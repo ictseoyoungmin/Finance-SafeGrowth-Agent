@@ -1,0 +1,1 @@
+-- Slice 2 will add Supabase tables, indexes, and pgvector setup.
