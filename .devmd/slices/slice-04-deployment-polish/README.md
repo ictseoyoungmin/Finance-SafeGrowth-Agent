@@ -25,15 +25,15 @@ Slice 0~3 완료. frontend/backend가 로컬에서 최소 동작해야 한다.
 
 ## Required Deliverables
 
-- [ ] `apps/backend/Dockerfile`
-- [ ] `docker-compose.yml`
-- [ ] `.github/workflows/backend-ci.yml`
-- [ ] `.github/workflows/frontend-ci.yml`
-- [ ] `docs/deployment/vercel.md`
-- [ ] `docs/deployment/render.md`
-- [ ] `docs/deployment/supabase.md`
-- [ ] `docs/demo/demo-script.md`
-- [ ] `docs/demo/fallback-plan.md`
+- [x] `apps/backend/Dockerfile`
+- [x] `docker-compose.yml`
+- [x] `.github/workflows/backend-ci.yml`
+- [x] `.github/workflows/frontend-ci.yml`
+- [x] `docs/deployment/vercel.md`
+- [x] `docs/deployment/render.md`
+- [x] `docs/deployment/supabase.md`
+- [x] `docs/demo/demo-script.md`
+- [x] `docs/demo/fallback-plan.md`
 
 ## Test Harness
 
@@ -53,26 +53,47 @@ curl https://your-render-service.onrender.com/v1/health
 
 ## Done Criteria
 
-- [ ] backend Docker build 성공.
-- [ ] backend/frontend CI workflow 존재.
-- [ ] Vercel/Render/Supabase deployment docs 존재.
+- [x] backend Docker build 성공.
+- [x] backend/frontend CI workflow 존재.
+- [x] Vercel/Render/Supabase deployment docs 존재.
 - [ ] public demo URL에서 표준 시나리오 1회 성공.
-- [ ] fallback plan 존재.
+- [x] fallback plan 존재.
 
 ## Implementation Completion Placeholder
 
-- Status: [ ] Not Started / [ ] In Progress / [ ] Completed
-- Branch:
-- Commit / PR:
+- Status: IN_PROGRESS
+- Branch: main
+- Commit / PR: not created
 - Implemented files:
-  - 
+  - `apps/backend/Dockerfile`
+  - `apps/backend/render.yaml`
+  - `apps/frontend/vercel.json`
+  - `docker-compose.yml`
+  - `.github/workflows/backend-ci.yml`
+  - `.github/workflows/frontend-ci.yml`
+  - `docs/deployment/vercel.md`
+  - `docs/deployment/render.md`
+  - `docs/deployment/supabase.md`
+  - `docs/demo/demo-script.md`
+  - `docs/demo/fallback-plan.md`
 - Test commands executed:
-  - 
+  - `cd apps/backend && .venv/bin/ruff check app tests`
+  - `cd apps/backend && .venv/bin/pytest`
+  - `cd apps/frontend && npm run build`
+  - `docker compose up --build backend`
+  - `curl http://localhost:8000/v1/health`
+  - `docker compose down`
 - Test result:
-  - 
+  - Backend lint passed.
+  - Backend pytest passed: 8 tests passed, 1 upstream PendingDeprecationWarning from Starlette/python-multipart.
+  - Frontend build passed.
+  - Docker Compose backend build succeeded.
+  - Dockerized backend health returned `{"status":"ok","env":"development"}`.
 - Known issues:
-  - 
+  - Public Render/Vercel deployment was not performed in this local environment, so production URL smoke and full public demo validation remain open.
+  - Slice 3 still needs manual browser click-through before it can be marked COMPLETE.
 - Fallback behavior:
-  - 
+  - Demo fallback plan documented in `docs/demo/fallback-plan.md`.
+  - Backend and frontend remain deterministic if Gemini, Supabase, or backend API calls are unavailable.
 - Next recommended task:
-  -
+  - Complete manual browser validation for Slice 3, deploy backend/frontend to Render/Vercel, run public URL smoke tests, then mark Slice 3 and Slice 4 COMPLETE.

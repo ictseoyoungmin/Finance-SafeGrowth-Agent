@@ -5,6 +5,7 @@
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "Node",
+    "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "strict": true
   },

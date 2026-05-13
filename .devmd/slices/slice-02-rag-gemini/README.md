@@ -25,17 +25,17 @@ Slice 1 완료. Analyze API와 RuleEngine이 동작해야 한다. Supabase 프�
 
 ## Required Deliverables
 
-- [ ] `infra/supabase/schema.sql`
-- [ ] `infra/supabase/seed_regulation_docs.sql`
-- [ ] vector search RPC
-- [ ] `app/integrations/supabase_client.py`
-- [ ] `app/integrations/gemini_client.py`
-- [ ] `app/rag/retriever.py`
-- [ ] `app/services/evidence_service.py`
-- [ ] `app/services/rewrite_service.py`
-- [ ] `/evidence` API
-- [ ] `/rewrite` API
-- [ ] fallback evidence/rewrite tests
+- [x] `infra/supabase/schema.sql`
+- [x] `infra/supabase/seed_regulation_docs.sql`
+- [x] vector search RPC
+- [x] `app/integrations/supabase_client.py`
+- [x] `app/integrations/gemini_client.py`
+- [x] `app/rag/retriever.py`
+- [x] `app/services/evidence_service.py`
+- [x] `app/services/rewrite_service.py`
+- [x] `/evidence` API
+- [x] `/rewrite` API
+- [x] fallback evidence/rewrite tests
 
 ## Test Harness
 
@@ -54,25 +54,51 @@ curl -X POST http://localhost:8000/v1/compliance/rewrite \
 
 ## Done Criteria
 
-- [ ] evidence_list 1개 이상 반환.
-- [ ] conservative/marketing 수정안 둘 다 반환.
-- [ ] Gemini/Supabase 미설정에도 API 200 또는 graceful fallback.
-- [ ] seed SQL 문서화.
+- [x] evidence_list 1개 이상 반환.
+- [x] conservative/marketing 수정안 둘 다 반환.
+- [x] Gemini/Supabase 미설정에도 API 200 또는 graceful fallback.
+- [x] seed SQL 문서화.
 
 ## Implementation Completion Placeholder
 
-- Status: [ ] Not Started / [ ] In Progress / [ ] Completed
-- Branch:
-- Commit / PR:
+- Status: COMPLETE
+- Branch: main
+- Commit / PR: not created
 - Implemented files:
-  - 
+  - `infra/supabase/schema.sql`
+  - `infra/supabase/seed_regulation_docs.sql`
+  - `infra/supabase/seed_demo_contents.sql`
+  - `apps/backend/app/api/v1/compliance.py`
+  - `apps/backend/app/core/config.py`
+  - `apps/backend/app/schemas/evidence.py`
+  - `apps/backend/app/schemas/rewrite.py`
+  - `apps/backend/app/integrations/supabase_client.py`
+  - `apps/backend/app/integrations/gemini_client.py`
+  - `apps/backend/app/repositories/regulation_docs_repo.py`
+  - `apps/backend/app/rag/chunker.py`
+  - `apps/backend/app/rag/embeddings.py`
+  - `apps/backend/app/rag/retriever.py`
+  - `apps/backend/app/services/evidence_service.py`
+  - `apps/backend/app/services/rewrite_service.py`
+  - `apps/backend/tests/test_rag_retriever.py`
+  - `apps/backend/tests/test_api_evidence.py`
+  - `apps/backend/tests/test_api_rewrite.py`
 - Test commands executed:
-  - 
+  - `cd apps/backend && .venv/bin/ruff check app tests`
+  - `cd apps/backend && .venv/bin/pytest`
+  - `cd apps/backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000`
+  - `curl -X POST http://localhost:8000/v1/compliance/evidence -H 'Content-Type: application/json' -d '{"content_id":"demo-content","risk_categories":["확정 수익 오인","원금 보장 오인"],"product_type":"투자상품"}'`
+  - `curl -X POST http://localhost:8000/v1/compliance/rewrite -H 'Content-Type: application/json' -d '{"content_id":"demo-content","mode":"marketing_balanced"}'`
 - Test result:
-  - 
+  - `ruff check app tests` passed.
+  - `pytest` passed: 8 tests passed, 1 upstream PendingDeprecationWarning from Starlette/python-multipart.
+  - `/v1/compliance/evidence` returned fallback docs `doc-demo-001` and `doc-demo-002`.
+  - `/v1/compliance/rewrite` returned conservative and marketing rewrite text plus change explanations.
 - Known issues:
-  - 
+  - Supabase RPC/schema was authored but not executed against a live Supabase project in this environment.
+  - Gemini wrapper is present, but no real Gemini call was exercised because `GEMINI_API_KEY` is not configured.
 - Fallback behavior:
-  - 
+  - Evidence uses in-process demo regulation docs when Supabase is unavailable.
+  - Rewrite uses deterministic conservative/marketing fallback text when Gemini is unavailable or returns unparsable JSON.
 - Next recommended task:
-  -
+  - Start Slice 3: implement frontend 5-step workflow, API client, redline rendering, evidence/rewrite screens, and approval package.

@@ -25,17 +25,17 @@ Slice 1 analyze API와 Slice 2 evidence/rewrite API가 동작하거나 mock resp
 
 ## Required Deliverables
 
-- [ ] AppShell / Sidebar / Header
-- [ ] Compliance state machine
-- [ ] API client
-- [ ] InputStep
-- [ ] RedlineStep
-- [ ] EvidenceStep
-- [ ] RewriteStep
-- [ ] ApprovalStep
-- [ ] Redline renderer
-- [ ] mock/fallback data
-- [ ] build success
+- [x] AppShell / Sidebar / Header
+- [x] Compliance state machine
+- [x] API client
+- [x] InputStep
+- [x] RedlineStep
+- [x] EvidenceStep
+- [x] RewriteStep
+- [x] ApprovalStep
+- [x] Redline renderer
+- [x] mock/fallback data
+- [x] build success
 
 ## Test Harness
 
@@ -59,23 +59,45 @@ Manual check:
 
 - [ ] 표준 문구로 5단계 진행 가능.
 - [ ] backend down 상태에서도 mock fallback 표시.
-- [ ] build 성공.
-- [ ] 화면별 CTA와 상태 전이가 명확함.
+- [x] build 성공.
+- [x] 화면별 CTA와 상태 전이가 명확함.
 
 ## Implementation Completion Placeholder
 
-- Status: [ ] Not Started / [ ] In Progress / [ ] Completed
-- Branch:
-- Commit / PR:
+- Status: IN_PROGRESS
+- Branch: main
+- Commit / PR: not created
 - Implemented files:
-  - 
+  - `apps/frontend/src/App.tsx`
+  - `apps/frontend/src/styles.css`
+  - `apps/frontend/src/components/layout/AppShell.tsx`
+  - `apps/frontend/src/components/redline/RiskMark.tsx`
+  - `apps/frontend/src/components/redline/renderRedline.tsx`
+  - `apps/frontend/src/features/compliance/types.ts`
+  - `apps/frontend/src/features/compliance/api.ts`
+  - `apps/frontend/src/features/compliance/store.ts`
+  - `apps/frontend/src/features/compliance/steps/InputStep.tsx`
+  - `apps/frontend/src/features/compliance/steps/RedlineStep.tsx`
+  - `apps/frontend/src/features/compliance/steps/EvidenceStep.tsx`
+  - `apps/frontend/src/features/compliance/steps/RewriteStep.tsx`
+  - `apps/frontend/src/features/compliance/steps/ApprovalStep.tsx`
 - Test commands executed:
-  - 
+  - `cd apps/frontend && npm run lint`
+  - `cd apps/frontend && npm run typecheck`
+  - `cd apps/frontend && npm run build`
+  - `cd apps/frontend && npm run dev`
+  - `curl http://172.18.208.1:5174`
+  - `curl http://192.168.0.5:5174`
 - Test result:
-  - 
+  - Frontend lint passed.
+  - Frontend typecheck passed.
+  - Frontend build passed.
+  - Vite dev server started and served `index.html` from the advertised network URLs.
 - Known issues:
-  - 
+  - Manual browser click-through across all 5 screens was not executed in this environment, so the slice is not marked COMPLETE.
+  - A previous Windows-side Vite process may still be serving on port 5173. Future `npm run dev` may select another available port.
 - Fallback behavior:
-  - 
+  - API client falls back to deterministic analyze/evidence/rewrite demo data if backend requests fail.
+  - Frontend does not read or expose Gemini or Supabase service-role secrets.
 - Next recommended task:
-  -
+  - Manually validate the 5-screen flow in a browser, then mark Slice 3 COMPLETE if the flow passes.

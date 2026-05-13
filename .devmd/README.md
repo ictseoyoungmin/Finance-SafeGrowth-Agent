@@ -90,9 +90,9 @@ agent-guides/
 
 ## 6. 구현 완료 기록
 
-- [ ] Slice 0 완료
-- [ ] Slice 1 완료
-- [ ] Slice 2 완료
+- [x] Slice 0 완료
+- [x] Slice 1 완료
+- [x] Slice 2 완료
 - [ ] Slice 3 완료
 - [ ] Slice 4 완료
 

@@ -6,6 +6,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_env: str = "development"
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-1.5-flash"
+    supabase_url: str | None = None
+    supabase_anon_key: str | None = None
+    supabase_service_role_key: str | None = None
+    database_url: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
