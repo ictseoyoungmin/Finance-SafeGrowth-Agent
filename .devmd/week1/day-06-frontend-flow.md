@@ -1,28 +1,38 @@
-# Day 6 — Frontend 5-Step Flow
+# Day 6 — Frontend 5-Step Flow and Mockup Alignment
 
-## 목표
+## Goal
 
-mockup 기준 5단계 wizard UI를 구현하고 backend API와 연결한다.
+Implement and validate the 5-step compliance review wizard, connect it to the backend APIs, and align the UI with the mockups in `.devmd/mockup`.
 
-## 매핑 Slice
+Mapped slice:
 
-- `slices/slice-03-frontend-flow/README.md`
+- `.devmd/slices/slice-03-frontend-flow/README.md`
 
-## 작업 범위
+## Current Status
 
-1. Layout: sidebar, header, step container.
-2. Compliance state machine.
-3. API client.
-4. 콘텐츠 입력 화면.
-5. Redline Risk Review 화면.
-6. 근거 패널 화면.
-7. 수정안 비교 화면.
-8. 승인 패키지 화면.
-9. fallback mock data.
+The frontend flow has been implemented and automated checks have passed, but this day remains open until manual browser validation and mockup alignment are completed.
 
-## Required files
+## Work Scope
+
+1. App shell with sidebar, header, and step container.
+2. Compliance workflow state machine.
+3. API client for analyze, evidence, and rewrite.
+4. Content input screen.
+5. Redline risk review screen.
+6. Evidence panel screen.
+7. Rewrite comparison screen.
+8. Approval package screen.
+9. Deterministic fallback data for backend-down demos.
+10. Visual polish against `.devmd/mockup`.
+
+## Required Files
 
 ```text
+apps/frontend/src/App.tsx
+apps/frontend/src/styles.css
+apps/frontend/src/components/layout/AppShell.tsx
+apps/frontend/src/components/redline/RiskMark.tsx
+apps/frontend/src/components/redline/renderRedline.tsx
 apps/frontend/src/features/compliance/types.ts
 apps/frontend/src/features/compliance/api.ts
 apps/frontend/src/features/compliance/store.ts
@@ -31,9 +41,6 @@ apps/frontend/src/features/compliance/steps/RedlineStep.tsx
 apps/frontend/src/features/compliance/steps/EvidenceStep.tsx
 apps/frontend/src/features/compliance/steps/RewriteStep.tsx
 apps/frontend/src/features/compliance/steps/ApprovalStep.tsx
-apps/frontend/src/components/layout/AppShell.tsx
-apps/frontend/src/components/redline/RiskMark.tsx
-apps/frontend/src/components/redline/renderRedline.tsx
 ```
 
 ## State Flow
@@ -42,46 +49,74 @@ apps/frontend/src/components/redline/renderRedline.tsx
 input -> redline -> evidence -> rewrite -> approval
 ```
 
-재검토:
+Backward navigation must preserve state.
+
+## Redline Rendering Rule
+
+1. Prefer numeric `start`/`end` split rendering.
+2. If offsets are unavailable, fall back to the first matching `span_text`.
+3. Use separate classes by severity.
+4. Highlighted spans must remain readable and must not break the paragraph layout.
+
+## Mockup Reference
+
+Use these files as visual targets:
 
 ```text
-approval/rewrite -> rewrite or redline
+.devmd/mockup/1_콘텐츠입력.png
+.devmd/mockup/2_검토문장.png
+.devmd/mockup/3_근거패널.png
+.devmd/mockup/4_수정안비교.png
+.devmd/mockup/5_최종승인요약.png
+.devmd/mockup/compliance_ai_html_mockup.html
 ```
 
-## Redline rendering rule
+Required alignment:
 
-1. 우선 `start/end` 기준으로 split rendering.
-2. `start/end`가 없으면 `span_text` 첫 매칭 fallback.
-3. severity별 className을 분리한다.
+- Fixed or clearly persistent left stepper on desktop.
+- Light gray workspace background with white panels.
+- Blue primary actions and semantic state colors.
+- No marketing hero layout.
+- No nested cards inside cards.
+- Consistent panel spacing and clear CTA placement.
+- No clipped text, overlapping panels, or button label overflow.
 
-## 테스트 / 검증
+## Verification
 
 ```bash
 cd apps/frontend
 npm run lint
 npm run typecheck
 npm run build
+npm run dev
 ```
 
-Manual:
+Manual browser check:
 
-- 표준 문구 입력.
-- Redline 화면에서 위험 span 확인.
-- 근거 패널 표시.
-- 수정안 비교 표시.
-- 승인 패키지 표시.
+- Enter the standard demo sentence.
+- Confirm the input screen matches the mockup structure.
+- Confirm redline highlights and risk summary.
+- Confirm evidence cards and snippets.
+- Confirm rewrite comparison and change list.
+- Confirm approval package.
+- Repeat with backend unavailable and confirm fallback flow.
+- Check both desktop and narrow viewport widths.
 
-## 산출물
+## Deliverables
 
-- [ ] 5-step UI
-- [ ] API client
-- [ ] workflow store
-- [ ] Redline renderer
-- [ ] fallback mock data
-- [ ] build success
+- [x] 5-step UI
+- [x] API client
+- [x] workflow store
+- [x] redline renderer
+- [x] fallback mock data
+- [x] build success
+- [ ] manual 5-screen browser validation
+- [x] mockup alignment implementation pass
 
-## 완료 기준
+## Done Criteria
 
-- [ ] 단일 샘플 문구로 5단계 진행 가능.
-- [ ] backend down 상태에서도 mock fallback으로 UI 확인 가능.
-- [ ] 화면별 primary CTA가 명확하다.
+- [ ] Standard demo sentence completes all 5 steps.
+- [ ] Backend-down fallback completes all 5 steps.
+- [x] Every screen has been updated to follow `.devmd/mockup`.
+- [ ] Primary CTA is clear on every screen.
+- [ ] No text overflow, overlapping UI, or broken responsive layout.

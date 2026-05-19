@@ -13,15 +13,46 @@ export function RedlineStep({ workflow }: StepProps) {
     return null;
   }
 
+  const confidence =
+    analyze.flagged_spans.length > 0
+      ? Math.round(
+          (analyze.flagged_spans.reduce((sum, span) => sum + span.confidence, 0) /
+            analyze.flagged_spans.length) *
+            100,
+        )
+      : 0;
+
   return (
     <div className="review-layout">
-      <div className="redline-copy">{renderRedline(state.input.original_text, analyze.flagged_spans)}</div>
+      <section className="document-panel">
+        <div className="panel-heading compact">
+          <div>
+            <h2>검토된 문장</h2>
+            <p>위험 표현이 감지된 구간을 확인하세요.</p>
+          </div>
+          <button className="ghost-button" onClick={() => goTo("input")}>
+            원문 보기
+          </button>
+        </div>
+        <div className="redline-copy">{renderRedline(state.input.original_text, analyze.flagged_spans)}</div>
+        <div className="risk-legend">
+          {analyze.risk_categories.map((category) => (
+            <span key={category}>{category}</span>
+          ))}
+        </div>
+        <small className="character-count">문자 수 {state.input.original_text.length} / 2,000</small>
+      </section>
 
       <aside className="inspector">
         <div className={`risk-score risk-${analyze.risk_level.toLowerCase()}`}>
-          <span>Risk</span>
+          <span>위험도</span>
           <strong>{analyze.risk_level}</strong>
         </div>
+        <div className="confidence-row">
+          <span>신뢰도</span>
+          <strong>{confidence}%</strong>
+        </div>
+        <h2>탐지 리스크</h2>
         <p>{analyze.reviewer_notes}</p>
         <div className="span-list">
           {analyze.flagged_spans.map((span) => (
@@ -29,6 +60,7 @@ export function RedlineStep({ workflow }: StepProps) {
               <strong>{span.span_text}</strong>
               <span>{span.risk_category}</span>
               <small>{span.reason}</small>
+              <em>신뢰도 {Math.round(span.confidence * 100)}%</em>
             </article>
           ))}
         </div>

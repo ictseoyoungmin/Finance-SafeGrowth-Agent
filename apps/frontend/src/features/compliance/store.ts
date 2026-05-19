@@ -19,6 +19,7 @@ export interface ComplianceWorkflow {
   startReview: () => Promise<void>;
   loadEvidence: () => Promise<void>;
   loadRewrite: () => Promise<void>;
+  selectRevision: (revision: ComplianceState["selectedRevision"]) => void;
   goTo: (step: WorkflowStep) => void;
   reset: () => void;
 }
@@ -26,6 +27,7 @@ export interface ComplianceWorkflow {
 const INITIAL_STATE: ComplianceState = {
   step: "input",
   input: DEFAULT_INPUT,
+  selectedRevision: "marketing",
   usedFallback: false,
   isLoading: false,
 };
@@ -119,6 +121,10 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
     setState((current) => ({ ...current, step, errorMessage: undefined }));
   };
 
+  const selectRevision = (revision: ComplianceState["selectedRevision"]) => {
+    setState((current) => ({ ...current, selectedRevision: revision }));
+  };
+
   const reset = () => {
     setState(INITIAL_STATE);
   };
@@ -130,6 +136,7 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
     startReview,
     loadEvidence,
     loadRewrite,
+    selectRevision,
     goTo,
     reset,
   };

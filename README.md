@@ -46,6 +46,17 @@ npm run dev
 
 The Vite dev server defaults to `http://localhost:5173`.
 
+## Docker Compose
+
+The backend service reads `apps/backend/.env` when it exists. If the file is absent, the app starts in deterministic fallback mode and must still support the demo workflow without Gemini or Supabase.
+
+```bash
+docker compose up --build backend
+curl http://localhost:8000/v1/health
+```
+
+Do not use `.env.example` as a runtime env file. It is only a template for local setup.
+
 ## Secret Boundaries
 
 - Frontend only receives backend API base URL values such as `VITE_API_BASE_URL`.

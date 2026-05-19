@@ -3,7 +3,8 @@ services:
     build:
       context: ./apps/backend
     env_file:
-      - ./apps/backend/.env.example
+      - path: ./apps/backend/.env
+        required: false
     ports:
       - "8000:8000"
 

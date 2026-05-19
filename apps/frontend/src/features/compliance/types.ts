@@ -72,6 +72,7 @@ export interface ComplianceState {
   analyze?: AnalyzeResponse;
   evidence?: EvidenceResponse;
   rewrite?: RewriteResponse;
+  selectedRevision: "conservative" | "marketing";
   usedFallback: boolean;
   isLoading: boolean;
   errorMessage?: string;

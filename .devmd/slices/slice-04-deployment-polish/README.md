@@ -1,63 +1,171 @@
-# Slice 4 — Deployment & Polish
+# Slice 4 — Deployment, CI, Demo Polish, and Public Smoke
 
-이 slice README는 agent가 해당 구현 단위를 독립적으로 수행할 수 있도록 통합 지시문, 구현 범위, 테스트 하네스, 완료 placeholder를 포함한다.
-
+This slice is still **IN_PROGRESS**. Local Docker and build checks have passed, and deployment documentation exists, but the slice cannot be marked complete until the public Render/Vercel deployment is smoke-tested and Slice 3's browser UI flow is validated.
 
 ## Objective
 
-CI/CD, Docker, Vercel/Render/Supabase 배포 문서와 데모 안정화를 완료한다.
+Finish the Week 1 deployment/demo layer:
 
-## Mapped Days
+- CI workflows for backend and frontend
+- Docker backend validation
+- Render backend deployment guide
+- Vercel frontend deployment guide
+- Supabase setup and seed guide
+- demo script and fallback plan
+- public URL smoke checklist
+- final visual check against `.devmd/mockup`
 
-Day 7
+## Mapped Week 1 Day
+
+- `.devmd/week1/day-07-deploy-ci-polish.md`
 
 ## Prerequisites
 
-Slice 0~3 완료. frontend/backend가 로컬에서 최소 동작해야 한다.
+- Slice 0, Slice 1, and Slice 2 are complete.
+- Slice 3 must at least run locally.
+- Before marking this slice complete, Slice 3 must pass manual 5-screen browser validation.
 
-## Integrated Instructions
+## Current State
 
-1. CD는 Vercel/Render GitHub 연동을 우선 사용한다.
-2. GitHub Actions는 PR 품질 검증 중심으로 둔다.
-3. Render free cold start를 전제로 `/v1/health` warm-up 가이드를 문서화한다.
-4. Supabase migration/seed 절차를 명확히 쓴다.
-5. 공개 URL smoke test checklist를 남긴다.
+Already implemented:
 
-## Required Deliverables
+- backend Dockerfile
+- `docker-compose.yml`
+- backend CI workflow
+- frontend CI workflow
+- Render deployment notes
+- Vercel deployment notes
+- Supabase setup notes
+- demo script
+- fallback plan
+- local Docker health smoke
 
-- [x] `apps/backend/Dockerfile`
-- [x] `docker-compose.yml`
-- [x] `.github/workflows/backend-ci.yml`
-- [x] `.github/workflows/frontend-ci.yml`
-- [x] `docs/deployment/vercel.md`
-- [x] `docs/deployment/render.md`
-- [x] `docs/deployment/supabase.md`
-- [x] `docs/demo/demo-script.md`
-- [x] `docs/demo/fallback-plan.md`
+Still missing:
 
-## Test Harness
+- public Render deployment smoke test
+- public Vercel deployment smoke test
+- public full demo scenario
+- final confirmation that deployed UI matches `.devmd/mockup`
 
-```bash
-docker compose up --build backend
-curl http://localhost:8000/v1/health
+## Required Files
 
-cd apps/backend && pytest
-cd apps/frontend && npm run build
+```text
+apps/backend/Dockerfile
+apps/backend/render.yaml
+apps/frontend/vercel.json
+docker-compose.yml
+.github/workflows/backend-ci.yml
+.github/workflows/frontend-ci.yml
+docs/deployment/vercel.md
+docs/deployment/render.md
+docs/deployment/supabase.md
+docs/demo/demo-script.md
+docs/demo/fallback-plan.md
 ```
 
-Production smoke:
+## Deployment Requirements
+
+Render backend:
+
+- Root Directory: `apps/backend`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Health endpoint: `/v1/health`
+- Document expected free-tier cold start behavior.
+
+Vercel frontend:
+
+- Root Directory: `apps/frontend`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Set `VITE_API_BASE_URL` to the deployed Render backend URL.
+- Do not expose backend-only secrets to Vercel.
+
+Supabase:
+
+- Apply `infra/supabase/schema.sql`.
+- Apply `infra/supabase/seed_regulation_docs.sql`.
+- Apply `infra/supabase/seed_demo_contents.sql` if demo records are needed.
+- Store service-role keys only in backend runtime environment.
+
+## Mockup and Demo Polish Requirements
+
+Before public demo approval, confirm that the deployed frontend still follows the mockup set:
+
+```text
+.devmd/mockup/1_콘텐츠입력.png
+.devmd/mockup/2_검토문장.png
+.devmd/mockup/3_근거패널.png
+.devmd/mockup/4_수정안비교.png
+.devmd/mockup/5_최종승인요약.png
+```
+
+Public UI acceptance:
+
+- The sidebar stepper is visible and highlights the current stage.
+- Each screen uses the same core layout hierarchy as its mockup.
+- Primary CTAs are obvious and consistently placed.
+- Risk highlights are readable and do not break line flow.
+- Evidence and rewrite cards fit without text clipping.
+- Approval summary shows final text, risk information, evidence summary, and decision actions.
+- Fallback mode is visible but not visually disruptive.
+- Desktop and narrow viewport layouts have no overlapping text or controls.
+
+## Verification
+
+Local:
+
+```bash
+cd apps/backend
+.venv/bin/ruff check app tests
+.venv/bin/pytest
+
+cd ../frontend
+npm run lint
+npm run typecheck
+npm run build
+
+cd ../..
+docker compose up --build backend
+curl http://localhost:8000/v1/health
+docker compose down
+```
+
+Public smoke:
 
 ```bash
 curl https://your-render-service.onrender.com/v1/health
 ```
 
+Manual public demo:
+
+1. Open the Vercel URL.
+2. Confirm the frontend is calling the Render backend.
+3. Run the standard demo sentence:
+
+```text
+지금 가입하면 누구나 연 8% 수익을 안정적으로 받을 수 있는 JB 투자상품! 원금 걱정 없이 시작하세요.
+```
+
+4. Complete all five screens.
+5. Confirm fallback behavior is documented and acceptable if Supabase or Gemini is unavailable.
+
 ## Done Criteria
 
-- [x] backend Docker build 성공.
-- [x] backend/frontend CI workflow 존재.
-- [x] Vercel/Render/Supabase deployment docs 존재.
-- [ ] public demo URL에서 표준 시나리오 1회 성공.
-- [x] fallback plan 존재.
+- [ ] Backend CI exists and passes on PR.
+- [ ] Frontend CI exists and passes on PR.
+- [x] Backend Docker build succeeds locally.
+- [x] Dockerized backend `/v1/health` succeeds locally.
+- [x] Render deployment docs exist.
+- [x] Vercel deployment docs exist.
+- [x] Supabase setup docs exist.
+- [x] Demo script exists.
+- [x] Fallback plan exists.
+- [x] Docker Compose no longer uses `.env.example` as backend runtime env.
+- [ ] Render public `/v1/health` succeeds.
+- [ ] Vercel public UI opens.
+- [ ] Public UI completes the standard 5-screen demo scenario.
+- [ ] Deployed UI is checked against `.devmd/mockup`.
 
 ## Implementation Completion Placeholder
 
@@ -80,6 +188,7 @@ curl https://your-render-service.onrender.com/v1/health
   - `cd apps/backend && .venv/bin/ruff check app tests`
   - `cd apps/backend && .venv/bin/pytest`
   - `cd apps/frontend && npm run build`
+  - `docker compose config`
   - `docker compose up --build backend`
   - `curl http://localhost:8000/v1/health`
   - `docker compose down`
@@ -89,11 +198,14 @@ curl https://your-render-service.onrender.com/v1/health
   - Frontend build passed.
   - Docker Compose backend build succeeded.
   - Dockerized backend health returned `{"status":"ok","env":"development"}`.
+  - 2026-05-19 update: `docker compose config` passed after changing backend env loading from `.env.example` to optional `apps/backend/.env`.
+  - 2026-05-19 update: Dockerized backend rebuilt successfully and `/v1/health` returned `{"status":"ok","env":"development"}`.
 - Known issues:
-  - Public Render/Vercel deployment was not performed in this local environment, so production URL smoke and full public demo validation remain open.
-  - Slice 3 still needs manual browser click-through before it can be marked COMPLETE.
+  - Public Render/Vercel deployment was not performed in this local environment.
+  - Production URL smoke tests remain open.
+  - Slice 3 still needs manual browser click-through or screenshot-based validation.
 - Fallback behavior:
-  - Demo fallback plan documented in `docs/demo/fallback-plan.md`.
+  - Demo fallback plan is documented in `docs/demo/fallback-plan.md`.
   - Backend and frontend remain deterministic if Gemini, Supabase, or backend API calls are unavailable.
 - Next recommended task:
-  - Complete manual browser validation for Slice 3, deploy backend/frontend to Render/Vercel, run public URL smoke tests, then mark Slice 3 and Slice 4 COMPLETE.
+  - Complete Slice 3 browser and mockup validation, deploy backend/frontend to Render/Vercel, run public smoke tests, then mark Slice 3 and Slice 4 COMPLETE.
