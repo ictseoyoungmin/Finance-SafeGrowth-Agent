@@ -989,6 +989,29 @@ dd {
     padding: 24px;
   }
 
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .status-stack {
+    justify-content: flex-start;
+  }
+
+  .step-list {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .step-item {
+    min-width: 112px;
+  }
+
+  .step-item p {
+    word-break: keep-all;
+  }
+
   .input-grid,
   .review-layout,
   .evidence-layout,

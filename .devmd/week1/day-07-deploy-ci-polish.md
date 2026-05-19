@@ -10,7 +10,7 @@ Mapped slice:
 
 ## Current Status
 
-Local Docker/build checks and deployment documentation exist. This day remains open until public Render/Vercel smoke tests and the full public demo scenario are completed.
+Local Docker/build checks, Playwright UI smoke, and deployment documentation exist. This day remains open until public Render/Vercel smoke tests and the full public demo scenario are completed.
 
 ## Work Scope
 
@@ -100,6 +100,7 @@ curl https://your-render-service.onrender.com/v1/health
 - [x] demo script
 - [x] fallback plan
 - [x] docker compose uses optional `apps/backend/.env` instead of `.env.example`
+- [x] local Playwright 5-screen UI smoke
 - [ ] public Render health smoke
 - [ ] public Vercel UI smoke
 - [ ] public 5-screen demo

@@ -1,6 +1,6 @@
 # Slice 4 — Deployment, CI, Demo Polish, and Public Smoke
 
-This slice is still **IN_PROGRESS**. Local Docker and build checks have passed, and deployment documentation exists, but the slice cannot be marked complete until the public Render/Vercel deployment is smoke-tested and Slice 3's browser UI flow is validated.
+This slice is still **IN_PROGRESS**. Local Docker, frontend Playwright, and build checks have passed, and deployment documentation exists. The slice cannot be marked complete until the public Render/Vercel deployment is smoke-tested.
 
 ## Objective
 
@@ -23,7 +23,7 @@ Finish the Week 1 deployment/demo layer:
 
 - Slice 0, Slice 1, and Slice 2 are complete.
 - Slice 3 must at least run locally.
-- Before marking this slice complete, Slice 3 must pass manual 5-screen browser validation.
+- Slice 3 is complete as of 2026-05-19.
 
 ## Current State
 
@@ -45,7 +45,7 @@ Still missing:
 - public Render deployment smoke test
 - public Vercel deployment smoke test
 - public full demo scenario
-- final confirmation that deployed UI matches `.devmd/mockup`
+- final confirmation that deployed UI still matches `.devmd/mockup`
 
 ## Required Files
 
@@ -162,6 +162,7 @@ Manual public demo:
 - [x] Demo script exists.
 - [x] Fallback plan exists.
 - [x] Docker Compose no longer uses `.env.example` as backend runtime env.
+- [x] Local Playwright UI smoke passes backend-online across all 5 screens.
 - [ ] Render public `/v1/health` succeeds.
 - [ ] Vercel public UI opens.
 - [ ] Public UI completes the standard 5-screen demo scenario.
@@ -192,6 +193,7 @@ Manual public demo:
   - `docker compose up --build backend`
   - `curl http://localhost:8000/v1/health`
   - `docker compose down`
+  - `docker run --rm --add-host=host.docker.internal:host-gateway ... mcr.microsoft.com/playwright:v1.60.0-noble ... node /app/frontend-ui-smoke.mjs`
 - Test result:
   - Backend lint passed.
   - Backend pytest passed: 8 tests passed, 1 upstream PendingDeprecationWarning from Starlette/python-multipart.
@@ -200,10 +202,10 @@ Manual public demo:
   - Dockerized backend health returned `{"status":"ok","env":"development"}`.
   - 2026-05-19 update: `docker compose config` passed after changing backend env loading from `.env.example` to optional `apps/backend/.env`.
   - 2026-05-19 update: Dockerized backend rebuilt successfully and `/v1/health` returned `{"status":"ok","env":"development"}`.
+  - 2026-05-19 update: local Playwright container smoke passed backend-online across all five frontend screens.
 - Known issues:
   - Public Render/Vercel deployment was not performed in this local environment.
   - Production URL smoke tests remain open.
-  - Slice 3 still needs manual browser click-through or screenshot-based validation.
 - Fallback behavior:
   - Demo fallback plan is documented in `docs/demo/fallback-plan.md`.
   - Backend and frontend remain deterministic if Gemini, Supabase, or backend API calls are unavailable.
