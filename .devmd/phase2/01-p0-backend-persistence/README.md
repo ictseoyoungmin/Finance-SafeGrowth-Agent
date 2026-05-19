@@ -1,0 +1,172 @@
+# Slice 01 — P0 Backend Persistence
+
+## Goal
+
+Replace fake/no-op repository behavior with real persistence when Supabase is configured, while keeping deterministic fallback behavior when it is not.
+
+This slice fixes the biggest current product gap: analysis results are currently not actually stored.
+
+## Problems to fix
+
+1. `ContentRepository.save_original()` returns `content-{uuid}` without inserting into DB.
+2. `RiskResultsRepository.save_analysis()` is a no-op.
+3. `AuditService.record_analysis()` creates an object but does not persist.
+4. Supabase schema uses UUID ids, while the current fake `content-{uuid}` string is incompatible.
+5. `.env.example` placeholder values such as `replace-me` can be mistakenly treated as configured secrets.
+
+## Target behavior
+
+### If Supabase is configured
+
+- Insert into `contents`.
+- Return the actual UUID as a string.
+- Insert into `risk_results`.
+- Insert into `audit_logs`.
+- Use real `content_id` consistently across the API.
+
+### If Supabase is not configured
+
+- Use deterministic in-memory fallback or local fake records.
+- Still return a string `content_id`.
+- Do not crash.
+- Make fallback mode explicit in logs.
+
+## Files to modify
+
+```text
+apps/backend/app/integrations/supabase_client.py
+apps/backend/app/repositories/contents_repo.py
+apps/backend/app/repositories/risk_results_repo.py
+apps/backend/app/repositories/audit_logs_repo.py       # new if needed
+apps/backend/app/services/audit_service.py
+apps/backend/app/services/analyze_service.py
+apps/backend/app/core/config.py
+apps/backend/tests/test_analyze_api.py                 # new
+apps/backend/tests/test_repositories_fallback.py        # new if useful
+```
+
+## Implementation guidance
+
+### 1. Harden config detection
+
+Do not treat placeholder values as real secrets.
+
+Suggested helper:
+
+```python
+def is_real_value(value: str | None) -> bool:
+    return bool(value and value.strip() and value.strip() != "replace-me")
+```
+
+Use it in `SupabaseClient.is_configured`.
+
+### 2. Create a real Supabase client wrapper
+
+Minimum acceptable implementation:
+
+- If using `supabase-py`, add dependency to `requirements.txt`.
+- If using direct PostgreSQL, add `psycopg[binary]` or `asyncpg`.
+- Keep the repository interface small.
+
+Recommended for MVP speed:
+
+```text
+supabase-py for table insert/select
+```
+
+### 3. Fix `content_id` format
+
+Do not return `content-{uuid}` if the DB schema uses UUID.
+
+Return:
+
+```python
+str(inserted_row["id"])
+```
+
+Fallback can return a UUID string:
+
+```python
+str(uuid4())
+```
+
+### 4. Persist `risk_results`
+
+Store:
+
+- `content_id`
+- `risk_level`
+- `flagged_spans` as JSON
+- `risk_categories`
+- `reviewer_notes`
+
+### 5. Persist `audit_logs`
+
+Store at least:
+
+- `content_id`
+- `action="analyze"`
+- `model_version="rule-engine-v1"`
+- `doc_version="local-rules-v1"`
+- `prompt_hash=None` for rule-only analysis
+
+## Required Deliverables
+
+- [ ] Supabase configured detection does not accept `replace-me`.
+- [ ] `contents_repo.py` inserts real rows when configured.
+- [ ] `risk_results_repo.py` inserts real rows when configured.
+- [ ] `audit_service.py` persists audit logs when configured.
+- [ ] Fallback mode still works without Supabase.
+- [ ] `content_id` is UUID-compatible.
+- [ ] Tests cover no-Supabase fallback.
+- [ ] Tests cover analyze API response shape.
+
+## Test Harness
+
+Run from `apps/backend`:
+
+```bash
+ruff check app tests
+pytest
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Smoke test:
+
+```bash
+curl http://localhost:8000/v1/health
+
+curl -X POST http://localhost:8000/v1/compliance/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_type":"투자상품",
+    "channel":"앱 푸시",
+    "target_customer":"30대 직장인",
+    "language":"ko",
+    "original_text":"지금 가입하면 누구나 연 8% 수익을 안정적으로 받을 수 있는 JB 투자상품! 원금 걱정 없이 시작하세요."
+  }'
+```
+
+Expected:
+
+- response contains `content_id`
+- `risk_level` is `HIGH`
+- flagged spans include `누구나`, `연 8% 수익`, `안정적으로`, `원금 걱정 없이`
+- fallback mode does not crash without Supabase
+
+
+## Implementation Completion Placeholder
+
+- Status: NOT_STARTED / IN_PROGRESS / COMPLETE / BLOCKED
+- Implemented files:
+  - [ ] TBD
+- Test commands executed:
+  - [ ] TBD
+- Test result summary:
+  - TBD
+- Known issues:
+  - TBD
+- Next recommended step:
+  - TBD
+
+Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.
