@@ -249,3 +249,31 @@ timeout 90 bash -lc 'PYTHONPATH=. .venv/bin/python ../../.devmd/tools/rewrite_li
   - `risk_level=HIGH`
   - `fallback_like=False`
   - Conservative and marketing rewrite outputs differed from the deterministic fallback.
+
+## Day 13 CI, Docker, Env, and Test Cleanup
+
+Status: COMPLETE locally
+
+Completed:
+
+- Backend CI path filters now include `infra/supabase/**`.
+- Frontend CI now uses lockfile-based `npm ci`.
+- Docker Compose uses `apps/backend/.env` as an optional runtime env file and does not use `.env.example` for service execution.
+- Docker Compose frontend command now uses `npm ci`.
+- README documents fallback/demo mode when local secrets are absent or placeholders.
+- Gemini placeholder keys such as `replace-me` are not treated as configured.
+- Approval/report contract tests assert that `selected_revision` and `final_text` contain actual final text, not `"marketing"` or `"conservative"`.
+
+Verification:
+
+- Backend `ruff`: passed.
+- Backend `pytest`: `26 passed, 1 warning`.
+- Frontend Docker `npm ci && npm run typecheck && npm run lint && npm run build`: passed.
+- Backend Docker image build via `docker compose -f docker-compose.yml up --build backend`: passed.
+- Local port `8000` was already allocated, so the backend container health check was run on host port `18000`.
+- `curl http://localhost:18000/v1/health`: HTTP 200.
+
+Known notes:
+
+- Frontend Docker install reported existing npm audit warnings.
+- Public redeploy is needed before CI/Docker cleanup behavior is reflected in hosted environments.

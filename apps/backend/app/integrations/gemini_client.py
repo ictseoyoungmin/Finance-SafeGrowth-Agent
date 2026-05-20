@@ -6,6 +6,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.integrations.supabase_client import is_real_value
 
 
 logger = get_logger(__name__)
@@ -24,10 +25,10 @@ class GeminiClient:
 
     @property
     def is_configured(self) -> bool:
-        return bool(self._api_key)
+        return is_real_value(self._api_key)
 
     def generate_json(self, prompt: str) -> GeminiResult | None:
-        if not self._api_key:
+        if not self.is_configured:
             return None
 
         url = (

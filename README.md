@@ -30,6 +30,9 @@ pip install -r requirements-dev.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+Optional local secrets live in `apps/backend/.env`. Leave it absent, or leave placeholder values such as
+`replace-me`, to run the deterministic fallback demo without Gemini or Supabase.
+
 Health check:
 
 ```bash
@@ -40,7 +43,7 @@ curl http://localhost:8000/v1/health
 
 ```bash
 cd apps/frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -56,6 +59,16 @@ curl http://localhost:8000/v1/health
 ```
 
 Do not use `.env.example` as a runtime env file. It is only a template for local setup.
+
+Frontend Docker verification should also use lockfile-based installs:
+
+```bash
+cd apps/frontend
+npm ci
+npm run lint
+npm run typecheck
+npm run build
+```
 
 ## Secret Boundaries
 

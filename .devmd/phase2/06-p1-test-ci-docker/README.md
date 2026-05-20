@@ -86,12 +86,12 @@ Add or confirm tests for:
 
 ## Required Deliverables
 
-- [ ] Backend CI path filters include Supabase infra changes.
-- [ ] Frontend CI uses `npm ci`.
-- [ ] Docker Compose no longer uses `.env.example` as real env.
-- [ ] Placeholder secrets are not treated as configured.
-- [ ] Backend API tests added.
-- [ ] README updated with correct env and Docker instructions.
+- [x] Backend CI path filters include Supabase infra changes.
+- [x] Frontend CI uses `npm ci`.
+- [x] Docker Compose no longer uses `.env.example` as real env.
+- [x] Placeholder secrets are not treated as configured.
+- [x] Backend API tests added.
+- [x] README updated with correct env and Docker instructions.
 
 ## Test Harness
 
@@ -115,18 +115,34 @@ curl http://localhost:8000/v1/health
 ```
 
 
-## Implementation Completion Placeholder
+## Implementation Completion
 
-- Status: NOT_STARTED / IN_PROGRESS / COMPLETE / BLOCKED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `.github/workflows/backend-ci.yml`
+  - [x] `.github/workflows/frontend-ci.yml`
+  - [x] `docker-compose.yml`
+  - [x] `apps/backend/app/integrations/gemini_client.py`
+  - [x] `apps/backend/tests/test_api_approval_report.py`
+  - [x] `apps/backend/tests/test_gemini_parser.py`
+  - [x] `README.md`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
+  - [x] `docker run --rm -v /tmp/dacon-day13-frontend-clean:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm ci && npm run typecheck && npm run lint && npm run build"`
+  - [x] `docker compose -f docker-compose.yml up --build backend`
+  - [x] `docker compose -f docker-compose.yml run --rm -p 18000:8000 backend`
+  - [x] `curl -s -i http://localhost:18000/v1/health`
 - Test result summary:
-  - TBD
+  - Backend ruff passed.
+  - Backend pytest passed: `26 passed, 1 warning`.
+  - Frontend Docker `npm ci`, typecheck, lint, and build passed.
+  - Backend Docker image built successfully.
+  - Backend container health check returned HTTP 200 on `http://localhost:18000/v1/health`.
 - Known issues:
-  - TBD
+  - Local port `8000` was already allocated, so the final container health check used host port `18000`.
+  - Frontend `npm ci` reported existing npm audit warnings.
 - Next recommended step:
-  - TBD
+  - Proceed to the next Week 2 slice after redeploying the CI/Docker cleanup changes if public verification is needed.
 
 Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.

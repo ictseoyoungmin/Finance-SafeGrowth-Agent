@@ -20,6 +20,11 @@ DEMO_PAYLOAD = {
     ),
 }
 
+APPROVED_FINAL_TEXT = (
+    "시장 상황에 따라 수익은 변동될 수 있으며, 원금 손실 가능성이 있습니다. "
+    "가입 전 상품설명서와 유의사항을 확인해 주세요."
+)
+
 
 def test_approve_audit_log_and_report_flow() -> None:
     FALLBACK_CONTENTS.clear()
@@ -38,7 +43,7 @@ def test_approve_audit_log_and_report_flow() -> None:
             "reviewer": "김준법 수석",
             "decision": "CONDITIONALLY_APPROVED",
             "comment": "Demo approval",
-            "selected_revision": "marketing",
+            "selected_revision": APPROVED_FINAL_TEXT,
         },
     )
     audit_response = client.get(f"/v1/compliance/audit-log?content_id={content_id}")
@@ -62,6 +67,9 @@ def test_approve_audit_log_and_report_flow() -> None:
     assert report_body["content_id"] == content_id
     assert report_body["risk_level"] == "HIGH"
     assert report_body["approval"]["decision"] == "CONDITIONALLY_APPROVED"
+    assert report_body["approval"]["selected_revision"] == APPROVED_FINAL_TEXT
+    assert report_body["final_text"] == APPROVED_FINAL_TEXT
+    assert report_body["final_text"] not in {"marketing", "conservative"}
     assert report_body["audit_log"][0]["action"] == "analyze"
 
 
