@@ -48,10 +48,11 @@ class GeminiClient:
         if not text:
             return None
 
-        try:
-            return GeminiResult(payload=json.loads(text), model_version=self._model)
-        except json.JSONDecodeError:
+        payload = parse_json_payload(text)
+        if payload is None:
             return None
+
+        return GeminiResult(payload=payload, model_version=self._model)
 
     def _extract_text(self, raw: dict[str, Any]) -> str | None:
         candidates = raw.get("candidates") or []
@@ -64,6 +65,38 @@ class GeminiClient:
 
         text = parts[0].get("text")
         return text if isinstance(text, str) else None
+
+
+def parse_json_payload(text: str) -> dict[str, Any] | None:
+    direct = _loads_object(text.strip())
+    if direct is not None:
+        return direct
+
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        fenced = _loads_object("\n".join(lines).strip())
+        if fenced is not None:
+            return fenced
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start >= 0 and end > start:
+        return _loads_object(text[start : end + 1])
+
+    return None
+
+
+def _loads_object(text: str) -> dict[str, Any] | None:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def get_gemini_client() -> GeminiClient:

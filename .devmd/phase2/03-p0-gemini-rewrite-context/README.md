@@ -117,12 +117,12 @@ Response schema:
 
 ## Required Deliverables
 
-- [ ] Rewrite context resolution added.
-- [ ] Prompt includes original text, risk spans, and evidence.
-- [ ] Gemini parser supports raw JSON and fenced JSON.
-- [ ] Rewrite fallback still works without Gemini.
-- [ ] Unit tests cover parser edge cases.
-- [ ] Unit tests cover fallback rewrite.
+- [x] Rewrite context resolution added.
+- [x] Prompt includes original text, risk spans, and evidence.
+- [x] Gemini parser supports raw JSON and fenced JSON.
+- [x] Rewrite fallback still works without Gemini.
+- [x] Unit tests cover parser edge cases.
+- [x] Unit tests cover fallback rewrite.
 
 ## Test Harness
 
@@ -149,16 +149,21 @@ Expected:
 
 ## Implementation Completion Placeholder
 
-- Status: NOT_STARTED / IN_PROGRESS / COMPLETE / BLOCKED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/backend/app/integrations/gemini_client.py`
+  - [x] `apps/backend/app/services/rewrite_service.py`
+  - [x] `apps/backend/tests/test_gemini_parser.py`
+  - [x] `apps/backend/tests/test_rewrite_service.py`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
 - Test result summary:
-  - TBD
+  - `ruff`: passed
+  - `pytest`: 25 passed, 1 warning
 - Known issues:
-  - TBD
+  - Gemini live output was not exercised locally; Render has `GEMINI_API_KEY` and `GEMINI_MODEL` configured for production smoke after deploy.
 - Next recommended step:
-  - TBD
+  - Public-smoke `/rewrite` after Render deploy and confirm fallback remains stable if Gemini errors.
 
 Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.

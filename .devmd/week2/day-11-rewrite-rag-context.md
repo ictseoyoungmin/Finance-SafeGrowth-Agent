@@ -44,14 +44,14 @@ apps/backend/tests/test_regulation_docs_repo.py
 
 ## Tasks
 
-- [ ] repository에 `get(content_id)`와 `get_latest_by_content_id(content_id)` 계열 조회를 추가한다.
-- [ ] rewrite context resolver를 구현한다.
-- [ ] Gemini prompt에 original text, metadata, flagged spans, risk categories, evidence snippets를 포함한다.
-- [ ] JSON parser가 raw/fenced/substr JSON을 처리한다.
-- [ ] Supabase regulation docs 조회 path를 구현한다.
-- [ ] fallback evidence docs는 유지한다.
-- [ ] parser edge case와 fallback rewrite tests를 추가한다.
-- [ ] evidence filtering tests를 추가한다.
+- [x] repository에 `get(content_id)`와 `get_latest_by_content_id(content_id)` 계열 조회를 추가한다.
+- [x] rewrite context resolver를 구현한다.
+- [x] Gemini prompt에 original text, metadata, flagged spans, risk categories, evidence snippets를 포함한다.
+- [x] JSON parser가 raw/fenced/substr JSON을 처리한다.
+- [x] Supabase regulation docs 조회 path를 구현한다.
+- [x] fallback evidence docs는 유지한다.
+- [x] parser edge case와 fallback rewrite tests를 추가한다.
+- [x] evidence filtering tests를 추가한다.
 
 ## Test
 
@@ -82,11 +82,27 @@ curl -X POST http://localhost:8000/v1/compliance/evidence \
 
 ## Completion Log
 
-- Status: NOT_STARTED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/backend/app/integrations/gemini_client.py`
+  - [x] `apps/backend/app/services/rewrite_service.py`
+  - [x] `apps/backend/app/repositories/regulation_docs_repo.py`
+  - [x] `apps/backend/tests/test_gemini_parser.py`
+  - [x] `apps/backend/tests/test_rewrite_service.py`
+  - [x] `apps/backend/tests/test_regulation_docs_repo.py`
+  - [x] `apps/frontend/src/features/compliance/store.ts`
+  - [x] `.env.example`
+  - [x] `apps/backend/.env.example`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
+  - [x] `docker run --rm -v /mnt/f/NowWorking/Dacon-Fin-Agent/apps/frontend:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm run typecheck"`
+  - [x] `docker run --rm -v /mnt/f/NowWorking/Dacon-Fin-Agent/apps/frontend:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm run lint"`
+- Test result summary:
+  - `ruff`: passed
+  - `pytest`: 25 passed, 1 warning
+  - frontend `typecheck`: passed
+  - frontend `lint`: passed
 - Known issues:
-  - TBD
-
+  - Supabase regulation docs retrieval uses table filtering, not pgvector RPC, because seeded docs do not yet include embeddings.
+  - Report API still has empty `evidence` and `changes`; persistence or regeneration is a later slice.

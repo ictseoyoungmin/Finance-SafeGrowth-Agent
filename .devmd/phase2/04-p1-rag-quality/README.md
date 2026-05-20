@@ -66,13 +66,13 @@ This is optional, but useful for debug and demo mode.
 
 ## Required Deliverables
 
-- [ ] Supabase configured path attempts real query.
-- [ ] Placeholder values are not treated as configured secrets.
-- [ ] Fallback still works.
-- [ ] Evidence response schema remains compatible with frontend.
-- [ ] Tests cover fallback retrieval.
-- [ ] Tests cover filtering logic.
-- [ ] Documentation notes how to seed `regulation_docs`.
+- [x] Supabase configured path attempts real query.
+- [x] Placeholder values are not treated as configured secrets.
+- [x] Fallback still works.
+- [x] Evidence response schema remains compatible with frontend.
+- [x] Tests cover fallback retrieval.
+- [x] Tests cover filtering logic.
+- [x] Documentation notes how to seed `regulation_docs`.
 
 ## Test Harness
 
@@ -103,16 +103,20 @@ Expected:
 
 ## Implementation Completion Placeholder
 
-- Status: NOT_STARTED / IN_PROGRESS / COMPLETE / BLOCKED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/backend/app/repositories/regulation_docs_repo.py`
+  - [x] `apps/backend/tests/test_regulation_docs_repo.py`
+  - [x] `docs/deployment/supabase.md`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
 - Test result summary:
-  - TBD
+  - `ruff`: passed
+  - `pytest`: 25 passed, 1 warning
 - Known issues:
-  - TBD
+  - Stage A table filtering is implemented. Stage B pgvector RPC remains future work because seeded docs do not include embeddings.
 - Next recommended step:
-  - TBD
+  - Add embeddings and switch to `match_regulation_docs()` when production-quality semantic retrieval is needed.
 
 Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.

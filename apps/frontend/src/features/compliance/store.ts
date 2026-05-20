@@ -129,6 +129,10 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
 
   const submitApproval = async (decision: ApprovalDecision) => {
     const contentId = state.analyze?.content_id ?? "demo-content";
+    const selectedRevisionText =
+      state.selectedRevision === "conservative"
+        ? state.rewrite?.revised_text_conservative
+        : state.rewrite?.revised_text_marketing;
     setState((current) => ({ ...current, isLoading: true, errorMessage: undefined }));
     try {
       const approval = await approveContent({
@@ -136,7 +140,7 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
         reviewer: "김준법 수석",
         decision,
         comment: decision === "CONDITIONALLY_APPROVED" ? "Demo approval" : undefined,
-        selected_revision: state.selectedRevision,
+        selected_revision: selectedRevisionText,
       });
       setState((current) => ({
         ...current,

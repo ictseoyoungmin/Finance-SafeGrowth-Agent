@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from typing import Any
 
+from app.core.logging import get_logger
 from app.integrations.supabase_client import SupabaseClient, get_supabase_client
 
 
@@ -47,6 +49,7 @@ FALLBACK_REGULATION_DOCS = [
         similarity=0.79,
     ),
 ]
+logger = get_logger(__name__)
 
 
 class RegulationDocsRepository:
@@ -60,9 +63,35 @@ class RegulationDocsRepository:
         limit: int = 5,
     ) -> list[RegulationDoc]:
         if self._supabase_client.is_configured:
-            return self._fallback_search(risk_categories, product_type, limit)
+            try:
+                docs = self._supabase_search(risk_categories, product_type, limit)
+                if docs:
+                    return docs
+            except Exception:
+                logger.exception("Supabase regulation docs lookup failed; falling back to demo docs.")
 
         return self._fallback_search(risk_categories, product_type, limit)
+
+    def _supabase_search(
+        self,
+        risk_categories: list[str],
+        product_type: str,
+        limit: int,
+    ) -> list[RegulationDoc]:
+        rows = self._supabase_client.select_many(
+            "regulation_docs",
+            filters={},
+            order="id.asc",
+            limit=100,
+        )
+        requested = set(risk_categories)
+        docs = [
+            self._row_to_doc(row, requested)
+            for row in rows
+            if row.get("product_type") in {product_type, "공통"}
+            and (not requested or requested.intersection(row.get("risk_categories") or []))
+        ]
+        return sorted(docs, key=lambda doc: (-doc.similarity, doc.evidence_id))[:limit]
 
     def _fallback_search(
         self,
@@ -80,6 +109,21 @@ class RegulationDocsRepository:
         if not docs:
             docs = FALLBACK_REGULATION_DOCS
         return sorted(docs, key=lambda doc: doc.similarity, reverse=True)[:limit]
+
+    def _row_to_doc(self, row: dict[str, Any], requested: set[str]) -> RegulationDoc:
+        row_categories = tuple(row.get("risk_categories") or ())
+        overlap_count = len(requested.intersection(row_categories)) if requested else 1
+        similarity = min(0.99, 0.72 + (0.05 * overlap_count))
+        return RegulationDoc(
+            evidence_id=str(row.get("id")),
+            title=str(row.get("title") or ""),
+            version=str(row.get("version") or ""),
+            product_type=str(row.get("product_type") or "공통"),
+            risk_categories=row_categories,
+            snippet=str(row.get("snippet") or ""),
+            guideline_snippet=str(row.get("guideline_snippet") or ""),
+            similarity=similarity,
+        )
 
 
 def get_regulation_docs_repository() -> RegulationDocsRepository:

@@ -19,6 +19,7 @@ Deploy only the backend from the monorepo.
 APP_ENV=production
 CORS_ORIGINS=https://finance-safe-growth-agent.vercel.app
 GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-1.5-flash
 SUPABASE_URL=...
 SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
@@ -26,6 +27,11 @@ DATABASE_URL=...
 ```
 
 `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` must stay backend-only.
+
+Current Gemini production setup:
+
+- Render has `GEMINI_API_KEY` and `GEMINI_MODEL`.
+- Vercel does not need Gemini secrets or model settings.
 
 Current Supabase production setup:
 

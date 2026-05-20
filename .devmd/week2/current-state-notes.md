@@ -24,6 +24,7 @@ Implemented:
 - `GET /v1/compliance/report`
 
 Day 10 / Phase 2 Slice 02 is complete locally.
+Day 11 / Phase 2 Slice 03 and Slice 04 are complete locally.
 
 ## Day 8 Findings
 
@@ -126,6 +127,26 @@ Verification:
 
 Next:
 
-- Apply the updated `infra/supabase/schema.sql` to production Supabase so `approval_logs.selected_revision` exists.
-- Redeploy Render/Vercel.
-- Public-smoke approve, audit-log, and report endpoints.
+- Public Day 10 approve/audit-log/report smoke succeeded on Render.
+- Frontend approval now sends the selected final text to `selected_revision`, not the `"marketing"` / `"conservative"` selector value.
+- Render has `GEMINI_API_KEY` and `GEMINI_MODEL`.
+
+Day 11 implementation completed:
+
+- Gemini JSON parser handles raw JSON, fenced JSON, and explanation-wrapped JSON.
+- Rewrite prompt now resolves context from content, latest risk result, and regulation evidence repositories.
+- Supabase configured regulation docs path now queries `regulation_docs` and filters by product type and risk category overlap.
+- Regulation evidence fallback remains deterministic.
+
+Verification:
+
+- Backend `ruff`: passed.
+- Backend `pytest`: 25 passed, 1 warning.
+- Frontend Docker `typecheck`: passed.
+- Frontend Docker `lint`: passed.
+
+Remaining:
+
+- Redeploy Render/Vercel before public testing the updated frontend approval fix and Gemini rewrite context.
+- Public-smoke `/rewrite` with Gemini enabled on Render.
+- Report `evidence` and `changes` are still empty until rewrite/evidence persistence or regeneration is implemented.

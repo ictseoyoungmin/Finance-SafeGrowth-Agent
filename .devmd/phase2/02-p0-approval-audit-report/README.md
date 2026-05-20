@@ -146,7 +146,7 @@ CONTENT_ID=$(curl -s -X POST http://localhost:8000/v1/compliance/analyze \
 
 curl -X POST http://localhost:8000/v1/compliance/approve \
   -H "Content-Type: application/json" \
-  -d "{\"content_id\":\"$CONTENT_ID\",\"reviewer\":\"김준법 수석\",\"decision\":\"CONDITIONALLY_APPROVED\",\"comment\":\"Demo approval\",\"selected_revision\":\"marketing\"}"
+  -d "{\"content_id\":\"$CONTENT_ID\",\"reviewer\":\"김준법 수석\",\"decision\":\"CONDITIONALLY_APPROVED\",\"comment\":\"Demo approval\",\"selected_revision\":\"시장 상황에 따라 수익은 변동될 수 있으며, 원금 손실 가능성이 있습니다. 가입 전 상품설명서와 유의사항을 확인해 주세요.\"}"
 
 curl "http://localhost:8000/v1/compliance/audit-log?content_id=$CONTENT_ID"
 curl "http://localhost:8000/v1/compliance/report?content_id=$CONTENT_ID"
@@ -179,12 +179,20 @@ curl "http://localhost:8000/v1/compliance/report?content_id=$CONTENT_ID"
   - [x] `docker run --rm -v /mnt/f/NowWorking/Dacon-Fin-Agent/apps/frontend:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm run lint"`
 - Test result summary:
   - `ruff`: passed
-  - `pytest`: 16 passed, 1 warning
+  - `pytest`: 25 passed, 1 warning
   - frontend `typecheck`: passed
   - frontend `lint`: passed
+- Live public verification:
+  - Render `/v1/compliance/analyze` returned HTTP 200 with UUID `content_id`.
+  - Render `/v1/compliance/approve` returned UUID `approval_id`.
+  - Render `/v1/compliance/audit-log` returned `analyze` and `approve` entries.
+  - Render `/v1/compliance/report` returned `risk_level=HIGH` and the actual selected revision text as `final_text`.
+- Bug fix:
+  - Frontend approval now sends the selected revision text, not only the `"marketing"` or `"conservative"` selector value.
 - Known issues:
   - Existing Supabase projects need the `approval_logs.selected_revision` schema update applied before live approval persistence can store that field.
   - Report API returns JSON only; PDF generation remains P2.
+  - Report `evidence` and `changes` are still empty until rewrite/evidence persistence or regeneration is added.
 - Next recommended step:
   - Apply the updated `infra/supabase/schema.sql` to production Supabase, redeploy Render/Vercel, then public-smoke the approve, audit-log, and report sequence.
 
