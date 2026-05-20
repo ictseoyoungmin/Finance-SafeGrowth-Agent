@@ -44,14 +44,14 @@ apps/frontend/src/features/compliance/steps/ApprovalStep.tsx
 
 ## Tasks
 
-- [ ] approval request/response schema를 추가한다.
-- [ ] approval repository/service를 추가한다.
-- [ ] `POST /approve`가 Supabase 또는 fallback에 decision을 저장한다.
-- [ ] `GET /audit-log`가 content별 action entries를 반환한다.
-- [ ] `GET /report`가 JSON approval package를 반환한다.
-- [ ] frontend ApprovalStep에 approve/reject/request revision/report action을 연결한다.
-- [ ] backend offline/fallback 상황에서 UI가 깨지지 않게 한다.
-- [ ] API tests를 추가한다.
+- [x] approval request/response schema를 추가한다.
+- [x] approval repository/service를 추가한다.
+- [x] `POST /approve`가 Supabase 또는 fallback에 decision을 저장한다.
+- [x] `GET /audit-log`가 content별 action entries를 반환한다.
+- [x] `GET /report`가 JSON approval package를 반환한다.
+- [x] frontend ApprovalStep에 approve/reject/request revision/report action을 연결한다.
+- [x] backend offline/fallback 상황에서 UI가 깨지지 않게 한다.
+- [x] API tests를 추가한다.
 
 ## Test
 
@@ -86,11 +86,33 @@ curl "http://localhost:8000/v1/compliance/report?content_id=$CONTENT_ID"
 
 ## Completion Log
 
-- Status: NOT_STARTED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/backend/app/api/v1/compliance.py`
+  - [x] `apps/backend/app/schemas/approval.py`
+  - [x] `apps/backend/app/schemas/audit.py`
+  - [x] `apps/backend/app/schemas/report.py`
+  - [x] `apps/backend/app/services/approval_service.py`
+  - [x] `apps/backend/app/services/audit_service.py`
+  - [x] `apps/backend/app/services/report_service.py`
+  - [x] `apps/backend/app/repositories/approval_logs_repo.py`
+  - [x] `apps/backend/tests/test_api_approval_report.py`
+  - [x] `apps/backend/tests/test_persistence_fallback.py`
+  - [x] `apps/frontend/src/features/compliance/api.ts`
+  - [x] `apps/frontend/src/features/compliance/store.ts`
+  - [x] `apps/frontend/src/features/compliance/types.ts`
+  - [x] `apps/frontend/src/features/compliance/steps/ApprovalStep.tsx`
+  - [x] `infra/supabase/schema.sql`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
+  - [x] `docker run --rm -v /mnt/f/NowWorking/Dacon-Fin-Agent/apps/frontend:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm run typecheck"`
+  - [x] `docker run --rm -v /mnt/f/NowWorking/Dacon-Fin-Agent/apps/frontend:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm run lint"`
+- Test result summary:
+  - `ruff`: passed
+  - `pytest`: 16 passed, 1 warning
+  - frontend `typecheck`: passed
+  - frontend `lint`: passed
 - Known issues:
-  - TBD
-
+  - Existing Supabase projects need the `approval_logs.selected_revision` schema update applied before live approval persistence can store that field.
+  - Report API returns JSON only; PDF generation remains out of scope for this slice.

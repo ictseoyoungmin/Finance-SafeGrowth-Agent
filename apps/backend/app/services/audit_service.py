@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
 
 from app.repositories.audit_logs_repo import AuditLogsRepository, get_audit_logs_repository
 
@@ -19,12 +20,28 @@ class AuditService:
         self._audit_logs_repository = audit_logs_repository
 
     def record_analysis(self, content_id: str) -> AuditRecord:
-        record = AuditRecord(
+        return self.record_action(
             content_id=content_id,
             action="analyze",
             model_version="rule-engine-v1",
             doc_version="local-rules-v1",
             prompt_hash=None,
+        )
+
+    def record_action(
+        self,
+        content_id: str,
+        action: str,
+        model_version: str,
+        doc_version: str,
+        prompt_hash: str | None = None,
+    ) -> AuditRecord:
+        record = AuditRecord(
+            content_id=content_id,
+            action=action,
+            model_version=model_version,
+            doc_version=doc_version,
+            prompt_hash=prompt_hash,
             created_at=datetime.now(timezone.utc),
         )
         self._audit_logs_repository.save(
@@ -36,6 +53,9 @@ class AuditService:
             created_at=record.created_at,
         )
         return record
+
+    def list_by_content_id(self, content_id: str) -> list[dict[str, Any]]:
+        return self._audit_logs_repository.list_by_content_id(content_id)
 
 
 def get_audit_service() -> AuditService:

@@ -27,6 +27,14 @@ DATABASE_URL=...
 
 `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` must stay backend-only.
 
+Current Supabase production setup:
+
+- Render has `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
+- `SUPABASE_URL` is the project base URL: `https://eszuojttibhkazrtqrqx.supabase.co`.
+- `SUPABASE_URL` must not include `/rest/v1/`; the backend adds the REST path internally.
+- Vercel does not contain Supabase secrets.
+- If Supabase REST returns `403 Forbidden`, check that SQL grants were applied for the public tables used by the Data API.
+
 ## Cold Start Warm-Up
 
 Render free services can sleep after inactivity. Before a public demo, warm the backend:
@@ -50,6 +58,14 @@ Completed on 2026-05-20:
 - `/v1/health` succeeded.
 - `/v1/compliance/analyze` succeeded.
 - CORS from `https://finance-safe-growth-agent.vercel.app` to this Render backend works.
+- Supabase schema and regulation seed SQL were applied successfully.
+- Initial Supabase REST insert returned `403 Forbidden`; SQL grants were applied through Supabase SQL Editor.
+- Public `/v1/compliance/analyze` smoke returned HTTP 200, `risk_level=HIGH`, and a UUID-compatible `content_id`.
+
+Live persistence verification:
+
+- API smoke: verified.
+- Supabase Table Editor row check: verify `contents`, `risk_results`, and `audit_logs(action=analyze)` after the grant.
 
 Known issue:
 

@@ -185,6 +185,19 @@ Expected:
 - Known issues:
   - Live Supabase insert/select was not exercised in this environment; configured paths are covered with a fake Supabase client.
   - Fallback memory is non-persistent and demo-only. It is lost on process restart and is not multi-worker safe.
+- Live Supabase verification:
+  - Status: VERIFIED.
+  - Supabase project created at `https://eszuojttibhkazrtqrqx.supabase.co`.
+  - `schema.sql` and `seed_regulation_docs.sql` were applied through Supabase SQL Editor.
+  - Render has `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
+  - Vercel has no Supabase secrets.
+  - `SUPABASE_URL` must be the project base URL and must not include `/rest/v1/`.
+  - Initial `POST /rest/v1/contents` returned `403 Forbidden`.
+  - Cause: strict Supabase security setup did not expose/privilege new tables for Data API roles.
+  - Fix: SQL grants were applied in Supabase SQL Editor.
+  - Public Render `/v1/compliance/analyze` API smoke returned HTTP 200 with `risk_level=HIGH` and UUID `content_id`.
+  - Public Render `/v1/compliance/analyze` is expected to persist `contents`, `risk_results`, and `audit_logs` after the grant.
+  - Confirm persistence by checking Supabase Table Editor rows for `contents`, `risk_results`, and `audit_logs(action=analyze)`.
 - Next recommended step:
   - Start Slice 02 / Day 10 approval, audit-log, and report APIs.
 

@@ -1,9 +1,12 @@
 import type {
   AnalyzeRequest,
   AnalyzeResponse,
+  ApprovalRequest,
+  ApprovalResponse,
   EvidenceRequest,
   EvidenceResponse,
   FlaggedSpan,
+  ReportResponse,
   RewriteRequest,
   RewriteResponse,
 } from "./types";
@@ -37,12 +40,30 @@ export async function fetchRewrite(request: RewriteRequest): Promise<RewriteResp
   return postJson<RewriteResponse>("/v1/compliance/rewrite", request);
 }
 
+export async function approveContent(request: ApprovalRequest): Promise<ApprovalResponse> {
+  return postJson<ApprovalResponse>("/v1/compliance/approve", request);
+}
+
+export async function fetchReport(contentId: string): Promise<ReportResponse> {
+  return getJson<ReportResponse>(`/v1/compliance/report?content_id=${encodeURIComponent(contentId)}`);
+}
+
 async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<TResponse>;
+}
+
+async function getJson<TResponse>(path: string): Promise<TResponse> {
+  const response = await fetch(`${API_BASE_URL}${path}`);
 
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status}`);

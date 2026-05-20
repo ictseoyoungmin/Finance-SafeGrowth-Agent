@@ -66,14 +66,46 @@ export interface RewriteResponse {
   changes: RewriteChange[];
 }
 
+export type ApprovalDecision = "APPROVED" | "CONDITIONALLY_APPROVED" | "REJECTED" | "REVISION_REQUESTED";
+
+export interface ApprovalRequest {
+  content_id: string;
+  reviewer: string;
+  decision: ApprovalDecision;
+  comment?: string;
+  selected_revision?: string;
+}
+
+export interface ApprovalResponse {
+  approval_id: string;
+  content_id: string;
+  status: string;
+  decision: ApprovalDecision;
+  reviewer: string;
+}
+
+export interface ReportResponse {
+  content_id: string;
+  summary: string;
+  risk_level?: RiskLevel;
+  final_text: string;
+  evidence: Record<string, unknown>[];
+  changes: Record<string, unknown>[];
+  approval?: Record<string, unknown>;
+  audit_log: Record<string, unknown>[];
+}
+
 export interface ComplianceState {
   step: WorkflowStep;
   input: AnalyzeRequest;
   analyze?: AnalyzeResponse;
   evidence?: EvidenceResponse;
   rewrite?: RewriteResponse;
+  approval?: ApprovalResponse;
+  report?: ReportResponse;
   selectedRevision: "conservative" | "marketing";
   usedFallback: boolean;
   isLoading: boolean;
   errorMessage?: string;
+  actionMessage?: string;
 }

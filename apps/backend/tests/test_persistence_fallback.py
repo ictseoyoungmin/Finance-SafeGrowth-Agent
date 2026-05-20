@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.integrations.supabase_client import SupabaseClient, SupabaseConfig, is_real_value
+from app.repositories.approval_logs_repo import FALLBACK_APPROVAL_LOGS, ApprovalLogsRepository
 from app.repositories.audit_logs_repo import FALLBACK_AUDIT_LOGS, AuditLogsRepository
 from app.repositories.contents_repo import FALLBACK_CONTENTS, ContentRepository
 from app.repositories.risk_results_repo import FALLBACK_RISK_RESULTS, RiskResultsRepository
@@ -32,6 +33,15 @@ class FakeSupabaseClient:
                 {
                     "content_id": "22222222-2222-4222-8222-222222222222",
                     "action": "analyze",
+                }
+            ],
+            "approval_logs": [
+                {
+                    "id": "44444444-4444-4444-8444-444444444444",
+                    "content_id": "22222222-2222-4222-8222-222222222222",
+                    "reviewer": "김준법 수석",
+                    "decision": "APPROVED",
+                    "selected_revision": "marketing",
                 }
             ],
         }
@@ -157,6 +167,7 @@ def test_configured_repositories_insert_into_supabase_tables() -> None:
     content_repository = ContentRepository(fake_client)  # type: ignore[arg-type]
     risk_repository = RiskResultsRepository(fake_client)  # type: ignore[arg-type]
     audit_repository = AuditLogsRepository(fake_client)  # type: ignore[arg-type]
+    approval_repository = ApprovalLogsRepository(fake_client)  # type: ignore[arg-type]
     audit_service = AuditService(audit_repository)
     request = AnalyzeRequest(
         product_type="투자상품",
@@ -186,13 +197,21 @@ def test_configured_repositories_insert_into_supabase_tables() -> None:
         reviewer_notes="표현 완화 필요",
     )
     audit_service.record_analysis(content_id)
+    approval_repository.save(
+        content_id=content_id,
+        reviewer="김준법 수석",
+        decision="APPROVED",
+        comment="Demo approval",
+        selected_revision="marketing",
+    )
 
     assert content_id == "22222222-2222-4222-8222-222222222222"
     inserted_tables = [table for table, _payload in fake_client.inserts]
-    assert inserted_tables == ["contents", "risk_results", "audit_logs"]
+    assert inserted_tables == ["contents", "risk_results", "audit_logs", "approval_logs"]
     assert fake_client.inserts[1][1]["flagged_spans"][0]["span_text"] == "누구나"
     assert fake_client.inserts[2][1]["action"] == "analyze"
     assert "created_at" in fake_client.inserts[2][1]
+    assert fake_client.inserts[3][1]["selected_revision"] == "marketing"
 
 
 def test_configured_repositories_read_from_supabase_tables() -> None:
@@ -200,23 +219,27 @@ def test_configured_repositories_read_from_supabase_tables() -> None:
     content_repository = ContentRepository(fake_client)  # type: ignore[arg-type]
     risk_repository = RiskResultsRepository(fake_client)  # type: ignore[arg-type]
     audit_repository = AuditLogsRepository(fake_client)  # type: ignore[arg-type]
+    approval_repository = ApprovalLogsRepository(fake_client)  # type: ignore[arg-type]
     content_id = "22222222-2222-4222-8222-222222222222"
 
     content = content_repository.get(content_id)
     risk_result = risk_repository.get_latest_by_content_id(content_id)
     audit_logs = audit_repository.list_by_content_id(content_id)
+    approval_logs = approval_repository.list_by_content_id(content_id)
 
     assert content is not None
     assert content["original_text"] == "stored text"
     assert risk_result is not None
     assert risk_result["risk_level"] == "LOW"
     assert audit_logs[0]["action"] == "analyze"
+    assert approval_logs[0]["decision"] == "APPROVED"
     assert fake_client.select_ones == [
         ("contents", {"id": content_id}, None),
         ("risk_results", {"content_id": content_id}, "created_at.desc"),
     ]
     assert fake_client.select_many_calls == [
-        ("audit_logs", {"content_id": content_id}, "created_at.asc", None)
+        ("audit_logs", {"content_id": content_id}, "created_at.asc", None),
+        ("approval_logs", {"content_id": content_id}, "created_at.asc", None),
     ]
 
 
@@ -224,10 +247,12 @@ def test_configured_repository_failures_fall_back_to_memory() -> None:
     FALLBACK_CONTENTS.clear()
     FALLBACK_RISK_RESULTS.clear()
     FALLBACK_AUDIT_LOGS.clear()
+    FALLBACK_APPROVAL_LOGS.clear()
     failing_client = FailingSupabaseClient()
     content_repository = ContentRepository(failing_client)  # type: ignore[arg-type]
     risk_repository = RiskResultsRepository(failing_client)  # type: ignore[arg-type]
     audit_repository = AuditLogsRepository(failing_client)  # type: ignore[arg-type]
+    approval_repository = ApprovalLogsRepository(failing_client)  # type: ignore[arg-type]
     request = AnalyzeRequest(
         product_type="투자상품",
         channel="앱 푸시",
@@ -256,8 +281,17 @@ def test_configured_repository_failures_fall_back_to_memory() -> None:
         reviewer_notes="fallback 확인",
     )
     AuditService(audit_repository).record_analysis(content_id)
+    approval_id = approval_repository.save(
+        content_id=content_id,
+        reviewer="김준법 수석",
+        decision="APPROVED",
+        comment="fallback approval",
+        selected_revision="marketing",
+    )
 
     assert UUID(content_id)
+    assert UUID(approval_id)
     assert content_repository.get(content_id) == FALLBACK_CONTENTS[content_id]
     assert risk_repository.get_latest_by_content_id(content_id) == FALLBACK_RISK_RESULTS[content_id][-1]
     assert audit_repository.list_by_content_id(content_id) == FALLBACK_AUDIT_LOGS[content_id]
+    assert approval_repository.list_by_content_id(content_id) == FALLBACK_APPROVAL_LOGS[content_id]

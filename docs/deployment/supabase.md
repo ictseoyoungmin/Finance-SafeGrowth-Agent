@@ -19,6 +19,73 @@ infra/supabase/seed_regulation_docs.sql
 infra/supabase/seed_demo_contents.sql
 ```
 
+In the SQL Editor, paste the SQL file contents. Do not paste the file path itself. Running a path such as `infra/supabase/schema.sql` in the SQL Editor will fail with a syntax error near `infra`.
+
+Current production setup status, 2026-05-20:
+
+- Live Supabase verification status: VERIFIED.
+- Supabase project created at `https://eszuojttibhkazrtqrqx.supabase.co`.
+- `infra/supabase/schema.sql` was applied successfully through the SQL Editor.
+- `infra/supabase/seed_regulation_docs.sql` was applied successfully through the SQL Editor.
+- Render stores the Supabase environment variables.
+- Vercel does not store Supabase secrets. Vercel only needs `VITE_API_BASE_URL=https://finance-safegrowth-agent.onrender.com`.
+
+## Runtime Environment
+
+Backend-only variables:
+
+```dotenv
+SUPABASE_URL=https://eszuojttibhkazrtqrqx.supabase.co
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+`SUPABASE_URL` must be the project base URL. Do not include `/rest/v1/`; the backend appends `/rest/v1/{table}` internally.
+
+The project uses the newer Supabase API key style:
+
+- publishable key -> `SUPABASE_ANON_KEY`
+- secret key -> `SUPABASE_SERVICE_ROLE_KEY`
+
+Never commit the secret key and never expose it to Vercel or frontend code.
+
+## Data API Grants
+
+The production project was created with strict security settings:
+
+- Data API enabled
+- Automatically expose new tables disabled
+- Automatic RLS enabled
+
+Because of that, the first Render insert to `POST /rest/v1/contents` returned `403 Forbidden`. The operational fix was to grant the service role access to the public tables from the Supabase SQL Editor:
+
+```sql
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select, insert, update, delete on table public.contents to service_role;
+grant select, insert, update, delete on table public.risk_results to service_role;
+grant select, insert, update, delete on table public.audit_logs to service_role;
+grant select, insert, update, delete on table public.approval_logs to service_role;
+grant select, insert, update, delete on table public.regulation_docs to service_role;
+```
+
+After applying grants, re-test live persistence through the public Render `/v1/compliance/analyze` endpoint and confirm rows in the Supabase Table Editor:
+
+- `contents` has a new row.
+- `risk_results` has a new row.
+- `audit_logs` has a new row with `action = analyze`.
+
+## Day 10 Schema Update
+
+Day 10 adds approval persistence. Existing Supabase projects should re-run the updated `infra/supabase/schema.sql` or apply the equivalent migration:
+
+```sql
+alter table approval_logs
+  add column if not exists selected_revision text;
+```
+
+Without this column, live `POST /v1/compliance/approve` may fall back to in-memory storage when it attempts to store the selected revision.
+
 ## Verification Queries
 
 ```sql

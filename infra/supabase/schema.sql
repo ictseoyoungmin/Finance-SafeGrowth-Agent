@@ -53,8 +53,12 @@ create table if not exists approval_logs (
   reviewer text not null,
   decision text not null,
   comment text,
+  selected_revision text,
   created_at timestamptz not null default now()
 );
+
+alter table approval_logs
+  add column if not exists selected_revision text;
 
 create table if not exists audit_logs (
   id uuid primary key default gen_random_uuid(),
@@ -100,3 +104,11 @@ as $$
   order by embedding <=> query_embedding
   limit match_count;
 $$;
+
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select, insert, update, delete on table public.contents to service_role;
+grant select, insert, update, delete on table public.risk_results to service_role;
+grant select, insert, update, delete on table public.audit_logs to service_role;
+grant select, insert, update, delete on table public.approval_logs to service_role;
+grant select, insert, update, delete on table public.regulation_docs to service_role;

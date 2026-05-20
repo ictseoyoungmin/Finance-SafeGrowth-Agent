@@ -5,7 +5,7 @@ interface StepProps {
 }
 
 export function ApprovalStep({ workflow }: StepProps) {
-  const { state, goTo, reset } = workflow;
+  const { state, goTo, loadReport, reset, submitApproval } = workflow;
   const analyze = state.analyze;
   const rewrite = state.rewrite;
   const finalText =
@@ -30,8 +30,8 @@ export function ApprovalStep({ workflow }: StepProps) {
       <section className="decision-banner">
         <span>심의</span>
         <div>
-          <h2>심의 결과: 조건부 승인 권고</h2>
-          <p>아래 주요 수정 사항을 반영하여 최종 승인하시기를 권고드립니다.</p>
+          <h2>심의 결과: {state.approval?.decision ?? "조건부 승인 권고"}</h2>
+          <p>{state.actionMessage ?? "아래 주요 수정 사항을 반영하여 최종 승인하시기를 권고드립니다."}</p>
         </div>
       </section>
 
@@ -54,6 +54,7 @@ export function ApprovalStep({ workflow }: StepProps) {
           <p>금융소비자보호 가이드라인</p>
           <p>금융투자상품 광고 심사지침</p>
           <p>검토 ID: {analyze?.content_id ?? "demo-content"}</p>
+          {state.report ? <p>리포트: {state.report.summary}</p> : null}
         </article>
       </section>
 
@@ -66,10 +67,26 @@ export function ApprovalStep({ workflow }: StepProps) {
       </section>
 
       <div className="action-row">
-        <button className="primary-button">승인</button>
-        <button className="danger-button">반려</button>
-        <button className="warning-button">수정 요청</button>
-        <button className="secondary-button">PDF 리포트 다운로드</button>
+        <button
+          className="primary-button"
+          disabled={state.isLoading}
+          onClick={() => submitApproval("CONDITIONALLY_APPROVED")}
+        >
+          승인
+        </button>
+        <button className="danger-button" disabled={state.isLoading} onClick={() => submitApproval("REJECTED")}>
+          반려
+        </button>
+        <button
+          className="warning-button"
+          disabled={state.isLoading}
+          onClick={() => submitApproval("REVISION_REQUESTED")}
+        >
+          수정 요청
+        </button>
+        <button className="secondary-button" disabled={state.isLoading} onClick={loadReport}>
+          리포트 확인
+        </button>
         <button className="secondary-button" onClick={() => goTo("rewrite")}>
           수정안으로
         </button>
