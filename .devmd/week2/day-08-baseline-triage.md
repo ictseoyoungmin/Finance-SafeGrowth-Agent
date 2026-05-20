@@ -41,13 +41,13 @@ Infra/docs:
 
 ## Tasks
 
-- [ ] 현재 endpoint 목록과 request/response shape를 확인한다.
-- [ ] Supabase configured detection이 placeholder 값을 real secret으로 보는지 확인한다.
-- [ ] repository layer가 실제 DB 저장을 하는지 확인한다.
-- [ ] fallback store가 API sequence 전체에서 context를 유지하는지 확인한다.
-- [ ] approval/report 관련 endpoint 존재 여부를 확인한다.
-- [ ] frontend 5-step flow가 backend API와 어디까지 연결되어 있는지 확인한다.
-- [ ] test 명령을 실행하고 실패 목록을 정리한다.
+- [x] 현재 endpoint 목록과 request/response shape를 확인한다.
+- [x] Supabase configured detection이 placeholder 값을 real secret으로 보는지 확인한다.
+- [x] repository layer가 실제 DB 저장을 하는지 확인한다.
+- [x] fallback store가 API sequence 전체에서 context를 유지하는지 확인한다.
+- [x] approval/report 관련 endpoint 존재 여부를 확인한다.
+- [x] frontend 5-step flow가 backend API와 어디까지 연결되어 있는지 확인한다.
+- [x] test 명령을 실행하고 실패 목록을 정리한다.
 
 ## Output
 
@@ -67,7 +67,15 @@ Infra/docs:
 
 ## Done When
 
-- P0 작업에 들어가기 전 blocker가 명확하다.
-- Day 9에서 수정해야 할 파일 목록이 확정되어 있다.
-- 기존 user 변경사항이나 dirty worktree가 있으면 기록되어 있다.
+- [x] P0 작업에 들어가기 전 blocker가 명확하다.
+- [x] Day 9에서 수정해야 할 파일 목록이 확정되어 있다.
+- [x] 기존 user 변경사항이나 dirty worktree가 있으면 기록되어 있다.
 
+## Completion Log
+
+- Status: COMPLETE
+- Output note: `.devmd/week2/current-state-notes.md`
+- Key findings:
+  - `content_id` fake `content-{uuid}` format and no-op persistence were the Day 9 blockers.
+  - approval/audit-log/report APIs are still missing and are Day 10 scope.
+  - Week 1 frontend/deployment flow is complete.

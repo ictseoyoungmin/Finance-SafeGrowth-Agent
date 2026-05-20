@@ -1,12 +1,39 @@
 from uuid import uuid4
 
+from app.core.logging import get_logger
+from app.integrations.supabase_client import SupabaseClient, get_supabase_client
 from app.schemas.compliance import AnalyzeRequest
 
 
+FALLBACK_CONTENTS: dict[str, dict[str, str]] = {}
+logger = get_logger(__name__)
+
+
 class ContentRepository:
+    def __init__(self, supabase_client: SupabaseClient) -> None:
+        self._supabase_client = supabase_client
+
     def save_original(self, request: AnalyzeRequest) -> str:
-        return f"content-{uuid4()}"
+        payload = {
+            "product_type": request.product_type,
+            "channel": request.channel,
+            "target_customer": request.target_customer,
+            "language": request.language,
+            "original_text": request.original_text,
+        }
+
+        if self._supabase_client.is_configured:
+            row = self._supabase_client.insert("contents", payload)
+            return str(row["id"])
+
+        content_id = str(uuid4())
+        FALLBACK_CONTENTS[content_id] = {"id": content_id, **payload}
+        logger.info("Supabase not configured; stored original content in fallback memory.")
+        return content_id
+
+    def get(self, content_id: str) -> dict[str, str] | None:
+        return FALLBACK_CONTENTS.get(content_id)
 
 
 def get_content_repository() -> ContentRepository:
-    return ContentRepository()
+    return ContentRepository(get_supabase_client())

@@ -102,15 +102,22 @@ curl https://your-render-service.onrender.com/v1/health
 - [x] docker compose uses optional `apps/backend/.env` instead of `.env.example`
 - [x] local Playwright 5-screen UI smoke
 - [x] default local CORS includes `localhost` and `127.0.0.1`
-- [ ] public Render health smoke
-- [ ] public Vercel UI smoke
-- [ ] public 5-screen demo
-- [ ] deployed mockup alignment pass
+- [x] public Render health smoke
+- [x] public Vercel UI smoke
+- [x] public 5-screen demo
+- [x] deployed mockup alignment pass
 
 ## Done Criteria
 
-- [ ] CI runs on GitHub PRs.
-- [ ] Render `/v1/health` returns OK.
-- [ ] Vercel public URL opens the UI.
-- [ ] The standard demo scenario succeeds at least once.
-- [ ] The deployed UI has been checked against the mockups.
+- [x] CI runs on GitHub PRs.
+- [x] Render `/v1/health` returns OK.
+- [x] Vercel public URL opens the UI.
+- [x] The standard demo scenario succeeds at least once.
+- [x] The deployed UI has been checked against the mockups.
+
+## Completion Status
+
+- Status: COMPLETE
+- Render: `https://finance-safegrowth-agent.onrender.com`
+- Vercel: `https://finance-safe-growth-agent.vercel.app`
+- Completion source: `.devmd/slices/slice-04-deployment-polish/README.md`

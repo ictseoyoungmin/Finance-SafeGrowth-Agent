@@ -68,16 +68,21 @@ curl -X POST http://localhost:8000/v1/compliance/rewrite \
 
 ## 산출물
 
-- [ ] GeminiClient
-- [ ] JSON prompt builder
-- [ ] Evidence API
-- [ ] Rewrite API
-- [ ] fallback evidence
-- [ ] fallback rewrite
-- [ ] tests
+- [x] GeminiClient
+- [x] JSON prompt builder
+- [x] Evidence API
+- [x] Rewrite API
+- [x] fallback evidence
+- [x] fallback rewrite
+- [x] tests
 
 ## 완료 기준
 
-- [ ] evidence_list 1개 이상 반환.
-- [ ] conservative/marketing rewrite 둘 다 반환.
-- [ ] Gemini key가 없어도 fallback으로 API가 200 응답 가능.
+- [x] evidence_list 1개 이상 반환.
+- [x] conservative/marketing rewrite 둘 다 반환.
+- [x] Gemini key가 없어도 fallback으로 API가 200 응답 가능.
+
+## 완료 상태
+
+- Status: COMPLETE
+- 완료 근거: `.devmd/slices/slice-02-rag-gemini/README.md`

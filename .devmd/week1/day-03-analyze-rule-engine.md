@@ -59,16 +59,21 @@ curl -X POST http://localhost:8000/v1/compliance/analyze \
 
 ## 산출물
 
-- [ ] AnalyzeRequest / AnalyzeResponse
-- [ ] RuleEngine.scan()
-- [ ] AnalyzeService.analyze()
-- [ ] RuleEngine tests
-- [ ] Analyze endpoint test
-- [ ] audit record interface
+- [x] AnalyzeRequest / AnalyzeResponse
+- [x] RuleEngine.scan()
+- [x] AnalyzeService.analyze()
+- [x] RuleEngine tests
+- [x] Analyze endpoint test
+- [x] audit record interface
 
 ## 완료 기준
 
-- [ ] 표준 문구에서 3개 이상 위험 span 탐지.
-- [ ] `risk_level=HIGH` 반환.
-- [ ] 각 span에 start/end 또는 span_text fallback이 존재.
-- [ ] DB 미연결 상태에서도 fallback repository로 API smoke 가능.
+- [x] 표준 문구에서 3개 이상 위험 span 탐지.
+- [x] `risk_level=HIGH` 반환.
+- [x] 각 span에 start/end 또는 span_text fallback이 존재.
+- [x] DB 미연결 상태에서도 fallback repository로 API smoke 가능.
+
+## 완료 상태
+
+- Status: COMPLETE
+- 완료 근거: `.devmd/slices/slice-01-backend-core/README.md`

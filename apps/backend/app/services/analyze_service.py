@@ -33,11 +33,14 @@ class AnalyzeService:
         flagged_spans = self._rule_engine.scan(request.original_text)
         risk_level = self._risk_level(flagged_spans)
         risk_categories = self._risk_categories(flagged_spans)
+        reviewer_notes = self._reviewer_notes(request, flagged_spans)
 
         self._risk_results_repository.save_analysis(
             content_id=content_id,
             risk_level=risk_level,
             flagged_spans=flagged_spans,
+            risk_categories=risk_categories,
+            reviewer_notes=reviewer_notes,
         )
         self._audit_service.record_analysis(content_id)
 
@@ -46,7 +49,7 @@ class AnalyzeService:
             risk_level=risk_level,
             flagged_spans=flagged_spans,
             risk_categories=risk_categories,
-            reviewer_notes=self._reviewer_notes(request, flagged_spans),
+            reviewer_notes=reviewer_notes,
         )
 
     def _risk_level(self, flagged_spans: list[FlaggedSpan]) -> RiskLevel:

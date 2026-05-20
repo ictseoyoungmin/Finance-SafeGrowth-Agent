@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -22,7 +24,7 @@ def test_analyze_returns_high_risk_for_demo_sentence() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["content_id"].startswith("content-")
+    assert UUID(body["content_id"])
     assert body["risk_level"] == "HIGH"
     assert len(body["flagged_spans"]) >= 3
     assert "확정 수익 오인" in body["risk_categories"]

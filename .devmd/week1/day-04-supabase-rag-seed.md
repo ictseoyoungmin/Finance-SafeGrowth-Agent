@@ -65,16 +65,21 @@ pytest tests/test_rag_retriever.py
 
 ## 산출물
 
-- [ ] schema.sql
-- [ ] seed_regulation_docs.sql
-- [ ] match_regulation_docs RPC
-- [ ] Supabase client wrapper
-- [ ] RegulationDocs repository
-- [ ] Retriever interface
+- [x] schema.sql
+- [x] seed_regulation_docs.sql
+- [x] match_regulation_docs RPC
+- [x] Supabase client wrapper
+- [x] RegulationDocs repository
+- [x] Retriever interface
 
 ## 완료 기준
 
-- [ ] Supabase에 seed 문서 3개 이상 존재.
-- [ ] product_type 기준 필터가 가능하다.
-- [ ] backend에서 evidence 후보를 list 형태로 받을 수 있다.
-- [ ] Supabase 미연결 시 fallback evidence가 반환된다.
+- [x] Supabase seed 문서 3개 이상이 SQL로 준비되었다.
+- [x] product_type 기준 필터가 가능하다.
+- [x] backend에서 evidence 후보를 list 형태로 받을 수 있다.
+- [x] Supabase 미연결 시 fallback evidence가 반환된다.
+
+## 완료 상태
+
+- Status: COMPLETE
+- 완료 근거: `.devmd/slices/slice-02-rag-gemini/README.md`

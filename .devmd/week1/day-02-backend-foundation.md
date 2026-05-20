@@ -61,15 +61,20 @@ curl http://localhost:8000/v1/health
 
 ## 산출물
 
-- [ ] FastAPI app starts
-- [ ] `/v1/health`
-- [ ] Router skeleton
-- [ ] Config object
-- [ ] Health test
-- [ ] Basic ruff/pytest scripts
+- [x] FastAPI app starts
+- [x] `/v1/health`
+- [x] Router skeleton
+- [x] Config object
+- [x] Health test
+- [x] Basic ruff/pytest scripts
 
 ## 완료 기준
 
-- [ ] `pytest` 통과.
-- [ ] `/docs`에서 API 문서가 열린다.
-- [ ] frontend localhost가 CORS allow_origins에 포함된다.
+- [x] `pytest` 통과.
+- [x] `/docs`에서 API 문서가 열린다.
+- [x] frontend localhost가 CORS allow_origins에 포함된다.
+
+## 완료 상태
+
+- Status: COMPLETE
+- 완료 근거: `.devmd/slices/slice-01-backend-core/README.md`

@@ -81,17 +81,22 @@ npm run dev
 
 ## 산출물
 
-- [ ] root project tree
-- [ ] frontend scaffold
-- [ ] backend scaffold
-- [ ] env examples
-- [ ] CI skeleton
-- [ ] docker-compose skeleton
-- [ ] README local run guide
+- [x] root project tree
+- [x] frontend scaffold
+- [x] backend scaffold
+- [x] env examples
+- [x] CI skeleton
+- [x] docker-compose skeleton
+- [x] README local run guide
 
 ## 완료 기준
 
-- [ ] backend `/v1/health`가 응답한다.
-- [ ] frontend dev server가 실행된다.
-- [ ] `.env.example`에 secret 이름만 있고 실제 key는 없다.
-- [ ] slice-00 README의 완료 placeholder가 갱신되었다.
+- [x] backend `/v1/health`가 응답한다.
+- [x] frontend dev server가 실행된다.
+- [x] `.env.example`에 secret 이름만 있고 실제 key는 없다.
+- [x] slice-00 README의 완료 placeholder가 갱신되었다.
+
+## 완료 상태
+
+- Status: COMPLETE
+- 완료 근거: `.devmd/slices/slice-00-bootstrap/README.md`

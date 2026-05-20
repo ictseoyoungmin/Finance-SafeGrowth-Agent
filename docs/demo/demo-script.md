@@ -5,10 +5,15 @@
 1. Warm the Render backend:
 
    ```bash
-   curl https://your-render-service.onrender.com/v1/health
+   curl https://finance-safegrowth-agent.onrender.com/v1/health
    ```
 
-2. Open the Vercel frontend URL.
+2. Open the Vercel frontend URL:
+
+   ```text
+   https://finance-safe-growth-agent.vercel.app
+   ```
+
 3. Use the standard demo sentence:
 
    ```text
@@ -30,3 +35,13 @@
 - Evidence list has one or more entries
 - Both conservative and marketing rewrite text are present
 - Demo continues even if Gemini or Supabase is unavailable
+- In the public deployment smoke completed on 2026-05-20, the standard 5-step demo completed without backend fallback.
+
+## Public URLs
+
+- Backend: `https://finance-safegrowth-agent.onrender.com`
+- Frontend: `https://finance-safe-growth-agent.vercel.app`
+
+## Demo Note
+
+Render Free tier cold start can delay the first request. Warm up `/v1/health` before the demo.

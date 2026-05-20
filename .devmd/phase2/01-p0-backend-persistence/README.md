@@ -112,14 +112,14 @@ Store at least:
 
 ## Required Deliverables
 
-- [ ] Supabase configured detection does not accept `replace-me`.
-- [ ] `contents_repo.py` inserts real rows when configured.
-- [ ] `risk_results_repo.py` inserts real rows when configured.
-- [ ] `audit_service.py` persists audit logs when configured.
-- [ ] Fallback mode still works without Supabase.
-- [ ] `content_id` is UUID-compatible.
-- [ ] Tests cover no-Supabase fallback.
-- [ ] Tests cover analyze API response shape.
+- [x] Supabase configured detection does not accept `replace-me`.
+- [x] `contents_repo.py` inserts real rows when configured.
+- [x] `risk_results_repo.py` inserts real rows when configured.
+- [x] `audit_service.py` persists audit logs when configured.
+- [x] Fallback mode still works without Supabase.
+- [x] `content_id` is UUID-compatible.
+- [x] Tests cover no-Supabase fallback.
+- [x] Tests cover analyze API response shape.
 
 ## Test Harness
 
@@ -157,16 +157,27 @@ Expected:
 
 ## Implementation Completion Placeholder
 
-- Status: NOT_STARTED / IN_PROGRESS / COMPLETE / BLOCKED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/backend/requirements.txt`
+  - [x] `apps/backend/requirements-dev.txt`
+  - [x] `apps/backend/app/integrations/supabase_client.py`
+  - [x] `apps/backend/app/repositories/contents_repo.py`
+  - [x] `apps/backend/app/repositories/risk_results_repo.py`
+  - [x] `apps/backend/app/repositories/audit_logs_repo.py`
+  - [x] `apps/backend/app/services/audit_service.py`
+  - [x] `apps/backend/app/services/analyze_service.py`
+  - [x] `apps/backend/tests/test_api_analyze.py`
+  - [x] `apps/backend/tests/test_persistence_fallback.py`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
 - Test result summary:
-  - TBD
+  - `ruff`: passed
+  - `pytest`: 12 passed, 1 warning
 - Known issues:
-  - TBD
+  - Live Supabase insert was not exercised in this environment; configured insert paths are covered with a fake Supabase client.
 - Next recommended step:
-  - TBD
+  - Start Slice 02 / Day 10 approval, audit-log, and report APIs.
 
 Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.

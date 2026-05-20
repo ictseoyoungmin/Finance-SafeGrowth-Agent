@@ -38,13 +38,13 @@ apps/backend/tests/
 
 ## Tasks
 
-- [ ] placeholder env 값(`replace-me`, empty string 등)을 configured로 보지 않게 한다.
-- [ ] `ContentRepository.save_original()`이 real insert 또는 fallback UUID를 반환하게 한다.
-- [ ] `RiskResultsRepository.save_analysis()`를 real/fallback 저장으로 구현한다.
-- [ ] `AuditService.record_analysis()`가 audit log를 저장하게 한다.
-- [ ] analyze API response shape를 유지한다.
-- [ ] no-Supabase fallback test를 추가한다.
-- [ ] analyze API contract test를 추가하거나 갱신한다.
+- [x] placeholder env 값(`replace-me`, empty string 등)을 configured로 보지 않게 한다.
+- [x] `ContentRepository.save_original()`이 real insert 또는 fallback UUID를 반환하게 한다.
+- [x] `RiskResultsRepository.save_analysis()`를 real/fallback 저장으로 구현한다.
+- [x] `AuditService.record_analysis()`가 audit log를 저장하게 한다.
+- [x] analyze API response shape를 유지한다.
+- [x] no-Supabase fallback test를 추가한다.
+- [x] analyze API contract test를 추가하거나 갱신한다.
 
 ## Test
 
@@ -64,18 +64,28 @@ curl -X POST http://localhost:8000/v1/compliance/analyze \
 
 ## Done When
 
-- `content_id`가 UUID-compatible이다.
-- Supabase 미설정 상태에서도 `/analyze`가 성공한다.
-- analyze 결과, risk result, audit action 저장 경로가 모두 구현되어 있다.
-- 관련 tests가 통과한다.
+- [x] `content_id`가 UUID-compatible이다.
+- [x] Supabase 미설정 상태에서도 `/analyze`가 성공한다.
+- [x] analyze 결과, risk result, audit action 저장 경로가 모두 구현되어 있다.
+- [x] 관련 tests가 통과한다.
 
 ## Completion Log
 
-- Status: NOT_STARTED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/backend/requirements.txt`
+  - [x] `apps/backend/requirements-dev.txt`
+  - [x] `apps/backend/app/integrations/supabase_client.py`
+  - [x] `apps/backend/app/repositories/contents_repo.py`
+  - [x] `apps/backend/app/repositories/risk_results_repo.py`
+  - [x] `apps/backend/app/repositories/audit_logs_repo.py`
+  - [x] `apps/backend/app/services/audit_service.py`
+  - [x] `apps/backend/app/services/analyze_service.py`
+  - [x] `apps/backend/tests/test_api_analyze.py`
+  - [x] `apps/backend/tests/test_persistence_fallback.py`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
 - Known issues:
-  - TBD
-
+  - Manual `uvicorn` + cross-exec `curl` smoke could not connect in this sandbox, but FastAPI `TestClient` API tests pass.
+  - Supabase live insert was not exercised against production; configured repository insert paths are covered with a fake Supabase client.

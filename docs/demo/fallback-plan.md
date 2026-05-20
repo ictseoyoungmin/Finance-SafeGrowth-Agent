@@ -22,3 +22,19 @@ The MVP must keep the demo path working when external services are unavailable.
 3. If Gemini fails, use the deterministic rewrite response.
 4. If Supabase fails, use the deterministic evidence response.
 5. Record skipped external dependencies in the slice README before marking completion.
+
+## Public Deployment Status
+
+Public smoke completed on 2026-05-20:
+
+- Render backend: `https://finance-safegrowth-agent.onrender.com`
+- Vercel frontend: `https://finance-safe-growth-agent.vercel.app`
+- Render `/v1/health` succeeded.
+- Render `/v1/compliance/analyze` succeeded.
+- Vercel UI successfully called the Render backend.
+- CORS from Vercel origin to Render backend is working.
+- Standard 5-step demo completed without backend fallback.
+
+Known issue:
+
+- Render Free tier cold start can delay the first request. Warm up `/v1/health` before demo.

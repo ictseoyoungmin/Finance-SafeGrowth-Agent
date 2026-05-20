@@ -6,13 +6,20 @@
 
 | Day | 문서 | 목표 |
 |---|---|---|
-| Day 1 | `day-01-bootstrap.md` | monorepo, env, scaffold, CI skeleton |
-| Day 2 | `day-02-backend-foundation.md` | FastAPI foundation, config, router |
-| Day 3 | `day-03-analyze-rule-engine.md` | analyze API, RuleEngine, audit 기초 |
-| Day 4 | `day-04-supabase-rag-seed.md` | Supabase schema, seed, RAG skeleton |
-| Day 5 | `day-05-gemini-rewrite-evidence.md` | Gemini, evidence, rewrite, fallback |
-| Day 6 | `day-06-frontend-flow.md` | 5단계 frontend flow |
-| Day 7 | `day-07-deploy-ci-polish.md` | Docker, CI/CD, Vercel/Render/Supabase, demo polish |
+| Day 1 | `day-01-bootstrap.md` | COMPLETE — monorepo, env, scaffold, CI skeleton |
+| Day 2 | `day-02-backend-foundation.md` | COMPLETE — FastAPI foundation, config, router |
+| Day 3 | `day-03-analyze-rule-engine.md` | COMPLETE — analyze API, RuleEngine, audit 기초 |
+| Day 4 | `day-04-supabase-rag-seed.md` | COMPLETE — Supabase schema, seed, RAG skeleton |
+| Day 5 | `day-05-gemini-rewrite-evidence.md` | COMPLETE — Gemini, evidence, rewrite, fallback |
+| Day 6 | `day-06-frontend-flow.md` | COMPLETE — 5단계 frontend flow |
+| Day 7 | `day-07-deploy-ci-polish.md` | COMPLETE — Docker, CI/CD, Vercel/Render/Supabase, demo polish |
+
+## Week 1 상태
+
+- Status: COMPLETE
+- Render: `https://finance-safegrowth-agent.onrender.com`
+- Vercel: `https://finance-safe-growth-agent.vercel.app`
+- 다음 단계: `.devmd/week2/README.md`
 
 ## 운영 원칙
 
