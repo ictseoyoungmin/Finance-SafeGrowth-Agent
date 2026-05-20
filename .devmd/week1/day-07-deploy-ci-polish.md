@@ -101,6 +101,7 @@ curl https://your-render-service.onrender.com/v1/health
 - [x] fallback plan
 - [x] docker compose uses optional `apps/backend/.env` instead of `.env.example`
 - [x] local Playwright 5-screen UI smoke
+- [x] default local CORS includes `localhost` and `127.0.0.1`
 - [ ] public Render health smoke
 - [ ] public Vercel UI smoke
 - [ ] public 5-screen demo

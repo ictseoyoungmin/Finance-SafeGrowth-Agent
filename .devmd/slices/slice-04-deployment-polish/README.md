@@ -120,15 +120,24 @@ cd apps/backend
 .venv/bin/ruff check app tests
 .venv/bin/pytest
 
-cd ../frontend
-npm run lint
-npm run typecheck
-npm run build
-
 cd ../..
 docker compose up --build backend
 curl http://localhost:8000/v1/health
 docker compose down
+```
+
+Frontend checks in this environment must use the Playwright Docker image instead of local npm:
+
+```bash
+docker run --rm --add-host=host.docker.internal:host-gateway \
+  -v /tmp/dacon-ui-smoke-final3:/app \
+  -v /mnt/f/NowWorking/Dacon-Fin-Agent/.devmd/tools/frontend-ui-smoke.mjs:/tmp/frontend-ui-smoke.mjs:ro \
+  -w /app \
+  -e VITE_API_BASE_URL=http://host.docker.internal:8000 \
+  -e FRONTEND_URL=http://localhost:5173 \
+  -e SCREENSHOT_DIR=/app/ui-smoke \
+  mcr.microsoft.com/playwright:v1.60.0-noble \
+  sh -c "set -e; npm ci; npm install --no-save playwright@1.60.0; npm run lint; npm run typecheck; npm run build; cp /tmp/frontend-ui-smoke.mjs /app/frontend-ui-smoke.mjs; npm run dev -- --host 0.0.0.0 > /tmp/vite.log 2>&1 & sleep 2; node /app/frontend-ui-smoke.mjs"
 ```
 
 Public smoke:
@@ -163,6 +172,7 @@ Manual public demo:
 - [x] Fallback plan exists.
 - [x] Docker Compose no longer uses `.env.example` as backend runtime env.
 - [x] Local Playwright UI smoke passes backend-online across all 5 screens.
+- [x] Default CORS origins include both `localhost` and `127.0.0.1` for local frontend smoke.
 - [ ] Render public `/v1/health` succeeds.
 - [ ] Vercel public UI opens.
 - [ ] Public UI completes the standard 5-screen demo scenario.
@@ -188,7 +198,6 @@ Manual public demo:
 - Test commands executed:
   - `cd apps/backend && .venv/bin/ruff check app tests`
   - `cd apps/backend && .venv/bin/pytest`
-  - `cd apps/frontend && npm run build`
   - `docker compose config`
   - `docker compose up --build backend`
   - `curl http://localhost:8000/v1/health`
@@ -203,6 +212,7 @@ Manual public demo:
   - 2026-05-19 update: `docker compose config` passed after changing backend env loading from `.env.example` to optional `apps/backend/.env`.
   - 2026-05-19 update: Dockerized backend rebuilt successfully and `/v1/health` returned `{"status":"ok","env":"development"}`.
   - 2026-05-19 update: local Playwright container smoke passed backend-online across all five frontend screens.
+  - 2026-05-20 update: default backend CORS now includes `127.0.0.1` local origins to avoid false fallback during Playwright/local smoke.
 - Known issues:
   - Public Render/Vercel deployment was not performed in this local environment.
   - Production URL smoke tests remain open.
@@ -210,4 +220,4 @@ Manual public demo:
   - Demo fallback plan is documented in `docs/demo/fallback-plan.md`.
   - Backend and frontend remain deterministic if Gemini, Supabase, or backend API calls are unavailable.
 - Next recommended task:
-  - Complete Slice 3 browser and mockup validation, deploy backend/frontend to Render/Vercel, run public smoke tests, then mark Slice 3 and Slice 4 COMPLETE.
+  - Deploy backend/frontend to Render/Vercel, run public smoke tests, then mark Slice 4 COMPLETE.
