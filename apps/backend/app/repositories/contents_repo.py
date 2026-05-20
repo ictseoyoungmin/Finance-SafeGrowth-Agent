@@ -23,16 +23,28 @@ class ContentRepository:
         }
 
         if self._supabase_client.is_configured:
-            row = self._supabase_client.insert("contents", payload)
-            return str(row["id"])
+            try:
+                row = self._supabase_client.insert("contents", payload)
+                return str(row["id"])
+            except Exception:
+                logger.exception("Supabase contents insert failed; falling back to memory store.")
 
+        return self._save_fallback(payload)
+
+    def get(self, content_id: str) -> dict[str, str] | None:
+        if self._supabase_client.is_configured:
+            try:
+                return self._supabase_client.select_one("contents", {"id": content_id})
+            except Exception:
+                logger.exception("Supabase contents lookup failed; falling back to memory store.")
+
+        return FALLBACK_CONTENTS.get(content_id)
+
+    def _save_fallback(self, payload: dict[str, str]) -> str:
         content_id = str(uuid4())
         FALLBACK_CONTENTS[content_id] = {"id": content_id, **payload}
         logger.info("Supabase not configured; stored original content in fallback memory.")
         return content_id
-
-    def get(self, content_id: str) -> dict[str, str] | None:
-        return FALLBACK_CONTENTS.get(content_id)
 
 
 def get_content_repository() -> ContentRepository:

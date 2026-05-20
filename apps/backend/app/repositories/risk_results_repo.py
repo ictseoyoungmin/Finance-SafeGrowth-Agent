@@ -30,17 +30,33 @@ class RiskResultsRepository:
         }
 
         if self._supabase_client.is_configured:
-            self._supabase_client.insert("risk_results", payload)
-            return
+            try:
+                self._supabase_client.insert("risk_results", payload)
+                return
+            except Exception:
+                logger.exception("Supabase risk result insert failed; falling back to memory store.")
 
-        FALLBACK_RISK_RESULTS.setdefault(content_id, []).append(payload)
-        logger.info("Supabase not configured; stored risk result in fallback memory.")
+        self._save_fallback(content_id, payload)
 
     def get_latest_by_content_id(self, content_id: str) -> dict[str, Any] | None:
+        if self._supabase_client.is_configured:
+            try:
+                return self._supabase_client.select_one(
+                    "risk_results",
+                    {"content_id": content_id},
+                    order="created_at.desc",
+                )
+            except Exception:
+                logger.exception("Supabase risk result lookup failed; falling back to memory store.")
+
         records = FALLBACK_RISK_RESULTS.get(content_id, [])
         if not records:
             return None
         return records[-1]
+
+    def _save_fallback(self, content_id: str, payload: dict[str, Any]) -> None:
+        FALLBACK_RISK_RESULTS.setdefault(content_id, []).append(payload)
+        logger.info("Supabase not configured; stored risk result in fallback memory.")
 
 
 def get_risk_results_repository() -> RiskResultsRepository:

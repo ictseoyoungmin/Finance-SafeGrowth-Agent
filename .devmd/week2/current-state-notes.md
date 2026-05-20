@@ -42,18 +42,23 @@ These are Day 10 / Phase 2 Slice 02 scope.
 Implemented:
 
 - Hardened Supabase configured detection with placeholder filtering.
-- Added Supabase REST insert helper.
+- Added Supabase REST insert and select helpers.
 - Changed fallback `content_id` to UUID-compatible strings.
 - Added fallback content store.
 - Added fallback risk result store.
 - Added audit logs repository with fallback store.
+- Added repository-level fallback when Supabase insert/select fails.
+- Added Supabase-backed lookup methods for content, latest risk result, and audit logs.
+- Included explicit `created_at` in audit log insert payloads.
 - Wired `AuditService.record_analysis()` to persist audit logs.
 - Updated analyze service to persist risk categories and reviewer notes.
 - Added tests for:
   - placeholder Supabase config detection
   - fallback content UUID/store
   - fallback risk and audit persistence
+  - fallback after configured Supabase failures
   - configured repository insert paths
+  - configured repository select paths
   - analyze API UUID response shape
 
 ## Verification
@@ -69,11 +74,12 @@ timeout 60 .venv/bin/pytest -q
 Result:
 
 - `ruff`: passed
-- `pytest`: `12 passed, 1 warning`
+- `pytest`: `14 passed, 1 warning`
 
 Known environment note:
 
 - Starting `uvicorn` in one sandboxed exec session and calling it via `curl` from another exec session failed with connection error in this environment. API behavior is covered by FastAPI `TestClient` tests.
+- Fallback memory is non-persistent and demo-only. It is lost on process restart and is not shared across multiple workers.
 
 ## Next Step
 
@@ -81,4 +87,3 @@ Proceed to Day 10:
 
 - `.devmd/week2/day-10-approval-report-api.md`
 - `.devmd/phase2/02-p0-approval-audit-report/README.md`
-

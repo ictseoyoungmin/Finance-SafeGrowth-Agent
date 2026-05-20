@@ -28,18 +28,34 @@ class AuditLogsRepository:
             "model_version": model_version,
             "doc_version": doc_version,
             "prompt_hash": prompt_hash,
+            "created_at": created_at.isoformat(),
         }
 
         if self._supabase_client.is_configured:
-            self._supabase_client.insert("audit_logs", payload)
-            return
+            try:
+                self._supabase_client.insert("audit_logs", payload)
+                return
+            except Exception:
+                logger.exception("Supabase audit log insert failed; falling back to memory store.")
 
-        fallback_payload = {**payload, "created_at": created_at.isoformat()}
-        FALLBACK_AUDIT_LOGS.setdefault(content_id, []).append(fallback_payload)
-        logger.info("Supabase not configured; stored audit log in fallback memory.")
+        self._save_fallback(content_id, payload)
 
     def list_by_content_id(self, content_id: str) -> list[dict[str, Any]]:
+        if self._supabase_client.is_configured:
+            try:
+                return self._supabase_client.select_many(
+                    "audit_logs",
+                    {"content_id": content_id},
+                    order="created_at.asc",
+                )
+            except Exception:
+                logger.exception("Supabase audit log lookup failed; falling back to memory store.")
+
         return list(FALLBACK_AUDIT_LOGS.get(content_id, []))
+
+    def _save_fallback(self, content_id: str, payload: dict[str, Any]) -> None:
+        FALLBACK_AUDIT_LOGS.setdefault(content_id, []).append(payload)
+        logger.info("Supabase not configured; stored audit log in fallback memory.")
 
 
 def get_audit_logs_repository() -> AuditLogsRepository:

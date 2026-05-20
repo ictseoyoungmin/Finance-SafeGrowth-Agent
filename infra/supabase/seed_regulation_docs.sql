@@ -1,4 +1,4 @@
--- PoC seed data for JB SafeGrowth Agent MVP.
+-- PoC seed data for SafeGrowth Agent MVP.
 -- These examples are demo guidance snippets, not verified legal advice.
 
 insert into regulation_docs (

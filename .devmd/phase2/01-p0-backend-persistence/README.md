@@ -116,6 +116,8 @@ Store at least:
 - [x] `contents_repo.py` inserts real rows when configured.
 - [x] `risk_results_repo.py` inserts real rows when configured.
 - [x] `audit_service.py` persists audit logs when configured.
+- [x] Supabase insert failures fall back to in-memory demo storage.
+- [x] Supabase select helpers and repository lookup methods are available for Day 10 APIs.
 - [x] Fallback mode still works without Supabase.
 - [x] `content_id` is UUID-compatible.
 - [x] Tests cover no-Supabase fallback.
@@ -174,9 +176,15 @@ Expected:
   - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
 - Test result summary:
   - `ruff`: passed
-  - `pytest`: 12 passed, 1 warning
+  - `pytest`: 14 passed, 1 warning
+- Hardening notes:
+  - Contents, risk results, and audit logs catch Supabase write failures and fall back to memory for MVP demo stability.
+  - `select_one()` and `select_many()` were added to the Supabase REST client.
+  - Repository reads now use Supabase when configured, with memory fallback on lookup failure.
+  - Audit log inserts now send `created_at` explicitly.
 - Known issues:
-  - Live Supabase insert was not exercised in this environment; configured insert paths are covered with a fake Supabase client.
+  - Live Supabase insert/select was not exercised in this environment; configured paths are covered with a fake Supabase client.
+  - Fallback memory is non-persistent and demo-only. It is lost on process restart and is not multi-worker safe.
 - Next recommended step:
   - Start Slice 02 / Day 10 approval, audit-log, and report APIs.
 

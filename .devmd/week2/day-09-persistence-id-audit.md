@@ -42,6 +42,8 @@ apps/backend/tests/
 - [x] `ContentRepository.save_original()`이 real insert 또는 fallback UUID를 반환하게 한다.
 - [x] `RiskResultsRepository.save_analysis()`를 real/fallback 저장으로 구현한다.
 - [x] `AuditService.record_analysis()`가 audit log를 저장하게 한다.
+- [x] Supabase insert/select 실패 시 demo 안정성을 위해 repository fallback으로 내려가게 한다.
+- [x] Day 10 조회 흐름을 위해 Supabase select helper와 repository 조회 메서드를 추가한다.
 - [x] analyze API response shape를 유지한다.
 - [x] no-Supabase fallback test를 추가한다.
 - [x] analyze API contract test를 추가하거나 갱신한다.
@@ -86,6 +88,15 @@ curl -X POST http://localhost:8000/v1/compliance/analyze \
 - Test commands executed:
   - [x] `cd apps/backend && .venv/bin/ruff check app tests`
   - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
+- Test result summary:
+  - `ruff`: passed
+  - `pytest`: 14 passed, 1 warning
+- Hardening added:
+  - Supabase insert failures in contents, risk results, and audit logs now fall back to in-memory demo storage.
+  - Supabase lookup helpers now support `select_one()` and `select_many()`.
+  - `ContentRepository.get()`, `RiskResultsRepository.get_latest_by_content_id()`, and `AuditLogsRepository.list_by_content_id()` read from Supabase when configured and fall back to memory if unavailable.
+  - Audit log inserts include `created_at` for reproducible audit timestamps.
 - Known issues:
   - Manual `uvicorn` + cross-exec `curl` smoke could not connect in this sandbox, but FastAPI `TestClient` API tests pass.
-  - Supabase live insert was not exercised against production; configured repository insert paths are covered with a fake Supabase client.
+  - Supabase live insert/select was not exercised against production; configured repository paths are covered with a fake Supabase client.
+  - Fallback memory stores are non-persistent and demo-only; data is lost on process restart and is not shared across multiple workers.

@@ -1,4 +1,4 @@
--- JB SafeGrowth Agent PoC schema.
+-- SafeGrowth Agent PoC schema.
 -- Demo regulation content is for MVP validation only and is not legal advice.
 
 create extension if not exists vector;
