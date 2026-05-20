@@ -150,3 +150,44 @@ Remaining:
 - Redeploy Render/Vercel before public testing the updated frontend approval fix and Gemini rewrite context.
 - Public-smoke `/rewrite` with Gemini enabled on Render.
 - Report `evidence` and `changes` are still empty until rewrite/evidence persistence or regeneration is implemented.
+
+## Day 11 Follow-up Verification
+
+Status: IN_PROGRESS
+
+Completed:
+
+- Frontend approval sends actual selected revision text, falling back to the original input text if rewrite text is unavailable.
+- Gemini failure paths log useful Render diagnostics without printing API keys.
+- `.env.example` files use placeholders and do not contain project-specific Supabase keys.
+- Gemini rewrite context includes original text, risk spans, risk categories, reviewer notes, and regulation evidence.
+- Gemini JSON parser handles raw, fenced, and explanation-wrapped JSON.
+- Regulation evidence lookup uses Supabase table filtering before fallback.
+- Backend tests passed.
+- Frontend Docker `npm ci`, `typecheck`, `lint`, and `build` passed from a clean temporary copy.
+
+Public verification:
+
+- Render `/rewrite` smoke: NOT_RUN after latest local changes.
+- Vercel UI approval/report smoke: NOT_RUN after latest local changes.
+- Supabase `approval_logs.selected_revision` actual text check from UI path: NOT_RUN after latest local changes.
+
+Local verification:
+
+- Backend `ruff`: passed.
+- Backend `pytest`: 25 passed, 1 warning.
+- Frontend Docker command used:
+
+```bash
+docker run --rm -v /tmp/dacon-day11-frontend-clean:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm ci && npm run typecheck && npm run lint && npm run build"
+```
+
+- Frontend `typecheck`: passed.
+- Frontend `lint`: passed.
+- Frontend `build`: passed.
+
+Known limitations:
+
+- Report `evidence` and `changes` are still empty until evidence/rewrite persistence or regeneration is added.
+- Supabase regulation retrieval uses table filtering, not pgvector RPC, because seeded docs do not yet include embeddings.
+- Gemini live behavior should be checked in Render logs because fallback also returns HTTP 200.

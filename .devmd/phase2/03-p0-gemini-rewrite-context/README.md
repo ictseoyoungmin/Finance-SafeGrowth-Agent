@@ -163,7 +163,20 @@ Expected:
   - `pytest`: 25 passed, 1 warning
 - Known issues:
   - Gemini live output was not exercised locally; Render has `GEMINI_API_KEY` and `GEMINI_MODEL` configured for production smoke after deploy.
+  - Gemini failures now log server-side diagnostics and still fall back safely.
 - Next recommended step:
   - Public-smoke `/rewrite` after Render deploy and confirm fallback remains stable if Gemini errors.
+
+## Day 11 Follow-up Verification
+
+Status: LOCAL_COMPLETE / PUBLIC_REDEPLOY_PENDING
+
+- Frontend approval selected revision text fix is complete.
+- Gemini error logging is complete.
+- Backend `ruff`: passed.
+- Backend `pytest`: 25 passed, 1 warning.
+- Frontend Docker `npm ci && npm run typecheck && npm run lint && npm run build`: passed.
+- Render `/rewrite` public smoke after latest deploy: NOT_RUN.
+- Gemini live behavior should be checked in Render logs because deterministic fallback also returns HTTP 200.
 
 Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.

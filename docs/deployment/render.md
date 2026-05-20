@@ -32,6 +32,7 @@ Current Gemini production setup:
 
 - Render has `GEMINI_API_KEY` and `GEMINI_MODEL`.
 - Vercel does not need Gemini secrets or model settings.
+- Gemini request/parsing failures are logged server-side and fall back safely; logs must not include API keys.
 
 Current Supabase production setup:
 
@@ -76,3 +77,4 @@ Live persistence verification:
 Known issue:
 
 - Render Free tier cold start can delay the first request. Warm up `/v1/health` before demo.
+- After redeploying Day 11 follow-up changes, run a public `/v1/compliance/rewrite` smoke and inspect Render logs to distinguish Gemini success from deterministic fallback.

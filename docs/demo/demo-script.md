@@ -27,6 +27,7 @@
 3. Evidence Panel: confirm at least one regulation evidence item and guideline snippet.
 4. Rewrite Comparison: compare conservative and marketing-balanced rewrite options.
 5. Approval Package: confirm conditional approval summary and final marketing-safe copy.
+6. Click `승인`, then click `리포트 확인`.
 
 ## Expected Result
 
@@ -34,8 +35,16 @@
 - At least three flagged spans
 - Evidence list has one or more entries
 - Both conservative and marketing rewrite text are present
+- Approval succeeds and the report loads
+- Report `final_text` is the actual approved sentence, not `marketing` or `conservative`
 - Demo continues even if Gemini or Supabase is unavailable
 - In the public deployment smoke completed on 2026-05-20, the standard 5-step demo completed without backend fallback.
+
+## Follow-Up Verification Status
+
+- Latest local fix: approval sends actual selected revision text with original text fallback.
+- Public Vercel UI verification after redeploy: NOT_RUN.
+- Supabase UI-path `approval_logs.selected_revision` actual text check after redeploy: NOT_RUN.
 
 ## Public URLs
 

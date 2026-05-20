@@ -140,7 +140,7 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
         reviewer: "김준법 수석",
         decision,
         comment: decision === "CONDITIONALLY_APPROVED" ? "Demo approval" : undefined,
-        selected_revision: selectedRevisionText,
+        selected_revision: selectedRevisionText ?? state.input.original_text,
       });
       setState((current) => ({
         ...current,

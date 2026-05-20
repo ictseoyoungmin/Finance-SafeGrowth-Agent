@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.core.config import settings
+from app.core.logging import get_logger
+
+
+logger = get_logger(__name__)
 
 
 @dataclass(frozen=True)
@@ -42,14 +46,17 @@ class GeminiClient:
             with urllib.request.urlopen(request, timeout=10) as response:
                 raw = json.loads(response.read().decode("utf-8"))
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+            logger.exception("Gemini generate_json failed.")
             return None
 
         text = self._extract_text(raw)
         if not text:
+            logger.warning("Gemini response did not contain text output.")
             return None
 
         payload = parse_json_payload(text)
         if payload is None:
+            logger.warning("Gemini returned non-parseable JSON.")
             return None
 
         return GeminiResult(payload=payload, model_version=self._model)

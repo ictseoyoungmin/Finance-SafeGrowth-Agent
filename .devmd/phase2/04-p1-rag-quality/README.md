@@ -119,4 +119,16 @@ Expected:
 - Next recommended step:
   - Add embeddings and switch to `match_regulation_docs()` when production-quality semantic retrieval is needed.
 
+## Day 11 Follow-up Verification
+
+Status: LOCAL_COMPLETE / PUBLIC_REDEPLOY_PENDING
+
+- Regulation evidence lookup uses Supabase table filtering before fallback.
+- `.env.example` files are template-safe and do not contain project-specific Supabase keys.
+- Backend `ruff`: passed.
+- Backend `pytest`: 25 passed, 1 warning.
+- Frontend Docker `npm ci && npm run typecheck && npm run lint && npm run build`: passed.
+- Public Vercel UI approval/report smoke after latest deploy: NOT_RUN.
+- Supabase `approval_logs.selected_revision` actual text check from UI path: NOT_RUN.
+
 Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.

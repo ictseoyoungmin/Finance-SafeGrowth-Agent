@@ -86,6 +86,12 @@ alter table approval_logs
 
 Without this column, live `POST /v1/compliance/approve` may fall back to in-memory storage when it attempts to store the selected revision.
 
+After the Day 11 follow-up frontend fix is deployed, verify the latest UI approval row:
+
+- `approval_logs.selected_revision` contains the actual approved sentence.
+- `approval_logs.selected_revision` is not `marketing`.
+- `approval_logs.selected_revision` is not `conservative`.
+
 ## Verification Queries
 
 ```sql
