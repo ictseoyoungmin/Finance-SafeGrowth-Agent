@@ -12,6 +12,11 @@ export function RewriteStep({ workflow }: StepProps) {
     return null;
   }
 
+  const selectedFinalText =
+    state.selectedRevision === "conservative"
+      ? rewrite.revised_text_conservative
+      : rewrite.revised_text_marketing;
+
   return (
     <div className="rewrite-screen">
       <header className="panel-heading">
@@ -64,6 +69,16 @@ export function RewriteStep({ workflow }: StepProps) {
           <small>직접 편집하여 반영</small>
         </button>
       </div>
+
+      <section className="selected-revision-panel">
+        <div>
+          <span>최종 선택 문안</span>
+          <strong>
+            {state.selectedRevision === "conservative" ? "보수적 수정안" : "마케팅 유지 수정안"}
+          </strong>
+        </div>
+        <p>{selectedFinalText}</p>
+      </section>
 
       <div className="action-row">
         <button className="secondary-button" onClick={() => goTo("redline")}>

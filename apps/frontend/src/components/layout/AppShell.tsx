@@ -16,6 +16,7 @@ interface AppShellProps {
   apiBaseUrl: string;
   usedFallback: boolean;
   errorMessage?: string;
+  actionMessage?: string;
 }
 
 export function AppShell({
@@ -24,6 +25,7 @@ export function AppShell({
   apiBaseUrl,
   usedFallback,
   errorMessage,
+  actionMessage,
 }: AppShellProps) {
   const currentTitle = STEPS.find((step) => step.id === currentStep)?.title ?? "콘텐츠 입력";
 
@@ -72,6 +74,7 @@ export function AppShell({
         </header>
 
         {errorMessage && <div className="notice">{errorMessage}</div>}
+        {!errorMessage && actionMessage && <div className="notice success">{actionMessage}</div>}
         <section className="step-panel">{children}</section>
       </main>
     </div>

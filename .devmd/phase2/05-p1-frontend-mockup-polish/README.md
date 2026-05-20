@@ -125,12 +125,12 @@ Add state for:
 
 ## Required Deliverables
 
-- [ ] UI follows mockup layout more closely.
-- [ ] Language field exists in input step.
-- [ ] Approval buttons call backend APIs when available.
-- [ ] Fallback mode still works.
-- [ ] Loading and error states are visible but not visually disruptive.
-- [ ] Build passes.
+- [x] UI follows mockup layout more closely.
+- [x] Language field exists in input step.
+- [x] Approval buttons call backend APIs when available.
+- [x] Fallback mode still works.
+- [x] Loading and error states are visible but not visually disruptive.
+- [x] Build passes.
 
 ## Test Harness
 
@@ -157,16 +157,32 @@ Manual flow:
 
 ## Implementation Completion Placeholder
 
-- Status: NOT_STARTED / IN_PROGRESS / COMPLETE / BLOCKED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/frontend/src/App.tsx`
+  - [x] `apps/frontend/src/components/layout/AppShell.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/InputStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/RedlineStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/EvidenceStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/RewriteStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/ApprovalStep.tsx`
+  - [x] `apps/frontend/src/styles.css`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
+  - [x] `docker run --rm -v /tmp/dacon-day12-frontend-clean:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm ci && npm run typecheck && npm run lint && npm run build"`
+  - [x] Playwright Docker local UI smoke against Render backend
 - Test result summary:
-  - TBD
+  - `ruff`: passed
+  - `pytest`: 25 passed, 1 warning
+  - frontend `typecheck`: passed
+  - frontend `lint`: passed
+  - frontend `build`: passed
+  - UI smoke: passed
 - Known issues:
-  - TBD
+  - Public Vercel UI smoke after redeploy is still required.
+  - Report `evidence` and `changes` remain backend-empty until report enrichment is implemented.
 - Next recommended step:
-  - TBD
+  - Start Day 13 / Slice 06 CI, Docker, env, and test cleanup.
 
 Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.

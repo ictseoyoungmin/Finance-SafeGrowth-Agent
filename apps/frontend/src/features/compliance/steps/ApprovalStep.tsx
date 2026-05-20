@@ -12,6 +12,8 @@ export function ApprovalStep({ workflow }: StepProps) {
     state.selectedRevision === "conservative"
       ? rewrite?.revised_text_conservative
       : rewrite?.revised_text_marketing;
+  const evidenceCount = state.evidence?.evidence_list.length ?? 0;
+  const auditCount = state.report?.audit_log.length ?? 0;
 
   return (
     <div className="approval-layout">
@@ -25,6 +27,7 @@ export function ApprovalStep({ workflow }: StepProps) {
           <strong>김준법 수석</strong>
           <small>Compliance Manager</small>
         </div>
+        <div className="approval-stamp">준법 검토 준비</div>
       </section>
 
       <section className="decision-banner">
@@ -51,10 +54,13 @@ export function ApprovalStep({ workflow }: StepProps) {
         </article>
         <article>
           <h2>관련 근거</h2>
-          <p>금융소비자보호 가이드라인</p>
-          <p>금융투자상품 광고 심사지침</p>
+          <p>근거 문서 {evidenceCount}건 연결</p>
+          {state.evidence?.evidence_list.slice(0, 2).map((item) => (
+            <p key={item.evidence_id}>{item.title}</p>
+          ))}
           <p>검토 ID: {analyze?.content_id ?? "demo-content"}</p>
           {state.report ? <p>리포트: {state.report.summary}</p> : null}
+          {state.report ? <p>감사 로그 {auditCount}건</p> : null}
         </article>
       </section>
 

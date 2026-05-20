@@ -36,13 +36,13 @@ apps/frontend/src/styles.css
 
 ## Tasks
 
-- [ ] InputStep에 product/channel/target/language/text/character count/CTA를 정리한다.
-- [ ] RedlineStep에 risk summary, confidence, categories, AI reviewer note를 보강한다.
-- [ ] EvidenceStep에 selected risk context, evidence card, doc version, snippet, relevance를 정리한다.
-- [ ] RewriteStep에 original vs revised, conservative/marketing variants, changes, selected final text를 연결한다.
-- [ ] ApprovalStep에 decision panel, evidence summary, final text, approve/reject/request revision/report action을 배치한다.
-- [ ] loading/error/fallback 상태가 화면 흐름을 막지 않게 한다.
-- [ ] mobile/desktop에서 text overflow와 버튼 깨짐을 확인한다.
+- [x] InputStep에 product/channel/target/language/text/character count/CTA를 정리한다.
+- [x] RedlineStep에 risk summary, confidence, categories, AI reviewer note를 보강한다.
+- [x] EvidenceStep에 selected risk context, evidence card, doc version, snippet, relevance를 정리한다.
+- [x] RewriteStep에 original vs revised, conservative/marketing variants, changes, selected final text를 연결한다.
+- [x] ApprovalStep에 decision panel, evidence summary, final text, approve/reject/request revision/report action을 배치한다.
+- [x] loading/error/fallback 상태가 화면 흐름을 막지 않게 한다.
+- [x] mobile/desktop에서 text overflow와 버튼 깨짐을 확인한다.
 
 ## Design Constraints
 
@@ -75,11 +75,30 @@ Manual flow:
 
 ## Completion Log
 
-- Status: NOT_STARTED
+- Status: COMPLETE
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/frontend/src/App.tsx`
+  - [x] `apps/frontend/src/components/layout/AppShell.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/InputStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/RedlineStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/EvidenceStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/RewriteStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/steps/ApprovalStep.tsx`
+  - [x] `apps/frontend/src/styles.css`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 60 .venv/bin/pytest -q`
+  - [x] `docker run --rm -v /tmp/dacon-day12-frontend-clean:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm ci && npm run typecheck && npm run lint && npm run build"`
+  - [x] Playwright Docker local UI smoke against Render backend
+- Test result summary:
+  - `ruff`: passed
+  - `pytest`: 25 passed, 1 warning
+  - frontend `typecheck`: passed
+  - frontend `lint`: passed
+  - frontend `build`: passed
+  - UI smoke: passed
+- Smoke artifacts:
+  - `.devmd/memory/ui-smoke-day12-2026-05-20`
 - Known issues:
-  - TBD
-
+  - Public Vercel UI smoke after redeploy is still required.
+  - Report `evidence` and `changes` remain backend-empty until report enrichment is implemented.

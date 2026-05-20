@@ -54,6 +54,16 @@ export function RedlineStep({ workflow }: StepProps) {
         </div>
         <h2>탐지 리스크</h2>
         <p>{analyze.reviewer_notes}</p>
+        <div className="risk-metrics">
+          <span>
+            <strong>{analyze.flagged_spans.length}</strong>
+            탐지 표현
+          </span>
+          <span>
+            <strong>{analyze.risk_categories.length}</strong>
+            리스크 유형
+          </span>
+        </div>
         <div className="span-list">
           {analyze.flagged_spans.map((span) => (
             <article key={`${span.span_text}-${span.start}`} className="span-card">

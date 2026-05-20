@@ -78,6 +78,12 @@ export function InputStep({ workflow }: StepProps) {
 
       <div className="analysis-note">준법 리스크를 분석하고, 근거와 함께 수정안을 생성합니다.</div>
 
+      <div className="input-readiness">
+        <span>검토 준비</span>
+        <strong>규정 기반 리스크 분석 · 근거 매칭 · 수정안 생성</strong>
+        <small>입력한 정보는 분석 문맥으로 사용되며, 승인 패키지까지 연결됩니다.</small>
+      </div>
+
       <div className="action-row centered">
         <button className="primary-button" onClick={startReview} disabled={state.isLoading}>
           {state.isLoading ? "검토 중" : "준법검토 시작"}

@@ -15,6 +15,7 @@ export function App() {
       apiBaseUrl={workflow.apiBaseUrl}
       usedFallback={workflow.state.usedFallback}
       errorMessage={workflow.state.errorMessage}
+      actionMessage={workflow.state.actionMessage}
     >
       {workflow.state.step === "input" && <InputStep workflow={workflow} />}
       {workflow.state.step === "redline" && <RedlineStep workflow={workflow} />}

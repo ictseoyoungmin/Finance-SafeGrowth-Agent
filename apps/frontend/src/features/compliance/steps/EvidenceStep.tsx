@@ -48,6 +48,10 @@ export function EvidenceStep({ workflow }: StepProps) {
             <dt>검토 기준</dt>
             <dd>금융상품 광고 준수 규정</dd>
           </div>
+          <div>
+            <dt>선택 문맥</dt>
+            <dd>{firstRisk ? `${firstRisk.span_text} · ${firstRisk.reason}` : "표준 데모 문구"}</dd>
+          </div>
         </dl>
       </aside>
 
@@ -69,6 +73,9 @@ export function EvidenceStep({ workflow }: StepProps) {
               <small>
                 {item.title} · {item.version} · 관련도 {Math.round(item.similarity * 100)}%
               </small>
+              {evidence.guideline_snippets[index] ? (
+                <em>{evidence.guideline_snippets[index]}</em>
+              ) : null}
             </article>
           ))}
         </div>

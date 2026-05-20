@@ -308,6 +308,12 @@ p {
   color: #7a4b00;
 }
 
+.notice.success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
 .step-panel {
   max-width: 1120px;
   margin: 30px auto;
@@ -425,6 +431,35 @@ textarea {
   color: #667085;
   text-align: center;
   font-weight: 750;
+}
+
+.input-readiness {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 14px;
+  align-items: center;
+  border: 1px solid #d8e8ff;
+  border-radius: 9px;
+  background: #f8fbff;
+  padding: 16px 18px;
+}
+
+.input-readiness span {
+  grid-row: span 2;
+  border-radius: 999px;
+  background: var(--blue);
+  padding: 7px 11px;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.input-readiness strong {
+  color: #0f172a;
+}
+
+.input-readiness small {
+  color: #667085;
 }
 
 .action-row {
@@ -632,6 +667,29 @@ textarea {
   gap: 12px;
 }
 
+.risk-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.risk-metrics span {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 12px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.risk-metrics strong {
+  color: #0f172a;
+  font-size: 1.35rem;
+}
+
 .span-card {
   display: grid;
   gap: 6px;
@@ -727,6 +785,17 @@ dd {
   background: #f8fafc;
   padding: 10px 12px;
   color: #64748b;
+}
+
+.evidence-card em {
+  grid-column: 2;
+  width: fit-content;
+  border-radius: 6px;
+  background: var(--blue-soft);
+  padding: 7px 10px;
+  color: var(--blue);
+  font-style: normal;
+  font-weight: 800;
 }
 
 .info-strip {
@@ -837,6 +906,38 @@ dd {
   background: var(--blue-soft);
 }
 
+.selected-revision-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #c7d7fe;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 20px;
+}
+
+.selected-revision-panel div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selected-revision-panel span {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.selected-revision-panel strong {
+  color: var(--blue);
+}
+
+.selected-revision-panel p {
+  margin-bottom: 0;
+  color: #111827;
+  font-weight: 700;
+}
+
 .approval-layout {
   display: grid;
   gap: 22px;
@@ -850,6 +951,11 @@ dd {
   border: 0;
   box-shadow: none;
   padding: 0;
+}
+
+.approval-hero > div:first-child {
+  min-width: 0;
+  flex: 1;
 }
 
 .approval-hero h2 {
@@ -873,6 +979,21 @@ dd {
 
 .reviewer-card small {
   color: #667085;
+}
+
+.approval-stamp {
+  display: grid;
+  place-items: center;
+  width: 118px;
+  height: 118px;
+  flex: 0 0 auto;
+  border: 3px solid #10b981;
+  border-radius: 50%;
+  color: #047857;
+  font-size: 0.95rem;
+  font-weight: 900;
+  text-align: center;
+  transform: rotate(-8deg);
 }
 
 .decision-banner {
@@ -1039,7 +1160,8 @@ dd {
     grid-template-columns: 1fr;
   }
 
-  .evidence-card small {
+  .evidence-card small,
+  .evidence-card em {
     grid-column: auto;
   }
 
@@ -1056,5 +1178,20 @@ dd {
 
   .status-stack {
     flex-wrap: wrap;
+  }
+
+  .input-readiness,
+  .risk-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .input-readiness span {
+    grid-row: auto;
+    width: fit-content;
+  }
+
+  .approval-stamp {
+    width: 96px;
+    height: 96px;
   }
 }

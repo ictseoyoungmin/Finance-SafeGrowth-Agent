@@ -25,6 +25,7 @@ Implemented:
 
 Day 10 / Phase 2 Slice 02 is complete locally.
 Day 11 / Phase 2 Slice 03 and Slice 04 are complete locally.
+Day 12 / Phase 2 Slice 05 is complete locally.
 
 ## Day 8 Findings
 
@@ -191,3 +192,60 @@ Known limitations:
 - Report `evidence` and `changes` are still empty until evidence/rewrite persistence or regeneration is added.
 - Supabase regulation retrieval uses table filtering, not pgvector RPC, because seeded docs do not yet include embeddings.
 - Gemini live behavior should be checked in Render logs because fallback also returns HTTP 200.
+
+## Day 12 Frontend Mockup Polish
+
+Status: COMPLETE locally
+
+Completed:
+
+- Input step now includes a readiness/context strip under the analysis note.
+- Redline step now includes compact risk metrics for detected expressions and risk categories.
+- Evidence step now surfaces selected risk context and guideline snippets in evidence cards.
+- Rewrite step now shows a selected final revision preview before approval.
+- Approval step now includes a review stamp, evidence count, report/audit summary, and clearer action feedback.
+- App shell displays success/action messages separately from error notices.
+- Desktop and mobile screenshots were captured through Playwright Docker.
+
+Verification:
+
+- Render `/v1/health`: HTTP 200.
+- Render `/v1/compliance/analyze`: HTTP 200 with `risk_level=HIGH`.
+- Render `/v1/compliance/rewrite`: HTTP 200 with conservative/marketing rewrites and changes.
+- Backend `ruff`: passed.
+- Backend `pytest`: 25 passed, 1 warning.
+- Frontend Docker `npm ci && npm run typecheck && npm run lint && npm run build`: passed.
+- Playwright Docker 5-step UI smoke against Render backend: passed.
+
+Artifacts:
+
+- `.devmd/memory/ui-smoke-day12-2026-05-20`
+
+Remaining:
+
+- Public Vercel UI smoke after redeploy.
+- Supabase UI-path `approval_logs.selected_revision` actual text check after redeploy.
+
+## Gemini Rewrite Live Smoke
+
+Status: VERIFIED locally with root `.env`
+
+- Added `.devmd/tools/rewrite_live_smoke.py`.
+- The smoke script loads the selected env file before importing the FastAPI app.
+- It runs `analyze -> rewrite` with a non-standard investment ad example:
+  - includes `반드시`
+  - includes `연 12% 수익`
+  - includes `안전하게`
+  - includes `원금 보장`
+- It fails if the rewrite response exactly matches the deterministic fallback rewrite.
+- Command executed from `apps/backend`:
+
+```bash
+timeout 90 bash -lc 'PYTHONPATH=. .venv/bin/python ../../.devmd/tools/rewrite_live_smoke.py --env ../../.env'
+```
+
+- Result:
+  - Gemini model: `gemini-2.5-flash-lite`
+  - `risk_level=HIGH`
+  - `fallback_like=False`
+  - Conservative and marketing rewrite outputs differed from the deterministic fallback.
