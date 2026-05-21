@@ -89,12 +89,37 @@ This can remain a demo placeholder if time is limited.
 
 ## Required Deliverables
 
-- [ ] Demo script added.
+- [x] Demo script added.
 - [ ] Deployment checklist added.
 - [ ] Smoke test instructions added.
 - [ ] Demo freeze checklist completed.
-- [ ] Known issues documented.
+- [x] Known issues documented.
 - [ ] Optional regulation-impact placeholder added if time allows.
+
+## Demo Detail Hardening Pass
+
+Status: IN_PROGRESS locally
+
+Completed in the first implementation pass:
+
+- Fixed the rewrite demo-risk where Gemini-unavailable responses could show only fixed standard-demo correction text.
+- Backend deterministic rewrite fallback now uses the submitted original text and detected risky spans.
+- Rewrite responses now include `source: "gemini" | "fallback"`.
+- Frontend rewrite UI now displays `Gemini 검수 결과` or `Deterministic fallback`.
+- RuleEngine now catches broader non-demo financial ad risk phrases and deduplicates overlapping highlights.
+- Demo docs now explain rewrite source badges and input-aware fallback behavior.
+
+Verification:
+
+- Backend `ruff`: passed.
+- Backend `pytest`: `28 passed, 1 warning`.
+- Frontend Playwright Docker `npm ci && npm run typecheck && npm run lint && npm run build`: passed.
+
+Remaining before marking full Slice 07 complete:
+
+- Public Vercel/Render smoke after redeploy.
+- Deployment checklist and smoke-test docs.
+- Optional regulation-impact placeholder, if still desired.
 
 ## Test Harness
 
@@ -123,16 +148,26 @@ Then manually run the 5-step UI flow from the Vercel URL.
 
 ## Implementation Completion Placeholder
 
-- Status: NOT_STARTED / IN_PROGRESS / COMPLETE / BLOCKED
+- Status: IN_PROGRESS
 - Implemented files:
-  - [ ] TBD
+  - [x] `apps/backend/app/schemas/rewrite.py`
+  - [x] `apps/backend/app/services/rewrite_service.py`
+  - [x] `apps/backend/app/rules/rule_engine.py`
+  - [x] `apps/frontend/src/features/compliance/steps/RewriteStep.tsx`
+  - [x] `apps/frontend/src/features/compliance/store.ts`
+  - [x] `docs/demo/README.md`
+  - [x] `docs/demo/demo-script.md`
+  - [x] `docs/demo/fallback-plan.md`
 - Test commands executed:
-  - [ ] TBD
+  - [x] `cd apps/backend && .venv/bin/ruff check app tests`
+  - [x] `cd apps/backend && timeout 90 .venv/bin/pytest -q`
+  - [x] `docker run --rm -v /tmp/dacon-day14-frontend-full:/app -w /app mcr.microsoft.com/playwright:v1.60.0-noble sh -c "npm ci && npm run typecheck && npm run lint && npm run build"`
 - Test result summary:
-  - TBD
+  - Backend and frontend checks passed locally.
 - Known issues:
-  - TBD
+  - Public redeploy/smoke remains pending.
+  - npm audit warnings remain in frontend dependency tree.
 - Next recommended step:
-  - TBD
+  - Redeploy and run public 5-step smoke, then finish deployment checklist and handover docs.
 
 Do not mark this slice COMPLETE unless all Required Deliverables and Test Harness checks pass.

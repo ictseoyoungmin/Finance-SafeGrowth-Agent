@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from typing import Any
 
 from app.integrations.gemini_client import GeminiClient, get_gemini_client
@@ -48,20 +49,21 @@ class RewriteService:
         self._regulation_docs_repository = regulation_docs_repository
 
     def rewrite(self, request: RewriteRequest) -> RewriteResponse:
-        prompt = self._build_prompt(request)
+        context = self._resolve_context(request.content_id)
+        prompt = self._build_prompt(request, context)
         result = self._gemini_client.generate_json(prompt)
         if result:
             parsed = self._parse_response(request.content_id, result.payload)
             if parsed:
                 return parsed
 
-        return FALLBACK_REWRITE.model_copy(update={"content_id": request.content_id})
+        return self._build_fallback_response(request.content_id, context)
 
     def prompt_hash(self, request: RewriteRequest) -> str:
-        return hashlib.sha256(self._build_prompt(request).encode("utf-8")).hexdigest()
-
-    def _build_prompt(self, request: RewriteRequest) -> str:
         context = self._resolve_context(request.content_id)
+        return hashlib.sha256(self._build_prompt(request, context).encode("utf-8")).hexdigest()
+
+    def _build_prompt(self, request: RewriteRequest, context: dict[str, Any]) -> str:
         return json.dumps(
             {
                 "task": "financial_ad_compliance_rewrite",
@@ -147,9 +149,156 @@ class RewriteService:
 
     def _parse_response(self, content_id: str, payload: dict[str, Any]) -> RewriteResponse | None:
         try:
-            return RewriteResponse(content_id=content_id, **payload)
+            return RewriteResponse(content_id=content_id, **{**payload, "source": "gemini"})
         except ValueError:
             return None
+
+    def _build_fallback_response(self, content_id: str, context: dict[str, Any]) -> RewriteResponse:
+        original_text = str(context["content"].get("original_text") or self._fallback_content(content_id)["original_text"])
+        flagged_spans = list(context["risk_result"].get("flagged_spans") or [])
+        changes = self._fallback_changes(original_text, flagged_spans)
+
+        if not changes:
+            return FALLBACK_REWRITE.model_copy(
+                update={
+                    "content_id": content_id,
+                    "revised_text_conservative": self._append_disclosure(original_text, strict=True),
+                    "revised_text_marketing": self._append_disclosure(original_text, strict=False),
+                    "changes": [
+                        RewriteChange(
+                            original="전체 문안",
+                            replacement="손실 가능성과 상품설명서 확인 문구 추가",
+                            reason="감지된 span이 없을 때도 투자상품 필수 고지를 보강합니다.",
+                        )
+                    ],
+                    "source": "fallback",
+                }
+            )
+
+        return RewriteResponse(
+            content_id=content_id,
+            revised_text_conservative=self._compose_fallback_text(context, strict=True),
+            revised_text_marketing=self._compose_fallback_text(context, strict=False),
+            changes=[
+                RewriteChange(original=change["original"], replacement=change["marketing"], reason=change["reason"])
+                for change in changes
+            ],
+            source="fallback",
+        )
+
+    def _fallback_changes(self, original_text: str, flagged_spans: list[Any]) -> list[dict[str, Any]]:
+        changes: list[dict[str, Any]] = []
+        seen: set[tuple[str, int, int]] = set()
+
+        for span in flagged_spans:
+            span_text = str(self._span_value(span, "span_text") or "")
+            start = self._span_int(span, "start")
+            end = self._span_int(span, "end")
+            risk_category = str(self._span_value(span, "risk_category") or "")
+            if not span_text:
+                continue
+            if start < 0 or end <= start or original_text[start:end] != span_text:
+                start = original_text.find(span_text)
+                end = start + len(span_text) if start >= 0 else -1
+            if start < 0 or end <= start:
+                continue
+
+            key = (span_text, start, end)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            conservative, marketing, reason = self._replacement_for(span_text, risk_category)
+            changes.append(
+                {
+                    "original": span_text,
+                    "start": start,
+                    "end": end,
+                    "conservative": conservative,
+                    "marketing": marketing,
+                    "reason": reason,
+                }
+            )
+
+        return sorted(changes, key=lambda change: (change["start"], change["end"]))
+
+    def _compose_fallback_text(self, context: dict[str, Any], strict: bool) -> str:
+        content = context["content"]
+        original_text = str(content.get("original_text") or "")
+        product_type = str(content.get("product_type") or "상품")
+        product_label = self._product_label(original_text, product_type)
+        target_customer = str(content.get("target_customer") or "").strip()
+
+        if strict:
+            return (
+                f"{product_label}은 시장 상황에 따라 수익 또는 손실이 발생할 수 있으며, "
+                "원금 손실 가능성이 있습니다. 가입 전 상품설명서와 투자 유의사항을 반드시 확인하시기 바랍니다."
+            )
+
+        if target_customer.endswith("고객"):
+            audience = f"{target_customer}을 위한 "
+        else:
+            audience = f"{target_customer} 고객을 위한 " if target_customer else ""
+        return (
+            f"{audience}{product_label}입니다. 시장 상황에 따라 수익은 변동될 수 있고 원금 손실 가능성이 있으므로, "
+            "가입 전 상품설명서와 유의사항을 확인해 주세요."
+        )
+
+    def _product_label(self, original_text: str, product_type: str) -> str:
+        match = re.search(r"(?:[A-Za-z0-9가-힣]+\s*)?투자상품", original_text)
+        if match:
+            return match.group(0).strip()
+        return product_type
+
+    def _replacement_for(self, span_text: str, risk_category: str) -> tuple[str, str, str]:
+        if "확정 수익" in risk_category:
+            return (
+                "수익은 시장 상황에 따라 변동될 수 있으며",
+                "목표 수익은 시장 상황에 따라 달라질 수 있으며",
+                "확정 수익처럼 보이는 표현을 변동 가능성 안내로 전환",
+            )
+        if "원금" in risk_category:
+            return (
+                "원금 손실 가능성이 있으며",
+                "원금 손실 가능성을 확인하고",
+                "원금 보장 오인 표현을 손실 가능성 고지로 대체",
+            )
+        if "안정" in risk_category:
+            return (
+                "위험과 변동 가능성을 확인한 뒤",
+                "투자 위험을 확인한 뒤",
+                "안정성 오인 표현을 투자 위험 확인 문구로 완화",
+            )
+        if "과장" in risk_category:
+            return (
+                "조건을 충족한 고객은",
+                "조건을 확인한 고객은",
+                "보편적 수혜처럼 보이는 표현을 조건 확인 문구로 완화",
+            )
+        return (
+            "관련 조건과 유의사항을 확인한 뒤",
+            f"{span_text}(조건 및 유의사항 확인 필요)",
+            "오인 가능성이 있는 표현에 확인 조건 추가",
+        )
+
+    def _append_disclosure(self, text: str, strict: bool) -> str:
+        disclosure = (
+            "가입 전 상품설명서와 투자 유의사항을 반드시 확인하시기 바랍니다."
+            if strict
+            else "가입 전 상품설명서와 유의사항을 확인해 주세요."
+        )
+        if "상품설명서" in text or "유의사항" in text:
+            return text
+        return f"{text} {disclosure}"
+
+    def _span_value(self, span: Any, key: str) -> Any:
+        if isinstance(span, dict):
+            return span.get(key)
+        return getattr(span, key, None)
+
+    def _span_int(self, span: Any, key: str) -> int:
+        value = self._span_value(span, key)
+        return value if isinstance(value, int) else -1
 
 
 def get_rewrite_service() -> RewriteService:

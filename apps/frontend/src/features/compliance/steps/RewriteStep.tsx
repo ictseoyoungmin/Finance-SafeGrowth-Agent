@@ -16,6 +16,7 @@ export function RewriteStep({ workflow }: StepProps) {
     state.selectedRevision === "conservative"
       ? rewrite.revised_text_conservative
       : rewrite.revised_text_marketing;
+  const sourceLabel = rewrite.source === "gemini" ? "Gemini 검수 결과" : "Deterministic fallback";
 
   return (
     <div className="rewrite-screen">
@@ -24,14 +25,19 @@ export function RewriteStep({ workflow }: StepProps) {
         <p>AI가 마케팅 의도를 유지하면서 컴플라이언스에 적합한 표현으로 대체 제안했습니다.</p>
       </header>
 
-      <div className="mode-strip">비교 모드: 마케팅 의도 유지 모드</div>
+      <div className="rewrite-status-row">
+        <div className="mode-strip">비교 모드: 마케팅 의도 유지 모드</div>
+        <span className={`rewrite-source ${rewrite.source === "gemini" ? "is-gemini" : "is-fallback"}`}>
+          {sourceLabel}
+        </span>
+      </div>
 
       <div className="rewrite-table">
         <div className="rewrite-header">항목</div>
         <div className="rewrite-header">원문 (위험 표현)</div>
         <div className="rewrite-header arrow-cell" />
         <div className="rewrite-header">수정안 (AI 제안)</div>
-        {rewrite.changes.map((change, index) => (
+        {rewrite.changes.length > 0 ? rewrite.changes.map((change, index) => (
           <article key={`${change.original}-${change.replacement}`} className="rewrite-row">
             <strong>{index + 1}</strong>
             <div>
@@ -46,7 +52,22 @@ export function RewriteStep({ workflow }: StepProps) {
               <p>오인 가능성을 낮추고 필수 고지 맥락을 보강합니다.</p>
             </div>
           </article>
-        ))}
+        )) : (
+          <article className="rewrite-row">
+            <strong>1</strong>
+            <div>
+              <mark className="delete-mark">전체 문안</mark>
+              <small>위험 사유</small>
+              <p>변경 항목이 비어 있어 최종 수정 문안을 기준으로 검토합니다.</p>
+            </div>
+            <span className="arrow-cell">→</span>
+            <div>
+              <mark className="add-mark">최종 선택 문안</mark>
+              <small>개선 포인트</small>
+              <p>원문 대비 필수 고지와 오인 방지 표현을 확인합니다.</p>
+            </div>
+          </article>
+        )}
       </div>
 
       <div className="revision-actions">

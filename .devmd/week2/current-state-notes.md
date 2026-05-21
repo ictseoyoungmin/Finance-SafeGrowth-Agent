@@ -277,3 +277,36 @@ Known notes:
 
 - Frontend Docker install reported existing npm audit warnings.
 - Public redeploy is needed before CI/Docker cleanup behavior is reflected in hosted environments.
+
+## Day 14 Demo Hardening Detail Pass
+
+Status: IN_PROGRESS locally
+
+Completed:
+
+- `/v1/compliance/rewrite` now exposes `source: "gemini" | "fallback"`.
+- Parsed Gemini rewrite responses are marked as `source = "gemini"`.
+- Deterministic rewrite fallback is now input-aware:
+  - uses stored/fallback original text
+  - uses detected risky spans
+  - returns changes based on the submitted sentence instead of only the fixed standard demo text
+- Rewrite UI displays a source badge:
+  - `Gemini 검수 결과`
+  - `Deterministic fallback`
+- Frontend workflow sets fallback state when the backend rewrite response itself reports fallback.
+- RuleEngine now catches additional non-demo financial ad variants such as `업계 최고`, `확정 수익률`, `원금 손실 없이`, and `위험 없이`.
+- RuleEngine deduplicates overlapping hits so redline highlighting favors longer, clearer spans.
+- Backend test env is isolated from local real `.env` values and proxy settings through `tests/conftest.py`.
+- Demo docs now describe rewrite source badges and input-aware fallback behavior.
+
+Verification:
+
+- Backend `ruff`: passed.
+- Backend `pytest`: `28 passed, 1 warning`.
+- Frontend Playwright Docker `npm ci && npm run typecheck && npm run lint && npm run build`: passed.
+
+Known notes:
+
+- Public Vercel/Render smoke after redeploy is pending.
+- Frontend `npm ci` still reports existing npm audit warnings.
+- FastAPI `TestClient` can hang inside the sandbox due isolation/proxy behavior; backend pytest was verified outside the sandbox.

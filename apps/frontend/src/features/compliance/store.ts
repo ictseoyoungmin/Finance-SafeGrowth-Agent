@@ -107,12 +107,16 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
     setState((current) => ({ ...current, isLoading: true, errorMessage: undefined }));
     try {
       const rewrite = await fetchRewrite({ content_id: contentId, mode: "marketing_balanced" });
+      const rewriteUsedFallback = rewrite.source === "fallback";
       setState((current) => ({
         ...current,
         step: "rewrite",
         rewrite,
+        usedFallback: current.usedFallback || rewriteUsedFallback,
         isLoading: false,
-        actionMessage: undefined,
+        actionMessage: rewriteUsedFallback
+          ? "Gemini 응답 대신 입력 문장 기반 deterministic fallback 수정안을 표시합니다."
+          : "Gemini 검수 수정안을 불러왔습니다.",
       }));
     } catch {
       setState((current) => ({

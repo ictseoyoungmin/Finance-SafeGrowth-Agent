@@ -28,3 +28,16 @@ def test_rule_engine_returns_span_offsets() -> None:
         assert hit.risk_category
         assert hit.reason
         assert 0 <= hit.confidence <= 1
+
+
+def test_rule_engine_detects_non_demo_financial_ad_variants() -> None:
+    text = "업계 최고 혜택으로 확정 수익률을 매월 지급하고, 원금 손실 없이 안전하게 운용됩니다."
+    hits = RuleEngine().scan(text)
+    span_texts = {hit.span_text for hit in hits}
+    categories = {hit.risk_category for hit in hits}
+
+    assert "업계 최고" in span_texts
+    assert "확정 수익률" in span_texts
+    assert "원금 손실 없이" in span_texts
+    assert "안전하게" in span_texts
+    assert {"과장 표현", "확정 수익 오인", "원금 보장 오인", "안정성 오인"} <= categories

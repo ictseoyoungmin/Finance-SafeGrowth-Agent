@@ -8,11 +8,14 @@ The MVP must keep the demo path working when external services are unavailable.
 - `/v1/compliance/analyze` returns rule-based spans without Gemini or Supabase.
 - `/v1/compliance/evidence` returns in-process demo regulation documents if Supabase is not configured.
 - `/v1/compliance/rewrite` returns deterministic conservative and marketing-balanced copy if Gemini is unavailable or returns unparsable JSON.
+- Rewrite fallback is input-aware: it uses the persisted/fallback original text plus detected risky spans, so alternate demo text does not collapse back to the fixed standard sentence.
+- Rewrite responses include `source`, with `gemini` for parsed Gemini output and `fallback` for deterministic fallback output.
 
 ## Frontend
 
 - The API client catches failed backend requests and supplies deterministic demo data.
 - Fallback mode is surfaced in the UI with a `Fallback` badge and notice.
+- Rewrite comparison also shows a source badge: `Gemini 검수 결과` or `Deterministic fallback`.
 - No frontend fallback path uses backend-only secrets.
 
 ## Demo Recovery

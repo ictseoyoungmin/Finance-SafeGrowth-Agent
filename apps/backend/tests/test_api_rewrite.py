@@ -17,3 +17,4 @@ def test_rewrite_returns_fallback_without_gemini() -> None:
     assert body["revised_text_conservative"]
     assert body["revised_text_marketing"]
     assert len(body["changes"]) >= 1
+    assert body["source"] == "fallback"

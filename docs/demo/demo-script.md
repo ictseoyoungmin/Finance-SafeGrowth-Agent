@@ -26,6 +26,8 @@
 2. Redline Risk Review: confirm highlighted spans for `누구나`, `연 8% 수익`, `안정적으로`, and `원금 걱정 없이`.
 3. Evidence Panel: confirm at least one regulation evidence item and guideline snippet.
 4. Rewrite Comparison: compare conservative and marketing-balanced rewrite options.
+   - Confirm the source badge says `Gemini 검수 결과` when Gemini produced the response.
+   - If Gemini is unavailable, confirm the badge says `Deterministic fallback` and the fallback rewrite still reflects the submitted sentence, not only the standard demo sentence.
 5. Approval Package: confirm conditional approval summary and final marketing-safe copy.
 6. Click `승인`, then click `리포트 확인`.
 
@@ -35,6 +37,8 @@
 - At least three flagged spans
 - Evidence list has one or more entries
 - Both conservative and marketing rewrite text are present
+- Rewrite source is visible in the UI
+- Fallback rewrite is generated from the submitted original text and detected spans
 - Approval succeeds and the report loads
 - Report `final_text` is the actual approved sentence, not `marketing` or `conservative`
 - Demo continues even if Gemini or Supabase is unavailable
@@ -43,6 +47,8 @@
 ## Follow-Up Verification Status
 
 - Latest local fix: approval sends actual selected revision text with original text fallback.
+- Latest local fix: rewrite UI displays whether output came from Gemini or deterministic fallback.
+- Latest local fix: deterministic fallback rewrite is now input-aware instead of returning only the fixed standard demo sentence.
 - Public Vercel UI verification after redeploy: NOT_RUN.
 - Supabase UI-path `approval_logs.selected_revision` actual text check after redeploy: NOT_RUN.
 

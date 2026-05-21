@@ -64,6 +64,7 @@ export interface RewriteResponse {
   revised_text_conservative: string;
   revised_text_marketing: string;
   changes: RewriteChange[];
+  source?: "gemini" | "fallback";
 }
 
 export type ApprovalDecision = "APPROVED" | "CONDITIONALLY_APPROVED" | "REJECTED" | "REVISION_REQUESTED";

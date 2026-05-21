@@ -132,6 +132,7 @@ export function fallbackRewrite(contentId: string): RewriteResponse {
         reason: "원금 보장 오인 표현을 필수 고지로 대체",
       },
     ],
+    source: "fallback",
   };
 }
 

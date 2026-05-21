@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -17,3 +19,4 @@ class RewriteResponse(BaseModel):
     revised_text_conservative: str
     revised_text_marketing: str
     changes: list[RewriteChange]
+    source: Literal["gemini", "fallback"] = "fallback"
