@@ -310,3 +310,38 @@ Known notes:
 - Public Vercel/Render smoke after redeploy is pending.
 - Frontend `npm ci` still reports existing npm audit warnings.
 - FastAPI `TestClient` can hang inside the sandbox due isolation/proxy behavior; backend pytest was verified outside the sandbox.
+
+## Slice 07 Cleanup: Redline/Rewrite Alignment
+
+Status: COMPLETE locally
+
+Reason:
+
+- Redline Risk Review previously used only rule-engine spans from `/analyze`.
+- Gemini was only called in `/rewrite`, so Gemini-discovered risky phrases could appear in Rewrite Comparison but not Redline.
+- Gemini rewrite changes could contain blank `original` values, causing invisible red text in the rewrite table.
+
+Completed:
+
+- Added `.devmd/week2/slice_07_cleanup.md`.
+- `/v1/compliance/analyze` now optionally augments rule-engine spans with Gemini-detected spans.
+- Gemini-detected analyze spans are validated as exact substrings of the original text before merging.
+- `FlaggedSpan.source` records `rule` or `gemini`.
+- Redline risk inspector shows each span source.
+- `/v1/compliance/rewrite` prompt now requires `changes[].original` to be a non-empty exact original substring.
+- Gemini rewrite changes are sanitized so blank originals are not returned to the frontend.
+- If Gemini change data is unusable, rewrite changes fall back to detected spans or `전체 문안`.
+
+Verification:
+
+- Backend `ruff`: passed.
+- Backend `pytest`: `30 passed, 1 warning`.
+- Frontend Playwright Docker `npm ci && npm run typecheck && npm run lint && npm run build`: passed.
+
+Remaining:
+
+- Redeploy Render/Vercel.
+- Public smoke with the user's non-standard text:
+  - `지금 가입하면 누구나 연 금리 23%. 2년 안에 못 갚으면 무려 50% 및 증가!`
+  - Confirm Redline shows Gemini-added spans when Gemini detects them.
+  - Confirm Rewrite Comparison has no blank original text rows.

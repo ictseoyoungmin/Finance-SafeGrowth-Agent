@@ -53,7 +53,7 @@ class RewriteService:
         prompt = self._build_prompt(request, context)
         result = self._gemini_client.generate_json(prompt)
         if result:
-            parsed = self._parse_response(request.content_id, result.payload)
+            parsed = self._parse_response(request.content_id, result.payload, context)
             if parsed:
                 return parsed
 
@@ -70,6 +70,12 @@ class RewriteService:
                 "content_id": request.content_id,
                 "mode": request.mode,
                 "instruction": "Return only raw JSON. Do not use markdown. Do not include explanation outside JSON.",
+                "change_rules": [
+                    "Every changes[].original must be a non-empty exact substring from source.original_text.",
+                    "Prefer originals from risk_context.flagged_spans.",
+                    "Do not invent original text that is absent from source.original_text.",
+                    "If the whole sentence is rewritten, use the most relevant exact risky substring as original.",
+                ],
                 "source": {
                     "product_type": context["content"].get("product_type"),
                     "channel": context["content"].get("channel"),
@@ -147,11 +153,79 @@ class RewriteService:
             "reviewer_notes": "수익률, 안정성, 원금 관련 표현 완화가 필요합니다.",
         }
 
-    def _parse_response(self, content_id: str, payload: dict[str, Any]) -> RewriteResponse | None:
+    def _parse_response(
+        self,
+        content_id: str,
+        payload: dict[str, Any],
+        context: dict[str, Any],
+    ) -> RewriteResponse | None:
         try:
-            return RewriteResponse(content_id=content_id, **{**payload, "source": "gemini"})
+            normalized = {
+                **payload,
+                "changes": self._sanitize_gemini_changes(payload, context),
+                "source": "gemini",
+            }
+            return RewriteResponse(content_id=content_id, **normalized)
         except ValueError:
             return None
+
+    def _sanitize_gemini_changes(self, payload: dict[str, Any], context: dict[str, Any]) -> list[dict[str, str]]:
+        original_text = str(context["content"].get("original_text") or "")
+        raw_changes = payload.get("changes")
+        if not isinstance(raw_changes, list):
+            raw_changes = []
+
+        changes: list[dict[str, str]] = []
+        seen: set[str] = set()
+        for item in raw_changes:
+            if not isinstance(item, dict):
+                continue
+            original = str(item.get("original") or "").strip()
+            replacement = str(item.get("replacement") or "").strip()
+            reason = str(item.get("reason") or "").strip()
+            if not original:
+                original = self._best_original_for_replacement(replacement, context)
+            if not original or original in seen:
+                continue
+            if original != "전체 문안" and original not in original_text:
+                recovered = self._best_original_for_replacement(replacement, context)
+                if not recovered or recovered in seen:
+                    continue
+                original = recovered
+            changes.append(
+                {
+                    "original": original,
+                    "replacement": replacement or "오인 가능성을 낮춘 표현",
+                    "reason": reason or "Gemini 수정안의 변경 근거입니다.",
+                }
+            )
+            seen.add(original)
+
+        if changes:
+            return changes
+
+        return [
+            {
+                "original": change["original"],
+                "replacement": change["marketing"],
+                "reason": change["reason"],
+            }
+            for change in self._fallback_changes(original_text, list(context["risk_result"].get("flagged_spans") or []))
+        ] or [
+            {
+                "original": "전체 문안",
+                "replacement": "수정안 본문",
+                "reason": "Gemini가 전체 문장 기준 수정안을 반환했습니다.",
+            }
+        ]
+
+    def _best_original_for_replacement(self, replacement: str, context: dict[str, Any]) -> str:
+        flagged_spans = list(context["risk_result"].get("flagged_spans") or [])
+        for span in flagged_spans:
+            span_text = str(self._span_value(span, "span_text") or "").strip()
+            if span_text:
+                return span_text
+        return "전체 문안" if replacement else ""
 
     def _build_fallback_response(self, content_id: str, context: dict[str, Any]) -> RewriteResponse:
         original_text = str(context["content"].get("original_text") or self._fallback_content(content_id)["original_text"])

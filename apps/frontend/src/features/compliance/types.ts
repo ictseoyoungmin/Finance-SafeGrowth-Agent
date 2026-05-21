@@ -18,6 +18,7 @@ export interface FlaggedSpan {
   severity: RiskLevel;
   reason: string;
   confidence: number;
+  source?: "rule" | "gemini";
 }
 
 export interface AnalyzeResponse {

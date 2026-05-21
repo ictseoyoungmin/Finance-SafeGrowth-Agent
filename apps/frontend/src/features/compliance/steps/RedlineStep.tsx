@@ -68,7 +68,10 @@ export function RedlineStep({ workflow }: StepProps) {
           {analyze.flagged_spans.map((span) => (
             <article key={`${span.span_text}-${span.start}`} className="span-card">
               <strong>{span.span_text}</strong>
-              <span>{span.risk_category}</span>
+              <span>
+                {span.risk_category}
+                {span.source === "gemini" ? " · Gemini" : " · Rule"}
+              </span>
               <small>{span.reason}</small>
               <em>신뢰도 {Math.round(span.confidence * 100)}%</em>
             </article>

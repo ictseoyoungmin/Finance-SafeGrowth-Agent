@@ -162,3 +162,31 @@ def test_rewrite_fallback_uses_actual_content_and_detected_spans() -> None:
     assert "40대 고객을 위한 투자상품입니다." in response.revised_text_marketing
     assert "시장 상황에 따라 수익은 변동될 수 있고" in response.revised_text_marketing
     assert "상품설명서" in response.revised_text_conservative
+
+
+def test_rewrite_sanitizes_blank_gemini_change_originals() -> None:
+    gemini = FakeGeminiClient(
+        {
+            "revised_text_conservative": "대출상품의 상환 조건과 비용을 확인해 주세요.",
+            "revised_text_marketing": "상환 조건과 비용을 확인한 뒤 이용해 주세요.",
+            "changes": [
+                {
+                    "original": "",
+                    "replacement": "상환 조건과 비용을 확인",
+                    "reason": "빈 원문은 UI에서 보이지 않으므로 보정되어야 합니다.",
+                }
+            ],
+        }
+    )
+    service = RewriteService(
+        gemini_client=gemini,  # type: ignore[arg-type]
+        content_repository=FakeContentRepository(),  # type: ignore[arg-type]
+        risk_results_repository=FakeRiskResultsRepository(),  # type: ignore[arg-type]
+        regulation_docs_repository=FakeRegulationDocsRepository(),  # type: ignore[arg-type]
+    )
+
+    response = service.rewrite(RewriteRequest(content_id="content-1", mode="marketing_balanced"))
+
+    assert response.source == "gemini"
+    assert response.changes[0].original
+    assert response.changes[0].original == "연 8% 수익"
