@@ -12,11 +12,16 @@ try {
   await page.waitForFunction(() => document.querySelectorAll(".trace-item").length >= 4, null, {
     timeout: 30_000,
   });
+  await page.getByText("도구 호출").first().waitFor({ timeout: 15_000 });
 
   const approveButton = page.getByRole("button", { name: "승인" }).first();
   await approveButton.waitFor({ timeout: 30_000 });
   await approveButton.click();
   await page.getByText("최종 리포트").waitFor({ timeout: 30_000 });
+  const leakedEnum = page.getByText("CONDITIONALLY_APPROVED");
+  if (await leakedEnum.isVisible().catch(() => false)) {
+    throw new Error("Internal approval enum leaked into the visible UI");
+  }
 
   console.log("agent-ui-smoke: ok");
 } finally {

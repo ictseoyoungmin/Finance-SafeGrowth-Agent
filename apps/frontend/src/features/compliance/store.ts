@@ -12,6 +12,7 @@ import {
   fetchRewrite,
   getApiBaseUrl,
 } from "./api";
+import { approvalDecisionLabel } from "./approvalDecisionLabels";
 import type { AnalyzeRequest, ApprovalDecision, ComplianceState, WorkflowStep } from "./types";
 
 export interface ComplianceWorkflow {
@@ -36,6 +37,12 @@ const INITIAL_STATE: ComplianceState = {
   isLoading: false,
 };
 
+function pendingActionForDecision(decision: ApprovalDecision): ComplianceState["pendingAction"] {
+  if (decision === "REJECTED") return "reject";
+  if (decision === "REVISION_REQUESTED") return "request_revision";
+  return "approve";
+}
+
 export function useComplianceWorkflow(): ComplianceWorkflow {
   const [state, setState] = useState<ComplianceState>(INITIAL_STATE);
   const apiBaseUrl = useMemo(() => getApiBaseUrl(), []);
@@ -49,7 +56,13 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
   };
 
   const startReview = async () => {
-    setState((current) => ({ ...current, isLoading: true, errorMessage: undefined }));
+    setState((current) => ({
+      ...current,
+      isLoading: true,
+      pendingAction: undefined,
+      errorMessage: undefined,
+      actionMessage: undefined,
+    }));
     try {
       const analyze = await analyzeContent(state.input);
       setState((current) => ({
@@ -75,7 +88,13 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
 
   const loadEvidence = async () => {
     const analyze = state.analyze ?? fallbackAnalyze(state.input);
-    setState((current) => ({ ...current, isLoading: true, errorMessage: undefined }));
+    setState((current) => ({
+      ...current,
+      isLoading: true,
+      pendingAction: undefined,
+      errorMessage: undefined,
+      actionMessage: undefined,
+    }));
     try {
       const evidence = await fetchEvidence({
         content_id: analyze.content_id,
@@ -104,7 +123,13 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
 
   const loadRewrite = async () => {
     const contentId = state.analyze?.content_id ?? "demo-content";
-    setState((current) => ({ ...current, isLoading: true, errorMessage: undefined }));
+    setState((current) => ({
+      ...current,
+      isLoading: true,
+      pendingAction: undefined,
+      errorMessage: undefined,
+      actionMessage: undefined,
+    }));
     try {
       const rewrite = await fetchRewrite({ content_id: contentId, mode: "marketing_balanced" });
       const rewriteUsedFallback = rewrite.source === "fallback";
@@ -137,7 +162,13 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
       state.selectedRevision === "conservative"
         ? state.rewrite?.revised_text_conservative
         : state.rewrite?.revised_text_marketing;
-    setState((current) => ({ ...current, isLoading: true, errorMessage: undefined }));
+    setState((current) => ({
+      ...current,
+      isLoading: true,
+      pendingAction: pendingActionForDecision(decision),
+      errorMessage: undefined,
+      actionMessage: `${approvalDecisionLabel(decision)} 저장 중...`,
+    }));
     try {
       const approval = await approveContent({
         content_id: contentId,
@@ -150,27 +181,35 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
         ...current,
         approval,
         isLoading: false,
-        actionMessage: `심의 결과가 저장되었습니다: ${approval.decision}`,
+        pendingAction: undefined,
+        actionMessage: `${approvalDecisionLabel(approval.decision)}으로 저장되었습니다.`,
       }));
     } catch {
       setState((current) => ({
         ...current,
         usedFallback: true,
         isLoading: false,
-        errorMessage: "승인 API 응답이 없어 화면 상태만 유지합니다.",
+        pendingAction: undefined,
+        errorMessage: "승인 저장에 실패했습니다. 다시 시도해주세요.",
       }));
     }
   };
 
   const loadReport = async () => {
     const contentId = state.analyze?.content_id ?? "demo-content";
-    setState((current) => ({ ...current, isLoading: true, errorMessage: undefined }));
+    setState((current) => ({
+      ...current,
+      isLoading: true,
+      pendingAction: "load_report",
+      errorMessage: undefined,
+    }));
     try {
       const report = await fetchReport(contentId);
       setState((current) => ({
         ...current,
         report,
         isLoading: false,
+        pendingAction: undefined,
         actionMessage: "리포트 패키지를 불러왔습니다.",
       }));
     } catch {
@@ -178,6 +217,7 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
         ...current,
         usedFallback: true,
         isLoading: false,
+        pendingAction: undefined,
         errorMessage: "리포트 API 응답이 없어 현재 화면 데이터로 검토를 이어갑니다.",
       }));
     }

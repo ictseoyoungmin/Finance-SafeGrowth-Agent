@@ -21,9 +21,13 @@ export function TraceTimeline({ steps, selected, onSelect }: TraceTimelineProps)
             key={`${step.run_id}-${step.step_index}`}
             className={`trace-item ${selected?.step_index === step.step_index ? "is-selected" : ""} step-${step.step_type}`}
             onClick={() => onSelect(step)}
+            aria-current={selected?.step_index === step.step_index ? "step" : undefined}
           >
             <span>{stepIcon(step)}</span>
-            <strong>{stepTitle(step)}</strong>
+            <div>
+              <em>{stepTypeLabel(step.step_type)}</em>
+              <strong>{stepTitle(step)}</strong>
+            </div>
             <small>{step.created_at ? new Date(step.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : `#${step.step_index}`}</small>
           </button>
         ))}
@@ -36,6 +40,7 @@ function stepIcon(step: AgentStep) {
   if (step.step_type === "tool_call") return "◇";
   if (step.step_type === "tool_result") return "◆";
   if (step.step_type === "human_prompt") return "!";
+  if (step.step_type === "human_response") return "↵";
   if (step.step_type === "final") return "✓";
   return "•";
 }
@@ -49,4 +54,16 @@ function stepTitle(step: AgentStep) {
     final: "최종 결과",
   };
   return labels[step.step_type] ?? step.step_type;
+}
+
+function stepTypeLabel(type: string) {
+  const labels: Record<string, string> = {
+    thought: "관찰",
+    tool_call: "도구 호출",
+    tool_result: "도구 결과",
+    human_prompt: "사람 확인 요청",
+    human_response: "사람 응답",
+    final: "최종 결과",
+  };
+  return labels[type] ?? type;
 }

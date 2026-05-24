@@ -108,6 +108,7 @@ export interface ComplianceState {
   selectedRevision: "conservative" | "marketing";
   usedFallback: boolean;
   isLoading: boolean;
+  pendingAction?: "approve" | "reject" | "request_revision" | "load_report";
   errorMessage?: string;
   actionMessage?: string;
 }

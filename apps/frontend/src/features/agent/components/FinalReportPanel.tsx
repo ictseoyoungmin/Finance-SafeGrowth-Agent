@@ -1,3 +1,4 @@
+import { replaceApprovalDecisionCodes } from "../../compliance/approvalDecisionLabels";
 import type { AgentRunDetail } from "../types";
 
 interface FinalReportPanelProps {
@@ -10,13 +11,14 @@ export function FinalReportPanel({ run, onReset }: FinalReportPanelProps) {
     return null;
   }
   const report = run.final_report;
+  const summary = replaceApprovalDecisionCodes(run.final_summary ?? report?.summary);
 
   return (
     <section className="agent-final-panel">
       <div className="panel-heading compact">
         <div>
           <h2>최종 리포트</h2>
-          <p>{run.final_summary ?? report?.summary ?? "Agent가 검토를 완료했습니다."}</p>
+          <p>{summary ?? "Agent가 검토를 완료했습니다."}</p>
         </div>
         <span className="run-pill status-done">{decisionLabel(run.final_decision)}</span>
       </div>
@@ -24,7 +26,7 @@ export function FinalReportPanel({ run, onReset }: FinalReportPanelProps) {
         <div className="agent-final-grid">
           <article>
             <strong>최종 문안</strong>
-            <p>{report.final_text}</p>
+            <p>{replaceApprovalDecisionCodes(report.final_text)}</p>
           </article>
           <article>
             <strong>리스크 수준</strong>

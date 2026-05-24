@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { approvalDecisionLabel } from "../approvalDecisionLabels";
 import { riskCategoryKo, riskReasonKo } from "../riskPresentation";
 import type { ComplianceWorkflow } from "../store";
 import type { WorkflowStep } from "../types";
@@ -199,9 +200,11 @@ function buildTraceItems(workflow: ComplianceWorkflow): TraceItem[] {
       id: "approval",
       label: "승인 패키지",
       status: state.approval || state.step === "approval" ? statusFor(4, currentIndex) : "pending",
-      detail: state.approval ? `심의 결과 ${state.approval.decision}` : "최종 승인 및 리포트 확인",
+      detail: state.approval
+        ? `심의 결과 ${approvalDecisionLabel(state.approval.decision)}`
+        : "최종 승인 및 리포트 확인",
       meta: [
-        { label: "결정", value: state.approval?.decision ?? "-" },
+        { label: "결정", value: state.approval ? approvalDecisionLabel(state.approval.decision) : "-" },
         { label: "리포트", value: state.report ? "완료" : "대기" },
       ],
     },
@@ -215,6 +218,7 @@ function buildJudgmentItems(workflow: ComplianceWorkflow): JudgmentItem[] {
   const evidenceCount = state.evidence?.evidence_list.length ?? 0;
   const rewriteCount = state.rewrite?.changes.length ?? 0;
   const approvalDecision = state.approval?.decision;
+  const approvalLabel = approvalDecisionLabel(approvalDecision);
 
   return [
     {
@@ -266,7 +270,7 @@ function buildJudgmentItems(workflow: ComplianceWorkflow): JudgmentItem[] {
       label: "사람 판단 요청",
       status: approvalDecision ? "done" : state.step === "approval" ? "active" : "pending",
       observation: approvalDecision
-        ? `심의 결과가 ${approvalDecision}로 기록되었습니다.`
+        ? `심의 결과가 ${approvalLabel}으로 기록되었습니다.`
         : "최종 문안과 근거가 준비되면 사람 승인 단계로 넘깁니다.",
       decision: approvalDecision
         ? "사람의 최종 판단을 감사 기록과 리포트에 반영합니다."

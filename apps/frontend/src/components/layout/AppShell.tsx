@@ -95,6 +95,7 @@ export function AppShell({
             <h1>{currentTitle}</h1>
           </div>
           <div className="status-stack">
+            {actionMessage && !errorMessage ? <span className="topbar-result">{actionMessage}</span> : null}
             <span className="bell">3</span>
             <span className="avatar">A</span>
             <span className="admin-block">

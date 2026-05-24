@@ -1,3 +1,6 @@
+import { useEffect, useRef } from "react";
+
+import { approvalDecisionLabel } from "../approvalDecisionLabels";
 import type { ComplianceWorkflow } from "../store";
 
 interface StepProps {
@@ -6,6 +9,7 @@ interface StepProps {
 
 export function ApprovalStep({ workflow }: StepProps) {
   const { state, goTo, loadReport, reset, submitApproval } = workflow;
+  const decisionBannerRef = useRef<HTMLElement>(null);
   const analyze = state.analyze;
   const rewrite = state.rewrite;
   const finalText =
@@ -14,6 +18,21 @@ export function ApprovalStep({ workflow }: StepProps) {
       : rewrite?.revised_text_marketing;
   const evidenceCount = state.evidence?.evidence_list.length ?? 0;
   const auditCount = state.report?.audit_log.length ?? 0;
+  const decisionLabel = approvalDecisionLabel(state.approval?.decision);
+  const isSavingDecision =
+    state.pendingAction === "approve" ||
+    state.pendingAction === "reject" ||
+    state.pendingAction === "request_revision";
+  const isApprovalSaved = Boolean(state.approval);
+
+  useEffect(() => {
+    if (!state.approval || !decisionBannerRef.current) return;
+    const rect = decisionBannerRef.current.getBoundingClientRect();
+    const isOutsideViewport = rect.top < 0 || rect.bottom > window.innerHeight;
+    if (isOutsideViewport) {
+      decisionBannerRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [state.approval]);
 
   return (
     <div className="approval-layout">
@@ -30,11 +49,23 @@ export function ApprovalStep({ workflow }: StepProps) {
         <div className="approval-stamp">준법 검토 준비</div>
       </section>
 
-      <section className="decision-banner">
-        <span>심의</span>
+      <section
+        ref={decisionBannerRef}
+        className={`decision-banner ${isApprovalSaved ? "is-saved" : ""} ${isSavingDecision ? "is-saving" : ""}`}
+        role={isApprovalSaved ? "status" : undefined}
+      >
+        <span>{isApprovalSaved ? "완료" : isSavingDecision ? "저장" : "심의"}</span>
         <div>
-          <h2>심의 결과: {state.approval?.decision ?? "조건부 승인 권고"}</h2>
-          <p>{state.actionMessage ?? "아래 주요 수정 사항을 반영하여 최종 승인하시기를 권고드립니다."}</p>
+          <h2>
+            {isSavingDecision
+              ? `${state.actionMessage ?? "심의 결과 저장 중..."}`
+              : `심의 결과: ${decisionLabel}`}
+          </h2>
+          <p>
+            {isApprovalSaved
+              ? `방금 김준법 수석 이름으로 ${decisionLabel} 결과가 저장되었습니다.`
+              : state.actionMessage ?? "아래 주요 수정 사항을 반영하여 최종 승인하시기를 권고드립니다."}
+          </p>
         </div>
       </section>
 
@@ -72,26 +103,48 @@ export function ApprovalStep({ workflow }: StepProps) {
         <p>{finalText}</p>
       </section>
 
+      {state.actionMessage || state.errorMessage ? (
+        <div
+          className={`action-feedback ${state.errorMessage ? "is-error" : "is-success"}`}
+          role={state.errorMessage ? "alert" : "status"}
+        >
+          <strong>{state.errorMessage ? "저장 실패" : "처리 결과"}</strong>
+          <span>{state.errorMessage ?? state.actionMessage}</span>
+        </div>
+      ) : null}
+
       <div className="action-row">
         <button
           className="primary-button"
           disabled={state.isLoading}
+          aria-busy={state.pendingAction === "approve"}
           onClick={() => submitApproval("CONDITIONALLY_APPROVED")}
         >
-          승인
+          {state.pendingAction === "approve" ? "조건부 승인 저장 중..." : "조건부 승인"}
         </button>
-        <button className="danger-button" disabled={state.isLoading} onClick={() => submitApproval("REJECTED")}>
-          반려
+        <button
+          className="danger-button"
+          disabled={state.isLoading}
+          aria-busy={state.pendingAction === "reject"}
+          onClick={() => submitApproval("REJECTED")}
+        >
+          {state.pendingAction === "reject" ? "반려 저장 중..." : "반려"}
         </button>
         <button
           className="warning-button"
           disabled={state.isLoading}
+          aria-busy={state.pendingAction === "request_revision"}
           onClick={() => submitApproval("REVISION_REQUESTED")}
         >
-          수정 요청
+          {state.pendingAction === "request_revision" ? "수정 요청 저장 중..." : "수정 요청"}
         </button>
-        <button className="secondary-button" disabled={state.isLoading} onClick={loadReport}>
-          리포트 확인
+        <button
+          className="secondary-button"
+          disabled={state.isLoading}
+          aria-busy={state.pendingAction === "load_report"}
+          onClick={loadReport}
+        >
+          {state.pendingAction === "load_report" ? "리포트 불러오는 중..." : "리포트 확인"}
         </button>
         <button className="secondary-button" onClick={() => goTo("rewrite")}>
           수정안으로

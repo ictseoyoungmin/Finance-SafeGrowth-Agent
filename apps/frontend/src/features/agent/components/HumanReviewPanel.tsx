@@ -9,6 +9,7 @@ interface HumanReviewPanelProps {
 export function HumanReviewPanel({ workflow }: HumanReviewPanelProps) {
   const prompt = workflow.runDetail?.pending_human;
   const [freeText, setFreeText] = useState("");
+  const [pendingOption, setPendingOption] = useState<string | undefined>();
 
   if (!prompt || workflow.runDetail?.status !== "awaiting_human") {
     return null;
@@ -23,16 +24,36 @@ export function HumanReviewPanel({ workflow }: HumanReviewPanelProps) {
         <p>{prompt.question}</p>
       </div>
       <div className="human-option-row">
-        {options.map((option) => (
-          <button key={option} className="choice-button" onClick={() => workflow.respond(option)} disabled={workflow.isLoading}>
-            {optionLabel(option)}
-          </button>
-        ))}
+        {options.map((option) => {
+          const isPending = workflow.isLoading && pendingOption === option;
+          return (
+            <button
+              key={option}
+              className="choice-button"
+              onClick={() => {
+                setPendingOption(option);
+                void workflow.respond(option).finally(() => setPendingOption(undefined));
+              }}
+              disabled={workflow.isLoading}
+              aria-busy={isPending}
+            >
+              {isPending ? `${optionLabel(option)} 처리 중...` : optionLabel(option)}
+            </button>
+          );
+        })}
       </div>
       <div className="human-freeform">
         <input value={freeText} onChange={(event) => setFreeText(event.target.value)} placeholder="추가 지시 입력" />
-        <button className="secondary-button" onClick={() => workflow.respond(freeText)} disabled={!freeText.trim() || workflow.isLoading}>
-          지시 제출
+        <button
+          className="secondary-button"
+          onClick={() => {
+            setPendingOption("freeform");
+            void workflow.respond(freeText).finally(() => setPendingOption(undefined));
+          }}
+          disabled={!freeText.trim() || workflow.isLoading}
+          aria-busy={workflow.isLoading && pendingOption === "freeform"}
+        >
+          {workflow.isLoading && pendingOption === "freeform" ? "지시 제출 중..." : "지시 제출"}
         </button>
       </div>
     </section>
