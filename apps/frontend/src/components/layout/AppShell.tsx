@@ -12,22 +12,27 @@ const STEPS: Array<{ id: WorkflowStep; label: string; icon: string; title: strin
 
 interface AppShellProps {
   children: ReactNode;
-  currentStep: WorkflowStep;
-  apiBaseUrl: string;
-  usedFallback: boolean;
+  mode?: "agent" | "legacy";
+  currentStep?: WorkflowStep;
+  apiBaseUrl?: string;
+  usedFallback?: boolean;
   errorMessage?: string;
   actionMessage?: string;
 }
 
 export function AppShell({
   children,
+  mode = "agent",
   currentStep,
-  apiBaseUrl,
-  usedFallback,
+  apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000",
+  usedFallback = false,
   errorMessage,
   actionMessage,
 }: AppShellProps) {
-  const currentTitle = STEPS.find((step) => step.id === currentStep)?.title ?? "콘텐츠 입력";
+  const currentTitle =
+    mode === "agent"
+      ? "AI 규제 Agent 실행"
+      : STEPS.find((step) => step.id === currentStep)?.title ?? "콘텐츠 입력";
 
   return (
     <div className="app-frame">
@@ -36,22 +41,48 @@ export function AppShell({
           <span className="brand-kicker" aria-hidden="true" />
           <strong>Compliance AI</strong>
         </div>
-        <nav className="step-list">
-          {STEPS.map((step, index) => (
-            <div
-              key={step.id}
-              className={`step-item ${step.id === currentStep ? "is-active" : ""}`}
-            >
-              <span>{index + 1}</span>
-              <i aria-hidden="true">{step.icon}</i>
-              <p>{step.label}</p>
-            </div>
-          ))}
+        <nav className={mode === "agent" ? "step-list app-nav-list" : "step-list"}>
+          {mode === "agent" ? (
+            <>
+              <a className="step-item app-nav-item is-active" href="#/">
+                <span>1</span>
+                <i aria-hidden="true">◆</i>
+                <p>Agent Run</p>
+              </a>
+              <a className="step-item app-nav-item" href="#/legacy/wizard">
+                <span>2</span>
+                <i aria-hidden="true">▤</i>
+                <p>구버전 5-step 검토</p>
+              </a>
+            </>
+          ) : (
+            <>
+              <a className="step-item app-nav-item legacy-home" href="#/">
+                <span>←</span>
+                <i aria-hidden="true">◆</i>
+                <p>Agent Run으로</p>
+              </a>
+              {STEPS.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={`step-item ${step.id === currentStep ? "is-active" : ""}`}
+                >
+                  <span>{index + 1}</span>
+                  <i aria-hidden="true">{step.icon}</i>
+                  <p>{step.label}</p>
+                </div>
+              ))}
+            </>
+          )}
         </nav>
 
         <div className="side-card">
           <span className="brand-kicker small" aria-hidden="true" />
-          <p>AI가 규정·가이드라인 기반으로 리스크를 분석하고 수정안을 제안합니다.</p>
+          <p>
+            {mode === "agent"
+              ? "Agent가 규정 검색, 리스크 판단, 수정안 생성, 사람 검토 요청까지 trace로 남깁니다."
+              : "AI가 규정·가이드라인 기반으로 리스크를 분석하고 수정안을 제안합니다."}
+          </p>
           <strong>자세히 보기 ›</strong>
         </div>
       </aside>

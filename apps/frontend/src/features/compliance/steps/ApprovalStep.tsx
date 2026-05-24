@@ -97,7 +97,7 @@ export function ApprovalStep({ workflow }: StepProps) {
           수정안으로
         </button>
         <button className="secondary-button" onClick={reset}>
-          새 검토
+          처음으로
         </button>
       </div>
     </div>

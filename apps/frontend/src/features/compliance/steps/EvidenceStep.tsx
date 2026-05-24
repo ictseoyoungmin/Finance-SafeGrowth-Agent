@@ -1,3 +1,4 @@
+import { riskCategoryKo, riskReasonKo, sourceLabel } from "../riskPresentation";
 import type { ComplianceWorkflow } from "../store";
 
 interface StepProps {
@@ -12,7 +13,8 @@ export function EvidenceStep({ workflow }: StepProps) {
     return null;
   }
 
-  const firstRisk = state.analyze?.flagged_spans[0];
+  const risks = state.analyze?.flagged_spans ?? [];
+  const firstRisk = risks[0];
 
   return (
     <div className="evidence-layout">
@@ -28,6 +30,19 @@ export function EvidenceStep({ workflow }: StepProps) {
           <strong>{firstRisk?.severity === "HIGH" ? "고위험" : "검토 필요"}</strong>
           <p>{state.input.original_text}</p>
         </div>
+        <div className="sentence-evidence-map">
+          {risks.map((risk, index) => (
+            <article key={`${risk.span_text}-${risk.start}`} className="sentence-map-card">
+              <span className="risk-number">{index + 1}</span>
+              <div>
+                <strong>{risk.span_text}</strong>
+                <small>
+                  참조 근거 {(index % Math.max(evidence.evidence_list.length, 1)) + 1} · {sourceLabel(risk.source)}
+                </small>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
 
       <aside className="guideline-panel summary">
@@ -35,10 +50,20 @@ export function EvidenceStep({ workflow }: StepProps) {
           <h2>검토 요약</h2>
           <span>관련 규정 {evidence.evidence_list.length}건</span>
         </div>
+        <div className="summary-score-row">
+          <span>
+            <strong>{risks.length}</strong>
+            탐지 표현
+          </span>
+          <span>
+            <strong>{evidence.evidence_list.length}</strong>
+            참조 근거
+          </span>
+        </div>
         <dl>
           <div>
             <dt>탐지 사유</dt>
-            <dd>{state.analyze?.risk_categories.join(", ")}</dd>
+            <dd>{state.analyze?.risk_categories.map(riskCategoryKo).join(", ")}</dd>
           </div>
           <div>
             <dt>리스크 수준</dt>
@@ -50,7 +75,7 @@ export function EvidenceStep({ workflow }: StepProps) {
           </div>
           <div>
             <dt>선택 문맥</dt>
-            <dd>{firstRisk ? `${firstRisk.span_text} · ${firstRisk.reason}` : "표준 데모 문구"}</dd>
+            <dd>{firstRisk ? `${firstRisk.span_text} · ${riskReasonKo(firstRisk)}` : "표준 데모 문구"}</dd>
           </div>
         </dl>
       </aside>
@@ -62,10 +87,20 @@ export function EvidenceStep({ workflow }: StepProps) {
             <p>해당 리스크 판단은 아래의 규정 및 가이드라인을 근거로 합니다.</p>
           </div>
         </div>
+        <div className="evidence-link-strip">
+          {risks.map((risk, index) => (
+            <span key={`${risk.span_text}-link-${index}`}>
+              리스크 {index + 1} ↔ 근거 {(index % Math.max(evidence.evidence_list.length, 1)) + 1}
+            </span>
+          ))}
+        </div>
         <div className="evidence-list">
           {evidence.evidence_list.map((item, index) => (
             <article key={item.evidence_id} className="evidence-card">
-              <strong>참조 근거 {index + 1}</strong>
+              <strong>
+                <span className="evidence-number">{index + 1}</span>
+                참조 근거
+              </strong>
               <div>
                 <p>{item.snippet}</p>
                 <button className="ghost-button">원문 보기</button>
@@ -76,6 +111,13 @@ export function EvidenceStep({ workflow }: StepProps) {
               {evidence.guideline_snippets[index] ? (
                 <em>{evidence.guideline_snippets[index]}</em>
               ) : null}
+              <div className="matched-risk-row">
+                {risks
+                  .filter((_, riskIndex) => riskIndex % Math.max(evidence.evidence_list.length, 1) === index)
+                  .map((risk, riskIndex) => (
+                    <span key={`${risk.span_text}-${riskIndex}`}>리스크 {risks.indexOf(risk) + 1}</span>
+                  ))}
+              </div>
             </article>
           ))}
         </div>

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { RiskMark } from "./RiskMark";
 import type { FlaggedSpan } from "../../features/compliance/types";
+import { riskReasonKo } from "../../features/compliance/riskPresentation";
 
 export function renderRedline(text: string, flaggedSpans: FlaggedSpan[]) {
   const validSpans = flaggedSpans
@@ -28,7 +29,8 @@ export function renderRedline(text: string, flaggedSpans: FlaggedSpan[]) {
       <RiskMark
         key={`${span.span_text}-${span.start}-${index}`}
         severity={span.severity}
-        label={`${span.risk_category}: ${span.reason}`}
+        label={`${span.risk_category}: ${riskReasonKo(span)}`}
+        index={index + 1}
       >
         {text.slice(span.start, span.end)}
       </RiskMark>,
@@ -58,7 +60,8 @@ function renderFallbackByText(text: string, flaggedSpans: FlaggedSpan[]) {
       <RiskMark
         key={`${span.span_text}-fallback-${index}`}
         severity={span.severity}
-        label={`${span.risk_category}: ${span.reason}`}
+        label={`${span.risk_category}: ${riskReasonKo(span)}`}
+        index={index + 1}
       >
         {span.span_text}
       </RiskMark>,

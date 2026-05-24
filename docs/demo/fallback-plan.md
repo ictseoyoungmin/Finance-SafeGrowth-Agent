@@ -13,6 +13,7 @@ The MVP must keep the demo path working when external services are unavailable.
 
 ## Frontend
 
+- `/` is the Agent run trace view. The old 5-step workflow remains available at `#/legacy/wizard` for regression checks and emergency demos.
 - The API client catches failed backend requests and supplies deterministic demo data.
 - Fallback mode is surfaced in the UI with a `Fallback` badge and notice.
 - Rewrite comparison also shows a source badge: `Gemini 검수 결과` or `Deterministic fallback`.

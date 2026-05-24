@@ -1,4 +1,7 @@
+import { useMemo, useState } from "react";
+
 import { renderRedline } from "../../../components/redline/renderRedline";
+import { riskCategoryKo, riskReasonKo, sourceLabel } from "../riskPresentation";
 import type { ComplianceWorkflow } from "../store";
 
 interface StepProps {
@@ -8,6 +11,14 @@ interface StepProps {
 export function RedlineStep({ workflow }: StepProps) {
   const { state, loadEvidence, goTo } = workflow;
   const analyze = state.analyze;
+  const [riskPage, setRiskPage] = useState(0);
+  const flaggedSpans = useMemo(() => analyze?.flagged_spans ?? [], [analyze?.flagged_spans]);
+  const safePage = flaggedSpans.length ? Math.min(riskPage, flaggedSpans.length - 1) : 0;
+  const activeSpan = flaggedSpans[safePage];
+  const categoryList = useMemo(
+    () => Array.from(new Set(flaggedSpans.map((span) => span.risk_category))),
+    [flaggedSpans],
+  );
 
   if (!analyze) {
     return null;
@@ -36,8 +47,11 @@ export function RedlineStep({ workflow }: StepProps) {
         </div>
         <div className="redline-copy">{renderRedline(state.input.original_text, analyze.flagged_spans)}</div>
         <div className="risk-legend">
-          {analyze.risk_categories.map((category) => (
-            <span key={category}>{category}</span>
+          {categoryList.map((category, index) => (
+            <span key={category}>
+              <b>{index + 1}</b>
+              {riskCategoryKo(category)}
+            </span>
           ))}
         </div>
         <small className="character-count">문자 수 {state.input.original_text.length} / 2,000</small>
@@ -64,20 +78,47 @@ export function RedlineStep({ workflow }: StepProps) {
             리스크 유형
           </span>
         </div>
-        <div className="span-list">
-          {analyze.flagged_spans.map((span) => (
-            <article key={`${span.span_text}-${span.start}`} className="span-card">
-              <strong>{span.span_text}</strong>
-              <span>
-                {span.risk_category}
-                {span.source === "gemini" ? " · Gemini" : " · Rule"}
-              </span>
-              <small>{span.reason}</small>
-              <em>신뢰도 {Math.round(span.confidence * 100)}%</em>
-            </article>
-          ))}
-        </div>
       </aside>
+
+      <section className="risk-carousel-section" aria-label="탐지 리스크 상세">
+        <button
+          className="carousel-button"
+          onClick={() => setRiskPage((page) => Math.max(0, page - 1))}
+          disabled={safePage === 0}
+          aria-label="이전 리스크"
+        >
+          &lt;
+        </button>
+        <div className="risk-carousel-window">
+          {activeSpan ? (
+            <article key={`${activeSpan.span_text}-${activeSpan.start}`} className="span-card risk-slide">
+              <div className="risk-slide-index">{safePage + 1}</div>
+              <strong>{activeSpan.span_text}</strong>
+              <span>
+                {riskCategoryKo(activeSpan.risk_category)} · {sourceLabel(activeSpan.source)}
+              </span>
+              <small>{riskReasonKo(activeSpan)}</small>
+              <em>신뢰도 {Math.round(activeSpan.confidence * 100)}%</em>
+            </article>
+          ) : (
+            <article className="span-card risk-slide">
+              <strong>탐지된 리스크가 없습니다.</strong>
+              <small>현재 문구는 자동 탐지 기준상 추가 확인 항목이 없습니다.</small>
+            </article>
+          )}
+        </div>
+        <button
+          className="carousel-button"
+          onClick={() => setRiskPage((page) => Math.min(flaggedSpans.length - 1, page + 1))}
+          disabled={!flaggedSpans.length || safePage >= flaggedSpans.length - 1}
+          aria-label="다음 리스크"
+        >
+          &gt;
+        </button>
+        <span className="carousel-count">
+          {flaggedSpans.length ? safePage + 1 : 0} / {flaggedSpans.length}
+        </span>
+      </section>
 
       <div className="action-row">
         <button className="secondary-button" onClick={() => goTo("input")}>
