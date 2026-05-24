@@ -49,6 +49,29 @@ class SupabaseClient:
         rows = self.select_many(table, filters=filters, order=order, limit=1)
         return rows[0] if rows else None
 
+    def patch(
+        self,
+        table: str,
+        filters: dict[str, Any],
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        if not self.is_configured:
+            raise RuntimeError("Supabase is not configured.")
+
+        params = {key: f"eq.{value}" for key, value in filters.items()}
+        response = httpx.patch(
+            self._table_url(table),
+            headers=self._headers(prefer="return=representation"),
+            params=params,
+            json=payload,
+            timeout=10,
+        )
+        response.raise_for_status()
+        rows = response.json()
+        if not isinstance(rows, list):
+            raise RuntimeError(f"Supabase patch on {table} returned a non-list response.")
+        return rows[0] if rows else None
+
     def select_many(
         self,
         table: str,
