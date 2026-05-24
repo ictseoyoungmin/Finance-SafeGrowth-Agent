@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     )
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-1.5-flash"
+    gemini_embedding_model: str = "gemini-embedding-001"
     llm_provider: str = "gemini"
     openai_base_url: str = "http://127.0.0.1:18080/v1"
     openai_api_key: str | None = "local-not-required"

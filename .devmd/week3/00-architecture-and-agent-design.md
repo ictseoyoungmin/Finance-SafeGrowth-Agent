@@ -292,8 +292,8 @@ POST /v1/agent/runs/{run_id}/cancel
 ## 9. Vector RAG (Day 20)
 
 - 현재 `app/rag/embeddings.py`는 character-code sum placeholder. 폐기.
-- 새 embedding: Gemini `text-embedding-004` (or fallback: deterministic local hash for offline tests).
-- Supabase pgvector column `regulation_chunks.embedding vector(768)`.
+- 새 embedding: Gemini `gemini-embedding-001` (or fallback: deterministic local hash for offline tests).
+- Supabase pgvector column `regulation_chunks.embedding vector(3072)`.
 - `RegulationDocsRepository.search` 보조 메서드 `vector_search(query_text, top_k)` 추가. tool `search_regulation`이 이를 우선 사용하고, 결과 부족 시 카테고리 필터로 보조.
 - 청크 단위는 600자(기존 `chunker.chunk_text` 유지) 또는 문단 기준 중 선택. Day 20에서 결정.
 
@@ -333,5 +333,5 @@ POST /v1/agent/runs/{run_id}/cancel
 
 1. **SSE + polling fallback** (closed). Backend는 SSE를 1차 채널로 노출하고 25초 heartbeat를 보낸다. Frontend는 EventSource 실패/끊김 시 1초 polling으로 자동 전환한다. §7, §10에 반영.
 2. **Admin-upload-first** (closed). Day 19의 첫 connector는 `admin_upload`로 한정한다. FSS/금융위 RSS connector는 메타데이터-only 모드로 placeholder만 만들고, 본문 fetch는 정책 검토 후 Week 4로 미룬다. §8에 반영.
-3. **text-embedding-004, 768d, ivfflat lists=100** (closed). Provider 인터페이스는 차원 가변으로 두되, 운영 default는 768. Chunk 수가 적은 동안은 ivfflat가 sequential scan보다 느릴 수 있다는 점은 Day 20에서 모니터링한다. §9에 반영.
+3. **gemini-embedding-001, 3072d, ivfflat lists=100** (closed, revised after API smoke). Provider 인터페이스는 차원 가변으로 두되, 운영 default는 3072. Chunk 수가 적은 동안은 ivfflat가 sequential scan보다 느릴 수 있다는 점은 Day 20에서 모니터링한다. §9에 반영.
 4. **Report payload 위치** (closed). `agent_runs.final_report jsonb` 컬럼을 신규 추가하고, `/v1/compliance/report` 응답은 기존 schema(`ReportResponse`)를 유지한다. `finalize_report` tool은 양쪽 모두에 동기 기록한다. §4, §5.2, §11에 반영.

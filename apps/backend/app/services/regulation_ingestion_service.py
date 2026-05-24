@@ -12,7 +12,12 @@ from app.repositories.regulation_versions_repo import (
     RegulationVersionsRepository,
     get_regulation_versions_repository,
 )
+from app.rag.embedding_provider import EmbeddingProvider, get_embedding_provider
 from app.schemas.regulation import IngestResult
+from app.core.logging import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class RegulationIngestionService:
@@ -20,9 +25,11 @@ class RegulationIngestionService:
         self,
         sources_repository: RegulationSourcesRepository,
         versions_repository: RegulationVersionsRepository,
+        embedding_provider: EmbeddingProvider | None = None,
     ) -> None:
         self._sources_repository = sources_repository
         self._versions_repository = versions_repository
+        self._embedding_provider = embedding_provider or get_embedding_provider()
 
     def ingest_payload(
         self,
@@ -60,12 +67,14 @@ class RegulationIngestionService:
             )
 
         latest = self._versions_repository.latest_for_source(source_id)
+        embeddings = self._embed_chunks(normalized.chunks)
         chunks = [
             {
                 "chunk_index": index,
                 "chunk_text": chunk,
                 "risk_categories": normalized.risk_categories,
                 "product_type": normalized.product_type,
+                "embedding": embeddings[index] if index < len(embeddings) else None,
             }
             for index, chunk in enumerate(normalized.chunks)
         ]
@@ -105,9 +114,19 @@ class RegulationIngestionService:
             return extract_html_text(raw_bytes)
         return raw_bytes.decode("utf-8", errors="ignore")
 
+    def _embed_chunks(self, chunks: list[str]) -> list[list[float] | None]:
+        if not chunks:
+            return []
+        try:
+            return self._embedding_provider.embed_batch(chunks)
+        except Exception:
+            logger.exception("Embedding generation failed; storing regulation chunks without embeddings.")
+            return [None for _ in chunks]
+
 
 def get_regulation_ingestion_service() -> RegulationIngestionService:
     return RegulationIngestionService(
         sources_repository=get_regulation_sources_repository(),
         versions_repository=get_regulation_versions_repository(),
+        embedding_provider=get_embedding_provider(),
     )

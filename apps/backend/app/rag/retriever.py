@@ -14,7 +14,15 @@ class RegulationRetriever:
         risk_categories: list[str],
         product_type: str,
         limit: int = 5,
+        query: str | None = None,
     ) -> list[RegulationDoc]:
+        if query:
+            return self._docs_repository.vector_search(
+                query_text=query,
+                risk_categories=risk_categories,
+                product_type=product_type,
+                limit=limit,
+            )
         return self._docs_repository.search(
             risk_categories=risk_categories,
             product_type=product_type,

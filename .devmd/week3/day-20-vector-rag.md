@@ -4,7 +4,7 @@
 
 `app/rag/embeddings.py`의 character-code-sum placeholder를 폐기하고, 실제 벡터 검색을 도입한다. agent tool `search_regulation`이 query text 기반 semantic search를 사용할 수 있게 한다.
 
-전제: Day 19에서 `regulation_chunks.embedding vector(768)` 컬럼과 ingestion 파이프라인이 준비되어 있다.
+전제: Day 19에서 `regulation_chunks.embedding vector(3072)` 컬럼과 ingestion 파이프라인이 준비되어 있다.
 
 참조 문서:
 
@@ -32,7 +32,7 @@ apps/backend/tests/test_search_regulation_tool_query.py (NEW)
 ### Embedding provider
 
 - [ ] `embedding_provider.py`에 두 구현:
-  - `GeminiEmbeddingProvider`: `text-embedding-004`, 768차원, batch 호출 지원.
+  - `GeminiEmbeddingProvider`: `gemini-embedding-001`, 3072차원, batch 호출 지원.
   - `DeterministicHashEmbeddingProvider`: 오프라인/테스트용. 동일 입력은 동일 벡터 보장. (단순 SHA → float 변환).
 - [ ] factory `get_embedding_provider()`: 설정 우선순위 = Gemini key 있음 → Gemini, 없음 → deterministic. 운영 환경에서 deterministic으로 떨어지면 startup 경고 로그.
 - [ ] 기존 `app/rag/embeddings.py`는 위 두 구현을 re-export하는 얇은 facade로 축소. 직접 호출하던 코드는 모두 provider 경유로 변경.
@@ -103,13 +103,27 @@ curl -X POST http://localhost:8000/v1/agent/run \
 
 - pgvector 인덱스 `ivfflat lists=100`은 chunk 수가 적을 때(<10000) 오히려 sequential scan보다 느릴 수 있다. 데이터 양에 따라 `hnsw`로 교체 검토. Day 19 종료 시점에는 ivfflat로 충분.
 - Gemini embedding API 요금/쿼터 확인. 1회 ingestion 시 chunk 수가 폭증하면 batch 제한 필요.
-- 한국어 임베딩 품질은 모델별 편차가 있다. `text-embedding-004`가 한국어를 잘 다루지 못하면 Week 4에서 multilingual-e5 등으로 교체 가능하도록 provider 인터페이스를 유지.
+- 한국어 임베딩 품질은 모델별 편차가 있다. `gemini-embedding-001`가 한국어를 잘 다루지 못하면 Week 4에서 `gemini-embedding-2` 또는 multilingual-e5 등으로 교체 가능하도록 provider 인터페이스를 유지.
 - query 인자가 너무 길거나 짧으면 검색 품질이 떨어진다. tool layer에서 길이 검증(예: 5~300자) 후 truncation/expansion.
 
 ## Completion Log
 
-- Status: NOT_STARTED
-- Implemented files: -
-- Test commands executed: -
-- Test result summary: -
-- Known issues: -
+- Status: DONE (2026-05-24)
+- Implemented files:
+  - `apps/backend/app/rag/embedding_provider.py`
+  - `apps/backend/app/rag/embeddings.py`
+  - `apps/backend/app/rag/vector_search.py`
+  - `apps/backend/app/repositories/regulation_docs_repo.py`
+  - `apps/backend/app/services/regulation_ingestion_service.py`
+  - `apps/backend/app/jobs/backfill_embeddings.py`
+  - `infra/supabase/migrations/2026-05-27_pgvector_indexes.sql`
+  - `apps/backend/tests/test_embedding_provider.py`
+  - `apps/backend/tests/test_vector_search.py`
+  - `apps/backend/tests/test_search_regulation_tool_query.py`
+- Test commands executed:
+  - `ruff check app tests`
+  - `docker run --rm --add-host=host.docker.internal:host-gateway -e OPENAI_BASE_URL=http://host.docker.internal:18080/v1 ... "ruff check app tests && pytest"`
+- Test result summary: Docker backend validation passed: 109 passed, 1 warning. Local LLM integration smoke executed and passed.
+- Known issues:
+  - Gemini embedding provider is implemented, fake-transport tested, and smoke-tested with the real API key using `gemini-embedding-001`/`gemini-embedding-2`. The removed `text-embedding-004` default returned 404.
+  - Supabase backfill job uses the existing REST helper and scans a limited batch; larger production backfills may need pagination.

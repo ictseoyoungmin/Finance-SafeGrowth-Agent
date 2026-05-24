@@ -33,7 +33,7 @@ create table if not exists regulation_docs (
   body text not null,
   snippet text not null,
   guideline_snippet text not null,
-  embedding vector(768),
+  embedding vector(3072),
   created_at timestamptz not null default now()
 );
 
@@ -80,7 +80,7 @@ create table if not exists regulation_chunks (
   chunk_text text not null,
   risk_categories text[] not null default '{}',
   product_type text,
-  embedding vector(768),
+  embedding vector(3072),
   created_at timestamptz not null default now(),
   unique (version_id, chunk_index)
 );
@@ -99,6 +99,10 @@ create index if not exists regulation_chunks_product_type_idx
 
 create index if not exists regulation_chunks_risk_categories_idx
   on regulation_chunks using gin(risk_categories);
+
+create index if not exists regulation_chunks_embedding_idx
+  on regulation_chunks using ivfflat (embedding vector_cosine_ops)
+  with (lists = 100);
 
 create table if not exists approval_logs (
   id uuid primary key default gen_random_uuid(),
@@ -124,7 +128,7 @@ create table if not exists audit_logs (
 );
 
 create or replace function match_regulation_docs(
-  query_embedding vector(768),
+  query_embedding vector(3072),
   match_product_type text,
   match_risk_categories text[],
   match_count int default 5
@@ -158,6 +162,43 @@ as $$
   limit match_count;
 $$;
 
+create or replace function match_regulation_chunks(
+  query_embedding vector(3072),
+  match_count int default 5,
+  match_product_type text default '공통',
+  match_risk_categories text[] default '{}'
+)
+returns table (
+  id bigint,
+  version_id uuid,
+  chunk_text text,
+  risk_categories text[],
+  product_type text,
+  similarity float
+)
+language sql
+stable
+as $$
+  select
+    c.id,
+    c.version_id,
+    c.chunk_text,
+    c.risk_categories,
+    c.product_type,
+    1 - (c.embedding <=> query_embedding) as similarity
+  from regulation_chunks c
+  join regulation_versions v on v.id = c.version_id
+  where c.embedding is not null
+    and v.superseded_by is null
+    and c.product_type in (match_product_type, '공통')
+    and (
+      coalesce(array_length(match_risk_categories, 1), 0) = 0
+      or c.risk_categories && match_risk_categories
+    )
+  order by c.embedding <=> query_embedding
+  limit match_count;
+$$;
+
 grant usage on schema public to anon, authenticated, service_role;
 
 grant select, insert, update, delete on table public.contents to service_role;
@@ -169,3 +210,4 @@ grant select, insert, update, delete on table public.regulation_sources to servi
 grant select, insert, update, delete on table public.regulation_versions to service_role;
 grant select, insert, update, delete on table public.regulation_chunks to service_role;
 grant usage, select on sequence public.regulation_chunks_id_seq to service_role;
+grant execute on function match_regulation_chunks(vector, int, text, text[]) to service_role;

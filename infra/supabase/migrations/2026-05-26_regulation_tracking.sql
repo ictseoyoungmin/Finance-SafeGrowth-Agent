@@ -34,7 +34,7 @@ create table if not exists regulation_chunks (
   chunk_text text not null,
   risk_categories text[] not null default '{}',
   product_type text,
-  embedding vector(768),
+  embedding vector(3072),
   created_at timestamptz not null default now(),
   unique (version_id, chunk_index)
 );

@@ -13,7 +13,7 @@ SYSTEM_PROMPT = (
     "- If a content_id is provided but the original text is missing, call fetch_content first.\n"
     "- Always call scan_rules before judging risk.\n"
     "- If scan_rules reports any HIGH or MEDIUM finding, call search_regulation with the "
-    "  reported risk_categories and the product_type from the content.\n"
+    "  reported risk_categories, the product_type from the content, and a focused query string.\n"
     "- If any flagged span exists, call draft_rewrite to obtain conservative and marketing variants.\n"
     "- If you need a missing input, want approval, or want a human to choose between revisions, "
     "  call request_human_review with a clear question. The run will pause until the user replies.\n"

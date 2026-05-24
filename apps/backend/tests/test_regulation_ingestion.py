@@ -1,17 +1,27 @@
 from app.ingestion.extractors.html import extract_html_text
+from app.integrations.supabase_client import SupabaseClient, SupabaseConfig
 from app.ingestion.normalizer import normalize_regulation_text
 from app.repositories.regulation_sources_repo import FALLBACK_REGULATION_SOURCES
+from app.repositories.regulation_sources_repo import RegulationSourcesRepository
 from app.repositories.regulation_versions_repo import (
     FALLBACK_REGULATION_CHUNKS,
     FALLBACK_REGULATION_VERSIONS,
     RegulationVersionsRepository,
 )
 from app.services.regulation_ingestion_service import RegulationIngestionService
-from app.repositories.regulation_sources_repo import RegulationSourcesRepository
-from app.integrations.supabase_client import SupabaseClient, SupabaseConfig
 
 
 SOURCE_ID = "11111111-1111-4111-8111-111111111111"
+
+
+class TinyEmbeddingProvider:
+    dimensions = 2
+
+    def embed(self, text: str) -> list[float]:
+        return self.embed_batch([text])[0]
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        return [[1.0, 0.0] for _ in texts]
 
 
 def setup_function() -> None:
@@ -24,6 +34,7 @@ def _service() -> RegulationIngestionService:
     return RegulationIngestionService(
         sources_repository=RegulationSourcesRepository(supabase),
         versions_repository=RegulationVersionsRepository(supabase),
+        embedding_provider=TinyEmbeddingProvider(),
     )
 
 
@@ -61,6 +72,7 @@ def test_ingest_payload_is_idempotent_for_same_hash() -> None:
     assert second.version_id == result.version_id
     assert len(FALLBACK_REGULATION_VERSIONS) == 1
     assert len(FALLBACK_REGULATION_CHUNKS) == result.chunk_count
+    assert FALLBACK_REGULATION_CHUNKS[0]["embedding"] == [1.0, 0.0]
 
 
 def test_ingest_payload_supersedes_previous_version() -> None:

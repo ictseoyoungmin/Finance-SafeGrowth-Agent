@@ -14,8 +14,7 @@ class SearchRegulationTool:
         "risk_categories and product_type. Returns up to `limit` evidence items with "
         "title, version/version_id, snippet, guideline_snippet, and similarity score. Prefer calling "
         "this after scan_rules so the risk_categories list is meaningful. The optional "
-        "`query` string will be used by the Day 20 vector search; for now it is logged "
-        "for tracing but does not affect filtering."
+        "`query` string is used for semantic vector search when available."
     )
     args_model = SearchRegulationArgs
     result_model = SearchRegulationResult
@@ -28,6 +27,7 @@ class SearchRegulationTool:
             risk_categories=list(args.risk_categories),
             product_type=args.product_type,
             limit=args.limit,
+            query=args.query,
         )
         return SearchRegulationResult(
             evidence=[

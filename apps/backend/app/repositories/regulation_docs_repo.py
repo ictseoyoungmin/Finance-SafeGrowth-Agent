@@ -7,6 +7,8 @@ from app.repositories.regulation_versions_repo import (
     FALLBACK_REGULATION_CHUNKS,
     FALLBACK_REGULATION_VERSIONS,
 )
+from app.rag.embedding_provider import EmbeddingProvider, get_embedding_provider
+from app.rag.vector_search import RegulationChunkHit, cosine_search
 
 
 @dataclass(frozen=True)
@@ -60,8 +62,13 @@ logger = get_logger(__name__)
 
 
 class RegulationDocsRepository:
-    def __init__(self, supabase_client: SupabaseClient) -> None:
+    def __init__(
+        self,
+        supabase_client: SupabaseClient,
+        embedding_provider: EmbeddingProvider | None = None,
+    ) -> None:
         self._supabase_client = supabase_client
+        self._embedding_provider = embedding_provider or get_embedding_provider()
 
     def search(
         self,
@@ -78,6 +85,42 @@ class RegulationDocsRepository:
                 logger.exception("Supabase regulation docs lookup failed; falling back to demo docs.")
 
         return self._fallback_search(risk_categories, product_type, limit)
+
+    def vector_search(
+        self,
+        query_text: str,
+        risk_categories: list[str],
+        product_type: str,
+        limit: int = 5,
+    ) -> list[RegulationDoc]:
+        query = query_text.strip()
+        if not query:
+            return self.search(risk_categories, product_type, limit)
+
+        try:
+            embedding = self._embedding_provider.embed(query)
+            hits = cosine_search(
+                self._supabase_client,
+                embedding,
+                top_k=limit,
+                product_type=product_type,
+                risk_categories=risk_categories,
+            )
+            docs = self._hits_to_docs(hits)
+        except Exception:
+            logger.exception("Vector regulation search failed; falling back to category search.")
+            return self.search(risk_categories, product_type, limit)
+
+        if len(docs) < limit or (docs and docs[0].similarity < 0.25):
+            existing = {doc.version_id or doc.evidence_id for doc in docs}
+            for doc in self.search(risk_categories, product_type, limit):
+                key = doc.version_id or doc.evidence_id
+                if key not in existing:
+                    docs.append(doc)
+                    existing.add(key)
+                if len(docs) >= limit:
+                    break
+        return docs[:limit]
 
     def _supabase_search(
         self,
@@ -152,6 +195,39 @@ class RegulationDocsRepository:
             docs.append(self._chunk_row_to_doc(row, version, requested))
             seen_versions.add(version_id)
         return sorted(docs, key=lambda doc: (-doc.similarity, doc.evidence_id))[:limit]
+
+    def _hits_to_docs(self, hits: list[RegulationChunkHit]) -> list[RegulationDoc]:
+        docs: list[RegulationDoc] = []
+        seen_versions: set[str] = set()
+        for hit in hits:
+            if hit.version_id in seen_versions:
+                continue
+            version = self._version_row(hit.version_id)
+            if not version or version.get("superseded_by"):
+                continue
+            docs.append(self._hit_to_doc(hit, version))
+            seen_versions.add(hit.version_id)
+        return docs
+
+    def _version_row(self, version_id: str) -> dict[str, Any] | None:
+        if self._supabase_client.is_configured:
+            return self._supabase_client.select_one("regulation_versions", {"id": version_id})
+        return FALLBACK_REGULATION_VERSIONS.get(version_id)
+
+    def _hit_to_doc(self, hit: RegulationChunkHit, version: dict[str, Any]) -> RegulationDoc:
+        return RegulationDoc(
+            evidence_id=f"reg-chunk-{hit.id}",
+            title=str(version.get("title") or ""),
+            version=str(version.get("version_label") or version.get("id") or ""),
+            product_type=hit.product_type,
+            risk_categories=hit.risk_categories,
+            snippet=hit.chunk_text[:220],
+            guideline_snippet=_first_sentence(hit.chunk_text),
+            similarity=max(0.0, min(hit.similarity, 1.0)),
+            version_id=str(version.get("id") or hit.version_id),
+            version_label=version.get("version_label"),
+            effective_date=version.get("effective_date"),
+        )
 
     def _chunk_row_to_doc(
         self,

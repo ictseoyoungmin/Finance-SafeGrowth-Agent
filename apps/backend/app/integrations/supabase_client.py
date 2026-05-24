@@ -72,6 +72,22 @@ class SupabaseClient:
             raise RuntimeError(f"Supabase patch on {table} returned a non-list response.")
         return rows[0] if rows else None
 
+    def rpc(self, function_name: str, payload: dict[str, Any]) -> list[dict[str, Any]]:
+        if not self.is_configured:
+            raise RuntimeError("Supabase is not configured.")
+
+        response = httpx.post(
+            f"{self._base_url()}/rest/v1/rpc/{function_name}",
+            headers=self._headers(),
+            json=payload,
+            timeout=10,
+        )
+        response.raise_for_status()
+        rows = response.json()
+        if not isinstance(rows, list):
+            raise RuntimeError(f"Supabase RPC {function_name} returned a non-list response.")
+        return rows
+
     def select_many(
         self,
         table: str,
@@ -102,9 +118,12 @@ class SupabaseClient:
         return rows
 
     def _table_url(self, table: str) -> str:
+        return f"{self._base_url()}/rest/v1/{table}"
+
+    def _base_url(self) -> str:
         if self.config.url is None:
             raise RuntimeError("Supabase URL is not configured.")
-        return f"{self.config.url.rstrip('/')}/rest/v1/{table}"
+        return self.config.url.rstrip("/")
 
     def _headers(self, prefer: str | None = None) -> dict[str, str]:
         service_role_key = self.config.service_role_key or ""

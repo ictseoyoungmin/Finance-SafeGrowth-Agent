@@ -82,7 +82,7 @@ create table regulation_chunks (
   chunk_text text not null,
   risk_categories text[] default '{}',
   product_type text,
-  embedding vector(768),               -- Day 20에서 채움. 이날은 NULL 허용.
+  embedding vector(3072),              -- Day 20에서 채움. 이날은 NULL 허용.
   created_at timestamptz default now()
 );
 
