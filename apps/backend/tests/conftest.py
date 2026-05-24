@@ -1,12 +1,16 @@
 import os
 
 
-os.environ["GEMINI_API_KEY"] = "replace-me"
-os.environ["SUPABASE_URL"] = "https://replace-me.supabase.co"
-os.environ["SUPABASE_ANON_KEY"] = "replace-me"
-os.environ["SUPABASE_SERVICE_ROLE_KEY"] = "replace-me"
-os.environ["NO_PROXY"] = "*"
-os.environ["no_proxy"] = "*"
+os.environ.setdefault("GEMINI_API_KEY", "replace-me")
+os.environ.setdefault("LLM_PROVIDER", "openai_compatible")
+os.environ.setdefault("OPENAI_BASE_URL", "http://127.0.0.1:18080/v1")
+os.environ.setdefault("OPENAI_API_KEY", "local-not-required")
+os.environ.setdefault("OPENAI_MODEL", "gemma-4-local")
+os.environ.setdefault("SUPABASE_URL", "https://replace-me.supabase.co")
+os.environ.setdefault("SUPABASE_ANON_KEY", "replace-me")
+os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "replace-me")
+os.environ.setdefault("NO_PROXY", "*")
+os.environ.setdefault("no_proxy", "*")
 
 for proxy_key in (
     "ALL_PROXY",

@@ -19,4 +19,4 @@ class RewriteResponse(BaseModel):
     revised_text_conservative: str
     revised_text_marketing: str
     changes: list[RewriteChange]
-    source: Literal["gemini", "fallback"] = "fallback"
+    source: Literal["llm", "gemini", "fallback"] = "fallback"

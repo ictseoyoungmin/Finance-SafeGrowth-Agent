@@ -11,6 +11,14 @@ class Settings(BaseSettings):
     )
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-1.5-flash"
+    llm_provider: str = "gemini"
+    openai_base_url: str = "http://127.0.0.1:18080/v1"
+    openai_api_key: str | None = "local-not-required"
+    openai_model: str = "gemma-4-local"
+    llm_timeout_seconds: int = 600
+    llm_thinking_enabled: bool = False
+    llm_max_tokens: int = 1024
+    llm_temperature: float = 0.2
     supabase_url: str | None = None
     supabase_anon_key: str | None = None
     supabase_service_role_key: str | None = None

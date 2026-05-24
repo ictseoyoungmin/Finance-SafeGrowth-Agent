@@ -54,7 +54,7 @@ apps/backend/tests/test_agent_trace.py         (NEW)
 §14 4건 — 확정 후 문서·코드에 반영:
 
 1. **SSE vs polling**: 기본 SSE. Render Free tier에서 SSE keep-alive가 5분 timeout으로 끊기는지 사전 확인. 끊기면 25s heartbeat ping 추가.
-2. **Regulation connector 첫 대상**: admin-upload-first로 결정 권장. 외부 사이트 크롤링 정책 리스크 회피, Day 18에서 RSS connector를 그 위에 얹는다.
+2. **Regulation connector 첫 대상**: admin-upload-first로 결정 권장. 외부 사이트 크롤링 정책 리스크 회피, Day 19에서 RSS connector를 그 위에 얹는다.
 3. **Embedding 차원**: 768 (text-embedding-004 default). pgvector ivfflat lists 100으로 시작.
 4. **Report payload 위치**: `agent_runs.final_report jsonb` 컬럼 추가, `/v1/compliance/report` 응답은 기존 schema 유지. 동기화는 finalize_report tool에서 양쪽 다 기록.
 
@@ -112,7 +112,7 @@ cat infra/supabase/migrations/2026-05-25_agent_tables.sql
   - full suite: 49 passed, 1 warning (existing starlette/python_multipart deprecation)
 - Open decisions closed (reflected in `00-architecture-and-agent-design.md` §3, §5.2, §7, §8, §9, §10, §14):
   - SSE + 25s heartbeat + 1s polling fallback
-  - Day 18 first connector = `admin_upload` only; RSS placeholder metadata-only
+  - Day 19 first connector = `admin_upload` only; RSS placeholder metadata-only
   - Embedding default = text-embedding-004, 768d, ivfflat lists=100
   - `agent_runs.final_report jsonb` column added; `ReportResponse` shape preserved
 - Schema additions surfaced (Day 15 only):

@@ -1,15 +1,15 @@
-# Day 19 — Vector RAG Upgrade
+# Day 20 — Vector RAG Upgrade
 
 ## Goal
 
 `app/rag/embeddings.py`의 character-code-sum placeholder를 폐기하고, 실제 벡터 검색을 도입한다. agent tool `search_regulation`이 query text 기반 semantic search를 사용할 수 있게 한다.
 
-전제: Day 18에서 `regulation_chunks.embedding vector(768)` 컬럼과 ingestion 파이프라인이 준비되어 있다.
+전제: Day 19에서 `regulation_chunks.embedding vector(768)` 컬럼과 ingestion 파이프라인이 준비되어 있다.
 
 참조 문서:
 
 - `.devmd/week3/00-architecture-and-agent-design.md` §9
-- `.devmd/week3/day-18-regulation-ingestion.md`
+- `.devmd/week3/day-19-regulation-ingestion.md`
 
 ## Files
 

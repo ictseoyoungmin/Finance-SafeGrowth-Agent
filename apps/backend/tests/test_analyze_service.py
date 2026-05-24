@@ -1,12 +1,15 @@
-from app.integrations.gemini_client import GeminiResult
+from app.integrations.llm import LlmJsonResult
 from app.rules.rule_engine import RuleEngine
 from app.schemas.compliance import AnalyzeRequest
 from app.services.analyze_service import AnalyzeService
 
 
-class FakeGeminiClient:
-    def generate_json(self, prompt: str) -> GeminiResult:
-        return GeminiResult(
+class ScriptedJsonLlmProvider:
+    model = "fake-llm"
+    is_configured = True
+
+    def generate_json(self, prompt: str) -> LlmJsonResult:
+        return LlmJsonResult(
             payload={
                 "flagged_spans": [
                     {
@@ -25,7 +28,7 @@ class FakeGeminiClient:
                     },
                 ]
             },
-            model_version="fake-gemini",
+            model_version="fake-llm",
         )
 
 
@@ -47,11 +50,11 @@ class FakeAuditService:
         self.content_id = content_id
 
 
-def test_analyze_merges_gemini_detected_spans_with_rule_spans() -> None:
+def test_analyze_merges_llm_detected_spans_with_rule_spans() -> None:
     risk_repository = FakeRiskResultsRepository()
     service = AnalyzeService(
         rule_engine=RuleEngine(),
-        gemini_client=FakeGeminiClient(),  # type: ignore[arg-type]
+        llm_provider=ScriptedJsonLlmProvider(),  # type: ignore[arg-type]
         content_repository=FakeContentRepository(),  # type: ignore[arg-type]
         risk_results_repository=risk_repository,  # type: ignore[arg-type]
         audit_service=FakeAuditService(),  # type: ignore[arg-type]
@@ -72,7 +75,7 @@ def test_analyze_merges_gemini_detected_spans_with_rule_spans() -> None:
     assert "누구나" in spans
     assert spans["누구나"].source == "rule"
     assert "무려 50% 및 증가" in spans
-    assert spans["무려 50% 및 증가"].source == "gemini"
+    assert spans["무려 50% 및 증가"].source == "llm"
     assert "" not in spans
     assert risk_repository.saved is not None
-    assert any(span.source == "gemini" for span in risk_repository.saved["flagged_spans"])
+    assert any(span.source == "llm" for span in risk_repository.saved["flagged_spans"])

@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
+import pytest
 
+from app.agent.runner import AgentRunner, get_agent_runner
 from app.main import app
 from app.repositories.agent_runs_repo import FALLBACK_AGENT_RUNS
 from app.repositories.agent_steps_repo import FALLBACK_AGENT_STEPS
@@ -7,6 +9,16 @@ from app.repositories.approval_logs_repo import FALLBACK_APPROVAL_LOGS
 from app.repositories.audit_logs_repo import FALLBACK_AUDIT_LOGS
 from app.repositories.contents_repo import FALLBACK_CONTENTS
 from app.repositories.risk_results_repo import FALLBACK_RISK_RESULTS
+from tests._agent_fakes import ScriptedLlmProvider
+
+
+@pytest.fixture(autouse=True)
+def fallback_agent_runner_override():
+    app.dependency_overrides[get_agent_runner] = lambda: AgentRunner(
+        llm_provider=ScriptedLlmProvider(configured=False)
+    )
+    yield
+    app.dependency_overrides.pop(get_agent_runner, None)
 
 
 def _reset_fallback_stores() -> None:

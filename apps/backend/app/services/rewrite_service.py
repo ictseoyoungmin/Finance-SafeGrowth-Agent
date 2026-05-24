@@ -3,7 +3,7 @@ import json
 import re
 from typing import Any
 
-from app.integrations.gemini_client import GeminiClient, get_gemini_client
+from app.integrations.llm import LlmProvider, get_llm_provider
 from app.repositories.contents_repo import ContentRepository, get_content_repository
 from app.repositories.regulation_docs_repo import RegulationDocsRepository, get_regulation_docs_repository
 from app.repositories.risk_results_repo import RiskResultsRepository, get_risk_results_repository
@@ -38,12 +38,12 @@ FALLBACK_REWRITE = RewriteResponse(
 class RewriteService:
     def __init__(
         self,
-        gemini_client: GeminiClient,
+        llm_provider: LlmProvider,
         content_repository: ContentRepository,
         risk_results_repository: RiskResultsRepository,
         regulation_docs_repository: RegulationDocsRepository,
     ) -> None:
-        self._gemini_client = gemini_client
+        self._llm = llm_provider
         self._content_repository = content_repository
         self._risk_results_repository = risk_results_repository
         self._regulation_docs_repository = regulation_docs_repository
@@ -51,7 +51,7 @@ class RewriteService:
     def rewrite(self, request: RewriteRequest) -> RewriteResponse:
         context = self._resolve_context(request.content_id)
         prompt = self._build_prompt(request, context)
-        result = self._gemini_client.generate_json(prompt)
+        result = self._llm.generate_json(prompt)
         if result:
             parsed = self._parse_response(request.content_id, result.payload, context)
             if parsed:
@@ -162,14 +162,14 @@ class RewriteService:
         try:
             normalized = {
                 **payload,
-                "changes": self._sanitize_gemini_changes(payload, context),
-                "source": "gemini",
+                "changes": self._sanitize_llm_changes(payload, context),
+                "source": "llm",
             }
             return RewriteResponse(content_id=content_id, **normalized)
         except ValueError:
             return None
 
-    def _sanitize_gemini_changes(self, payload: dict[str, Any], context: dict[str, Any]) -> list[dict[str, str]]:
+    def _sanitize_llm_changes(self, payload: dict[str, Any], context: dict[str, Any]) -> list[dict[str, str]]:
         original_text = str(context["content"].get("original_text") or "")
         raw_changes = payload.get("changes")
         if not isinstance(raw_changes, list):
@@ -196,7 +196,7 @@ class RewriteService:
                 {
                     "original": original,
                     "replacement": replacement or "오인 가능성을 낮춘 표현",
-                    "reason": reason or "Gemini 수정안의 변경 근거입니다.",
+                    "reason": reason or "LLM 수정안의 변경 근거입니다.",
                 }
             )
             seen.add(original)
@@ -215,7 +215,7 @@ class RewriteService:
             {
                 "original": "전체 문안",
                 "replacement": "수정안 본문",
-                "reason": "Gemini가 전체 문장 기준 수정안을 반환했습니다.",
+                "reason": "LLM이 전체 문장 기준 수정안을 반환했습니다.",
             }
         ]
 
@@ -377,7 +377,7 @@ class RewriteService:
 
 def get_rewrite_service() -> RewriteService:
     return RewriteService(
-        gemini_client=get_gemini_client(),
+        llm_provider=get_llm_provider(),
         content_repository=get_content_repository(),
         risk_results_repository=get_risk_results_repository(),
         regulation_docs_repository=get_regulation_docs_repository(),

@@ -1,5 +1,6 @@
 from typing import Any
 
+from app.integrations.llm.base import LlmMessage
 from app.schemas.agent import AgentRunRequest, AgentStep
 
 
@@ -55,14 +56,14 @@ def build_user_text(request: AgentRunRequest) -> str:
     return "\n\n".join(parts)
 
 
-def build_contents(request: AgentRunRequest, steps: list[AgentStep]) -> list[dict[str, Any]]:
-    contents: list[dict[str, Any]] = [
+def build_messages(request: AgentRunRequest, steps: list[AgentStep]) -> list[LlmMessage]:
+    messages: list[LlmMessage] = [
         {"role": "user", "parts": [{"text": build_user_text(request)}]}
     ]
 
     for step in steps:
         if step.step_type == "tool_call" and step.tool_name:
-            contents.append(
+            messages.append(
                 {
                     "role": "model",
                     "parts": [
@@ -76,7 +77,7 @@ def build_contents(request: AgentRunRequest, steps: list[AgentStep]) -> list[dic
                 }
             )
         elif step.step_type == "tool_result" and step.tool_name:
-            contents.append(
+            messages.append(
                 {
                     "role": "user",
                     "parts": [
@@ -90,7 +91,7 @@ def build_contents(request: AgentRunRequest, steps: list[AgentStep]) -> list[dic
                 }
             )
         elif step.step_type == "human_response":
-            contents.append(
+            messages.append(
                 {
                     "role": "user",
                     "parts": [
@@ -104,4 +105,8 @@ def build_contents(request: AgentRunRequest, steps: list[AgentStep]) -> list[dic
                 }
             )
 
-    return contents
+    return messages
+
+
+def build_contents(request: AgentRunRequest, steps: list[AgentStep]) -> list[dict[str, Any]]:
+    return build_messages(request, steps)

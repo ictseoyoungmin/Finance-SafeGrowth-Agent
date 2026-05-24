@@ -20,7 +20,7 @@ class StubRewriteService:
 
 class ExplodingRewriteService:
     def rewrite(self, request: RewriteRequest) -> RewriteResponse:
-        raise RuntimeError("gemini boom")
+        raise RuntimeError("llm boom")
 
 
 def _state() -> object:
@@ -39,7 +39,7 @@ def test_draft_rewrite_returns_rewrite_response_from_service() -> None:
                 reason="확정 수익 오인 표현 완화",
             )
         ],
-        source="gemini",
+        source="llm",
     )
     service = StubRewriteService(response)
     tool = DraftRewriteTool(rewrite_service=service)
@@ -54,7 +54,7 @@ def test_draft_rewrite_returns_rewrite_response_from_service() -> None:
 
     assert result.revised_text_conservative == "보수안"
     assert result.revised_text_marketing == "마케팅안"
-    assert result.source == "gemini"
+    assert result.source == "llm"
     assert len(result.changes) == 1
     assert service.calls[0].mode == "marketing_balanced"
     assert service.calls[0].content_id == "22222222-2222-4222-8222-222222222222"

@@ -4,7 +4,7 @@ from app.schemas.agent import AgentRunRequest
 
 from tests._agent_fakes import (
     InMemoryAgentRunsRepository,
-    ScriptedGeminiClient,
+    ScriptedLlmProvider,
     build_stub_registry,
     fn_call,
     in_memory_trace_recorder,
@@ -17,7 +17,7 @@ CONTENT_ID = "22222222-2222-4222-8222-222222222222"
 def test_happy_path_executes_full_tool_chain_and_ends_done() -> None:
     runs_repo = InMemoryAgentRunsRepository()
     registry = build_stub_registry(runs_repository=runs_repo)
-    gemini = ScriptedGeminiClient(
+    llm = ScriptedLlmProvider(
         [
             fn_call("scan_rules", {"text": "demo"}, in_tokens=120, out_tokens=20),
             fn_call(
@@ -53,7 +53,7 @@ def test_happy_path_executes_full_tool_chain_and_ends_done() -> None:
     recorder = in_memory_trace_recorder()
     runner = AgentRunner(
         registry=registry,
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,
         runs_repository=runs_repo,  # type: ignore[arg-type]
         trace_recorder=recorder,
         limits=AgentLimits(max_iterations=8, deadline_seconds=60),
@@ -92,7 +92,7 @@ def test_happy_path_executes_full_tool_chain_and_ends_done() -> None:
     assert persisted is not None
     assert persisted["status"] == "done"
     assert persisted["final_decision"] == "approve"
-    assert persisted["model"] == "fake-gemini-1.5-flash"
+    assert persisted["model"] == "fake-llm"
 
 
 def test_happy_path_no_tool_call_forces_finalize_with_none_decision() -> None:
@@ -100,10 +100,10 @@ def test_happy_path_no_tool_call_forces_finalize_with_none_decision() -> None:
 
     runs_repo = InMemoryAgentRunsRepository()
     registry = build_stub_registry(runs_repository=runs_repo)
-    gemini = ScriptedGeminiClient([text_response("플레인 텍스트 응답")])
+    llm = ScriptedLlmProvider([text_response("플레인 텍스트 응답")])
     runner = AgentRunner(
         registry=registry,
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,
         runs_repository=runs_repo,  # type: ignore[arg-type]
         trace_recorder=in_memory_trace_recorder(),
     )

@@ -276,7 +276,7 @@ POST /v1/agent/runs/{run_id}/cancel
 
 기존 `/v1/compliance/*`는 그대로 유지. Agent는 내부적으로 이 endpoint들을 호출하지 않고 service layer를 직접 사용한다 (HTTP 자가 호출 비용 회피).
 
-## 8. Regulation tracking (Day 18)
+## 8. Regulation tracking (Day 19)
 
 문제: `regulation_docs`가 사실상 상수다. "최신 규제 자동 추적" 명제 불충족.
 
@@ -289,21 +289,21 @@ POST /v1/agent/runs/{run_id}/cancel
 - 배치: APScheduler 또는 `python -m app.jobs.regulation_refresh` CLI. Render Cron Job으로 등록.
 - 변경 감지 시 agent에 노출되는 RAG index도 갱신한다.
 
-## 9. Vector RAG (Day 19)
+## 9. Vector RAG (Day 20)
 
 - 현재 `app/rag/embeddings.py`는 character-code sum placeholder. 폐기.
 - 새 embedding: Gemini `text-embedding-004` (or fallback: deterministic local hash for offline tests).
 - Supabase pgvector column `regulation_chunks.embedding vector(768)`.
 - `RegulationDocsRepository.search` 보조 메서드 `vector_search(query_text, top_k)` 추가. tool `search_regulation`이 이를 우선 사용하고, 결과 부족 시 카테고리 필터로 보조.
-- 청크 단위는 600자(기존 `chunker.chunk_text` 유지) 또는 문단 기준 중 선택. Day 19에서 결정.
+- 청크 단위는 600자(기존 `chunker.chunk_text` 유지) 또는 문단 기준 중 선택. Day 20에서 결정.
 
-## 10. Frontend agent trace UI (Day 20)
+## 10. Frontend agent trace UI (Day 21)
 
 목표: "5-step wizard"를 "agent run viewer"로 재구성.
 
 - 진입: 입력 화면(현 InputStep) → `submit` → `/v1/agent/run` 호출 → run_id 반환.
 - Run view: 좌측 trace timeline (`scan_rules`, `search_regulation`, ...), 우측 상세 패널.
-- Streaming: SSE 또는 polling 1s 둘 중 선택(Day 20에서 결정). 둘 다 backend `/stream`은 SSE.
+- Streaming: SSE 또는 polling 1s 둘 중 선택(Day 21에서 결정). 둘 다 backend `/stream`은 SSE.
 - Human-in-the-loop: agent가 `request_human_review` 호출 시 우측 패널에 승인/거절/추가지시 입력 UI.
 - 최종 리포트: agent가 `finalize_report` 호출 후 표시. 기존 `ReportStep` 디자인 재사용.
 - Legacy route `/legacy/wizard`로 기존 5-step 페이지 보존. demo fallback 용도.
@@ -332,6 +332,6 @@ POST /v1/agent/runs/{run_id}/cancel
 ## 14. Open decisions (Closed on Day 15, 2026-05-24)
 
 1. **SSE + polling fallback** (closed). Backend는 SSE를 1차 채널로 노출하고 25초 heartbeat를 보낸다. Frontend는 EventSource 실패/끊김 시 1초 polling으로 자동 전환한다. §7, §10에 반영.
-2. **Admin-upload-first** (closed). Day 18의 첫 connector는 `admin_upload`로 한정한다. FSS/금융위 RSS connector는 메타데이터-only 모드로 placeholder만 만들고, 본문 fetch는 정책 검토 후 Week 4로 미룬다. §8에 반영.
-3. **text-embedding-004, 768d, ivfflat lists=100** (closed). Provider 인터페이스는 차원 가변으로 두되, 운영 default는 768. Chunk 수가 적은 동안은 ivfflat가 sequential scan보다 느릴 수 있다는 점은 Day 19에서 모니터링한다. §9에 반영.
+2. **Admin-upload-first** (closed). Day 19의 첫 connector는 `admin_upload`로 한정한다. FSS/금융위 RSS connector는 메타데이터-only 모드로 placeholder만 만들고, 본문 fetch는 정책 검토 후 Week 4로 미룬다. §8에 반영.
+3. **text-embedding-004, 768d, ivfflat lists=100** (closed). Provider 인터페이스는 차원 가변으로 두되, 운영 default는 768. Chunk 수가 적은 동안은 ivfflat가 sequential scan보다 느릴 수 있다는 점은 Day 20에서 모니터링한다. §9에 반영.
 4. **Report payload 위치** (closed). `agent_runs.final_report jsonb` 컬럼을 신규 추가하고, `/v1/compliance/report` 응답은 기존 schema(`ReportResponse`)를 유지한다. `finalize_report` tool은 양쪽 모두에 동기 기록한다. §4, §5.2, §11에 반영.

@@ -3,7 +3,7 @@ from app.schemas.agent import AgentRunRequest
 
 from tests._agent_fakes import (
     InMemoryAgentRunsRepository,
-    ScriptedGeminiClient,
+    ScriptedLlmProvider,
     build_stub_registry,
     in_memory_trace_recorder,
 )
@@ -15,10 +15,10 @@ CONTENT_ID = "22222222-2222-4222-8222-222222222222"
 def test_fallback_runs_full_chain_pauses_then_resumes_done() -> None:
     runs_repo = InMemoryAgentRunsRepository()
     registry = build_stub_registry(runs_repository=runs_repo)
-    gemini = ScriptedGeminiClient(responses=[], configured=False)
+    llm = ScriptedLlmProvider(responses=[], configured=False)
     runner = AgentRunner(
         registry=registry,
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,
         runs_repository=runs_repo,  # type: ignore[arg-type]
         trace_recorder=in_memory_trace_recorder(),
     )
@@ -57,10 +57,10 @@ def test_fallback_runs_full_chain_pauses_then_resumes_done() -> None:
 def test_fallback_skips_draft_rewrite_when_no_content_id_given() -> None:
     runs_repo = InMemoryAgentRunsRepository()
     registry = build_stub_registry(runs_repository=runs_repo)
-    gemini = ScriptedGeminiClient(responses=[], configured=False)
+    llm = ScriptedLlmProvider(responses=[], configured=False)
     runner = AgentRunner(
         registry=registry,
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,
         runs_repository=runs_repo,  # type: ignore[arg-type]
         trace_recorder=in_memory_trace_recorder(),
     )

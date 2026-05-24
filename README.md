@@ -73,5 +73,6 @@ npm run build
 ## Secret Boundaries
 
 - Frontend only receives backend API base URL values such as `VITE_API_BASE_URL`.
-- `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` are backend-only.
+- `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` are backend-only.
+- Set `LLM_PROVIDER=openai_compatible` with `OPENAI_BASE_URL=http://host.docker.internal:18080/v1` when the backend container should use the shared local LLM server.
 - Rule-based compliance detection must work without Gemini or Supabase.

@@ -20,17 +20,25 @@ APP_ENV=production
 CORS_ORIGINS=https://finance-safe-growth-agent.vercel.app
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-1.5-flash
+LLM_PROVIDER=gemini
+OPENAI_BASE_URL=http://host.docker.internal:18080/v1
+OPENAI_API_KEY=local-not-required
+OPENAI_MODEL=gemma-4-local
+LLM_TIMEOUT_SECONDS=600
+LLM_THINKING_ENABLED=false
+LLM_MAX_TOKENS=1024
+LLM_TEMPERATURE=0.2
 SUPABASE_URL=...
 SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 DATABASE_URL=...
 ```
 
-`GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` must stay backend-only.
+`GEMINI_API_KEY`, `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` must stay backend-only.
 
 Current Gemini production setup:
 
-- Render has `GEMINI_API_KEY` and `GEMINI_MODEL`.
+- Render has the selected `LLM_PROVIDER` settings. Gemini requires `GEMINI_API_KEY`; local/OpenAI-compatible mode requires `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL`.
 - Vercel does not need Gemini secrets or model settings.
 - Gemini request/parsing failures are logged server-side and fall back safely; logs must not include API keys.
 

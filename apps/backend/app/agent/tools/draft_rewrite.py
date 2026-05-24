@@ -10,7 +10,7 @@ class DraftRewriteTool:
     description = (
         "Generate a compliance-aware rewrite of the stored advertisement text. "
         "Returns both a conservative and a marketing variant plus the list of changes. "
-        "Uses Gemini when configured, otherwise a deterministic rule-driven fallback. "
+        "Uses the configured LLM provider when available, otherwise a deterministic rule-driven fallback. "
         "The `mode` argument is a free-form hint forwarded to the rewriter "
         "(default 'marketing_balanced'). Call this after scan_rules and search_regulation "
         "so the rewrite context is rich."

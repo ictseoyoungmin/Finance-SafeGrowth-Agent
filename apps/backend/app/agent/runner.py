@@ -9,9 +9,9 @@ from app.agent.state import AgentState, init_state, time_exceeded
 from app.agent.tools import get_default_registry
 from app.agent.tools.registry import ToolRegistry
 from app.agent.trace import TraceRecorder, get_trace_recorder
-from app.agent.transcript import SYSTEM_PROMPT, build_contents
+from app.agent.transcript import SYSTEM_PROMPT, build_messages
 from app.core.logging import get_logger
-from app.integrations.gemini_client import GeminiClient, get_gemini_client
+from app.integrations.llm import LlmProvider, get_llm_provider
 from app.repositories.agent_runs_repo import (
     AgentRunsRepository,
     get_agent_runs_repository,
@@ -42,13 +42,13 @@ class AgentRunner:
     def __init__(
         self,
         registry: ToolRegistry | None = None,
-        gemini_client: GeminiClient | None = None,
+        llm_provider: LlmProvider | None = None,
         runs_repository: AgentRunsRepository | None = None,
         trace_recorder: TraceRecorder | None = None,
         limits: AgentLimits | None = None,
     ) -> None:
         self._registry = registry or get_default_registry()
-        self._gemini = gemini_client or get_gemini_client()
+        self._llm = llm_provider or get_llm_provider()
         self._runs_repository = runs_repository or get_agent_runs_repository()
         self._recorder = trace_recorder or get_trace_recorder()
         self._limits = limits or default_limits()
@@ -61,7 +61,7 @@ class AgentRunner:
             request,
             max_iterations=self._limits.max_iterations,
             deadline_seconds=self._limits.deadline_seconds,
-            model=(self._gemini.model if self._gemini.is_configured else FALLBACK_MODEL_LABEL),
+            model=(self._llm.model if self._llm.is_configured else FALLBACK_MODEL_LABEL),
         )
 
         self._runs_repository.insert(
@@ -88,7 +88,7 @@ class AgentRunner:
             f"request_snapshot={request_snapshot}",
         )
 
-        if not self._gemini.is_configured:
+        if not self._llm.is_configured:
             self._fallback.run_initial(state)
             return self._terminate(state)
 
@@ -131,7 +131,7 @@ class AgentRunner:
         )
         self._runs_repository.update(state.run_id, {"status": "running"})
 
-        if not self._gemini.is_configured:
+        if not self._llm.is_configured:
             self._fallback.run_after_human_response(state, human_response)
             return self._terminate(state)
 
@@ -189,17 +189,23 @@ class AgentRunner:
                 return
 
             existing_steps = self._recorder.list_steps(state.run_id)
-            contents = build_contents(state.request, existing_steps)
+            messages = build_messages(state.request, existing_steps)
 
-            response = self._gemini.generate_with_tools(
-                contents=contents,
+            response = self._llm.generate_with_tools(
+                messages=messages,
                 function_declarations=self._registry.declarations(),
                 system_instruction=SYSTEM_PROMPT,
             )
 
             if response is None:
-                logger.warning("Gemini returned no response; falling back to deterministic plan.")
-                self._fallback.run_initial(state)
+                logger.warning("LLM returned no response; falling back to deterministic plan.")
+                state.model = FALLBACK_MODEL_LABEL
+                self._runs_repository.update(state.run_id, {"model": FALLBACK_MODEL_LABEL})
+                human_response = _latest_human_response(existing_steps)
+                if human_response is not None:
+                    self._fallback.run_after_human_response(state, human_response)
+                else:
+                    self._fallback.run_initial(state)
                 return
 
             state.add_input_tokens(response.input_tokens)
@@ -390,6 +396,14 @@ def _serialize_response(human_response: Any) -> Any:
     if isinstance(human_response, list):
         return list(human_response)
     return str(human_response)
+
+
+def _latest_human_response(steps: list[AgentStep]) -> Any:
+    for step in reversed(steps):
+        if step.step_type == "human_response":
+            payload = step.payload if isinstance(step.payload, dict) else {}
+            return payload.get("response")
+    return None
 
 
 def get_agent_runner() -> AgentRunner:

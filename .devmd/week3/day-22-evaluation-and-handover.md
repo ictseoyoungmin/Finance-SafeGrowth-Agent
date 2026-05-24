@@ -1,8 +1,8 @@
-# Day 21 — Evaluation, Demo Freeze, Handover
+# Day 22 — Evaluation, Demo Freeze, Handover
 
 ## Goal
 
-Day 15~20에서 만든 Agent 구현을 **심사위원이 보고 평가할 수 있는 형태**로 마무리한다. 코드 추가는 최소화하고, 시연 시나리오·평가 근거·문서·known issues에 시간을 쓴다.
+Day 15~21에서 만든 Agent 구현을 **심사위원이 보고 평가할 수 있는 형태**로 마무리한다. 코드 추가는 최소화하고, 시연 시나리오·평가 근거·문서·known issues에 시간을 쓴다.
 
 이 날의 산출물 3가지:
 
@@ -14,7 +14,7 @@ Day 15~20에서 만든 Agent 구현을 **심사위원이 보고 평가할 수 �
 
 - `.devmd/week3/00-architecture-and-agent-design.md`
 - `.devmd/week3/day-17-agent-runner.md`
-- `.devmd/week3/day-20-frontend-agent-trace.md`
+- `.devmd/week3/day-21-frontend-agent-trace.md`
 - `.devmd/week2/day-14-demo-freeze-handover.md` (Week 2 freeze 형식 재사용)
 - `docs/demo/`, `docs/deployment/`, `docs/handover/`
 
@@ -58,7 +58,7 @@ apps/backend/tests/test_agent_smoke_scenarios.py      (NEW)
 
 - [ ] `judging-criteria-fit.md`에서 다음을 명시:
   - "Agent형 서비스" 명제 → `agent/runner.py` + tool registry + 함수 호출 loop 코드 위치.
-  - "AI 규제 Agent가 최신 금융규제와 내부 기준을 자동으로 추적" → Day 18 ingestion + change tracking.
+  - "AI 규제 Agent가 최신 금융규제와 내부 기준을 자동으로 추적" → Day 19 ingestion + change tracking.
   - "콘텐츠 초안에 대해 규제 위반 가능성, 표현 리스크, 수정 제안을 자동으로 도출" → scan_rules + search_regulation + draft_rewrite.
   - "준법 관리자는 AI 결과를 검토·승인하는 역할 중심으로 전환" → request_human_review + frontend HumanReviewPanel.
   - "규칙 기반 판단과 LLM 판단을 결합" → scan_rules(rule) + Gemini analyze span merge + draft_rewrite(Gemini).

@@ -49,7 +49,7 @@ apps/backend/app/services/*  (NOT modified — read-only from tool wrappers)
 - [ ] 도구 6개 구현. 각 도구는 기존 service를 직접 호출하되 **agent state에서 필요한 context를 채워준다**.
   - `fetch_content`: `ContentRepository.get(content_id)`. 미존재 시 `request_human_review`를 유도하는 `ToolError("content_not_found")` 발생.
   - `scan_rules`: `RuleEngine().scan(text)` + risk_level 계산 (`AnalyzeService._risk_level` 로직 재사용 — 내부 함수가 private면 helper로 추출).
-  - `search_regulation`: `RegulationRetriever.retrieve(risk_categories, product_type, limit)`. Day 19 이후 `query` 인자가 들어오면 vector_search로 위임.
+  - `search_regulation`: `RegulationRetriever.retrieve(risk_categories, product_type, limit)`. Day 20 이후 `query` 인자가 들어오면 vector_search로 위임.
   - `draft_rewrite`: `RewriteService.rewrite(RewriteRequest(...))`. agent가 original_text/flagged_spans/evidence를 직접 넘기는 경로도 지원(stateless rewrite).
   - `request_human_review`: side-effect 없음. 단순히 결과 payload를 반환하고, agent runner가 이를 감지하여 `awaiting_human`으로 전환.
   - `finalize_report`: `ApprovalService.record(...)` + `ReportService.build(...)` + `agent_runs.final_report` 갱신.
@@ -157,6 +157,6 @@ docker run --rm \
   - `request_human_review` mutates `state.pending_human` and `state.status = "awaiting_human"`; Day 17 runner detects this and halts the loop.
   - `finalize_report` writes through to `ApprovalService`, builds the `ReportResponse`, mutates `state.final`/`state.status="done"`, and patches `agent_runs.final_report` via the Day 15 repository.
 - Known notes:
-  - `SearchRegulationArgs.query` is accepted but not yet routed — Day 19 wires it into vector search.
+  - `SearchRegulationArgs.query` is accepted but not yet routed — Day 20 wires it into vector search.
   - `FinalizeReportTool` performs three side-effects (approval insert + report build + agent_runs patch) in sequence and is not transactional. Day 17 runner handles partial failure by leaving the run in `running` and surfacing the `ToolError` in the trace.
   - `DraftRewriteTool` calls `RewriteService` which re-reads context from repositories. Day 17/18 may optimize to share resolved context, but for now the redundancy is acceptable.

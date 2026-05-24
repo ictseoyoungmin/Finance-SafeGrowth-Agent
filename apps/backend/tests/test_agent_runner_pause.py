@@ -3,7 +3,7 @@ from app.schemas.agent import AgentRunRequest
 
 from tests._agent_fakes import (
     InMemoryAgentRunsRepository,
-    ScriptedGeminiClient,
+    ScriptedLlmProvider,
     build_stub_registry,
     fn_call,
     in_memory_trace_recorder,
@@ -16,7 +16,7 @@ CONTENT_ID = "22222222-2222-4222-8222-222222222222"
 def test_pause_on_request_human_review_then_resume_with_approve() -> None:
     runs_repo = InMemoryAgentRunsRepository()
     registry = build_stub_registry(runs_repository=runs_repo)
-    gemini = ScriptedGeminiClient(
+    llm = ScriptedLlmProvider(
         [
             fn_call("scan_rules", {"text": "demo"}),
             fn_call(
@@ -42,7 +42,7 @@ def test_pause_on_request_human_review_then_resume_with_approve() -> None:
     recorder = in_memory_trace_recorder()
     runner = AgentRunner(
         registry=registry,
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,
         runs_repository=runs_repo,  # type: ignore[arg-type]
         trace_recorder=recorder,
     )

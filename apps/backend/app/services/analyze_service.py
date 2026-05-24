@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from app.integrations.gemini_client import GeminiClient, get_gemini_client
+from app.integrations.llm import LlmProvider, get_llm_provider
 from app.repositories.contents_repo import ContentRepository, get_content_repository
 from app.repositories.risk_results_repo import (
     RiskResultsRepository,
@@ -23,13 +23,13 @@ class AnalyzeService:
     def __init__(
         self,
         rule_engine: RuleEngine,
-        gemini_client: GeminiClient,
+        llm_provider: LlmProvider,
         content_repository: ContentRepository,
         risk_results_repository: RiskResultsRepository,
         audit_service: AuditService,
     ) -> None:
         self._rule_engine = rule_engine
-        self._gemini_client = gemini_client
+        self._llm = llm_provider
         self._content_repository = content_repository
         self._risk_results_repository = risk_results_repository
         self._audit_service = audit_service
@@ -40,7 +40,7 @@ class AnalyzeService:
             request.original_text,
             [
                 *self._rule_engine.scan(request.original_text),
-                *self._gemini_spans(request),
+                *self._llm_spans(request),
             ],
         )
         risk_level = self._risk_level(flagged_spans)
@@ -64,7 +64,7 @@ class AnalyzeService:
             reviewer_notes=reviewer_notes,
         )
 
-    def _gemini_spans(self, request: AnalyzeRequest) -> list[FlaggedSpan]:
+    def _llm_spans(self, request: AnalyzeRequest) -> list[FlaggedSpan]:
         prompt = json.dumps(
             {
                 "task": "financial_ad_compliance_risk_detection",
@@ -102,7 +102,7 @@ class AnalyzeService:
             },
             ensure_ascii=False,
         )
-        result = self._gemini_client.generate_json(prompt)
+        result = self._llm.generate_json(prompt)
         if not result:
             return []
 
@@ -112,12 +112,12 @@ class AnalyzeService:
 
         spans: list[FlaggedSpan] = []
         for item in raw_spans:
-            span = self._parse_gemini_span(request.original_text, item)
+            span = self._parse_llm_span(request.original_text, item)
             if span:
                 spans.append(span)
         return spans
 
-    def _parse_gemini_span(self, original_text: str, item: Any) -> FlaggedSpan | None:
+    def _parse_llm_span(self, original_text: str, item: Any) -> FlaggedSpan | None:
         if not isinstance(item, dict):
             return None
 
@@ -145,9 +145,9 @@ class AnalyzeService:
             end=end,
             risk_category=str(item.get("risk_category") or "AI 추가 탐지"),
             severity=severity,
-            reason=str(item.get("reason") or "Gemini가 추가 검토가 필요한 표현으로 탐지했습니다."),
+            reason=str(item.get("reason") or "LLM이 추가 검토가 필요한 표현으로 탐지했습니다."),
             confidence=max(0, min(float(confidence), 1)),
-            source="gemini",
+            source="llm",
         )
 
     def _parse_severity(self, value: Any) -> RiskLevel:
@@ -210,7 +210,7 @@ class AnalyzeService:
 def get_analyze_service() -> AnalyzeService:
     return AnalyzeService(
         rule_engine=RuleEngine(),
-        gemini_client=get_gemini_client(),
+        llm_provider=get_llm_provider(),
         content_repository=get_content_repository(),
         risk_results_repository=get_risk_results_repository(),
         audit_service=get_audit_service(),

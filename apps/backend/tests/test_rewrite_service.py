@@ -1,21 +1,24 @@
 import json
 
-from app.integrations.gemini_client import GeminiResult
+from app.integrations.llm import LlmJsonResult
 from app.repositories.regulation_docs_repo import RegulationDoc
 from app.schemas.rewrite import RewriteRequest
 from app.services.rewrite_service import RewriteService
 
 
-class FakeGeminiClient:
+class ScriptedJsonLlmProvider:
+    model = "fake-llm"
+    is_configured = True
+
     def __init__(self, payload: dict | None) -> None:
         self.payload = payload
         self.prompts: list[str] = []
 
-    def generate_json(self, prompt: str) -> GeminiResult | None:
+    def generate_json(self, prompt: str) -> LlmJsonResult | None:
         self.prompts.append(prompt)
         if self.payload is None:
             return None
-        return GeminiResult(payload=self.payload, model_version="fake-gemini")
+        return LlmJsonResult(payload=self.payload, model_version="fake-llm")
 
 
 class FakeContentRepository:
@@ -64,7 +67,7 @@ class FakeRegulationDocsRepository:
 
 
 def test_rewrite_prompt_includes_content_risk_and_evidence_context() -> None:
-    gemini = FakeGeminiClient(
+    llm = ScriptedJsonLlmProvider(
         {
             "revised_text_conservative": "수익 또는 손실이 발생할 수 있습니다.",
             "revised_text_marketing": "수익은 변동될 수 있으며 원금 손실 가능성이 있습니다.",
@@ -78,26 +81,26 @@ def test_rewrite_prompt_includes_content_risk_and_evidence_context() -> None:
         }
     )
     service = RewriteService(
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,  # type: ignore[arg-type]
         content_repository=FakeContentRepository(),  # type: ignore[arg-type]
         risk_results_repository=FakeRiskResultsRepository(),  # type: ignore[arg-type]
         regulation_docs_repository=FakeRegulationDocsRepository(),  # type: ignore[arg-type]
     )
 
     response = service.rewrite(RewriteRequest(content_id="content-1", mode="marketing_balanced"))
-    prompt = json.loads(gemini.prompts[0])
+    prompt = json.loads(llm.prompts[0])
 
     assert response.revised_text_marketing == "수익은 변동될 수 있으며 원금 손실 가능성이 있습니다."
-    assert response.source == "gemini"
+    assert response.source == "llm"
     assert prompt["source"]["original_text"] == "누구나 연 8% 수익을 안정적으로 받을 수 있습니다."
     assert prompt["risk_context"]["flagged_spans"][0]["span_text"] == "연 8% 수익"
     assert prompt["evidence"][0]["guideline_snippet"] == "손실 가능성 고지 필요"
     assert "Return only raw JSON" in prompt["instruction"]
 
 
-def test_rewrite_returns_deterministic_fallback_when_gemini_unavailable() -> None:
+def test_rewrite_returns_deterministic_fallback_when_llm_unavailable() -> None:
     service = RewriteService(
-        gemini_client=FakeGeminiClient(None),  # type: ignore[arg-type]
+        llm_provider=ScriptedJsonLlmProvider(None),  # type: ignore[arg-type]
         content_repository=FakeContentRepository(),  # type: ignore[arg-type]
         risk_results_repository=FakeRiskResultsRepository(),  # type: ignore[arg-type]
         regulation_docs_repository=FakeRegulationDocsRepository(),  # type: ignore[arg-type]
@@ -146,7 +149,7 @@ def test_rewrite_fallback_uses_actual_content_and_detected_spans() -> None:
             }
 
     service = RewriteService(
-        gemini_client=FakeGeminiClient(None),  # type: ignore[arg-type]
+        llm_provider=ScriptedJsonLlmProvider(None),  # type: ignore[arg-type]
         content_repository=CustomContentRepository(),  # type: ignore[arg-type]
         risk_results_repository=CustomRiskResultsRepository(),  # type: ignore[arg-type]
         regulation_docs_repository=FakeRegulationDocsRepository(),  # type: ignore[arg-type]
@@ -164,8 +167,8 @@ def test_rewrite_fallback_uses_actual_content_and_detected_spans() -> None:
     assert "상품설명서" in response.revised_text_conservative
 
 
-def test_rewrite_sanitizes_blank_gemini_change_originals() -> None:
-    gemini = FakeGeminiClient(
+def test_rewrite_sanitizes_blank_llm_change_originals() -> None:
+    llm = ScriptedJsonLlmProvider(
         {
             "revised_text_conservative": "대출상품의 상환 조건과 비용을 확인해 주세요.",
             "revised_text_marketing": "상환 조건과 비용을 확인한 뒤 이용해 주세요.",
@@ -179,7 +182,7 @@ def test_rewrite_sanitizes_blank_gemini_change_originals() -> None:
         }
     )
     service = RewriteService(
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,  # type: ignore[arg-type]
         content_repository=FakeContentRepository(),  # type: ignore[arg-type]
         risk_results_repository=FakeRiskResultsRepository(),  # type: ignore[arg-type]
         regulation_docs_repository=FakeRegulationDocsRepository(),  # type: ignore[arg-type]
@@ -187,6 +190,6 @@ def test_rewrite_sanitizes_blank_gemini_change_originals() -> None:
 
     response = service.rewrite(RewriteRequest(content_id="content-1", mode="marketing_balanced"))
 
-    assert response.source == "gemini"
+    assert response.source == "llm"
     assert response.changes[0].original
     assert response.changes[0].original == "연 8% 수익"

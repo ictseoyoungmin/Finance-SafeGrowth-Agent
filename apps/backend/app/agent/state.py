@@ -106,6 +106,6 @@ def time_exceeded(state: AgentState, *, now: datetime | None = None) -> bool:
 
 
 def build_transcript(state: AgentState) -> list[AgentTurn]:
-    """Day 17 agent runner will convert this into Gemini `contents`."""
+    """Agent runner converts this into provider-specific transcript messages."""
 
     return list(state.transcript)

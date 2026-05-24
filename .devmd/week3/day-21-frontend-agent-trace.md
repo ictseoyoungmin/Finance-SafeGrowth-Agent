@@ -1,4 +1,4 @@
-# Day 20 — Frontend Agent Trace UI
+# Day 21 — Frontend Agent Trace UI
 
 ## Goal
 
@@ -41,7 +41,7 @@ apps/frontend/tests/agent.spec.ts                      (NEW, Playwright)
 - [ ] `App.tsx`를 `react-router` 또는 단순 hash 라우터 기반으로 변경.
   - `/`: AgentRunPage (기본)
   - `/legacy/wizard`: 기존 ComplianceWizard
-  - `/admin/regulations`: Day 18에서 만든 admin API용 간단 페이지(선택, P2)
+ - `/admin/regulations`: Day 19에서 만든 admin API용 간단 페이지(선택, P2)
 - [ ] AppShell 사이드바에 두 항목 노출. legacy는 "구버전 5-step 검토".
 
 ### API & types

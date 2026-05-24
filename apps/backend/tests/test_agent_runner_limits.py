@@ -4,7 +4,7 @@ from app.schemas.agent import AgentRunRequest
 
 from tests._agent_fakes import (
     InMemoryAgentRunsRepository,
-    ScriptedGeminiClient,
+    ScriptedLlmProvider,
     build_stub_registry,
     fn_call,
     in_memory_trace_recorder,
@@ -19,10 +19,10 @@ def test_max_iterations_exceeded_marks_run_failed() -> None:
     registry = build_stub_registry(runs_repository=runs_repo)
     # Endless loop: every iteration the model picks scan_rules again.
     infinite_scan = [fn_call("scan_rules", {"text": "loop"}) for _ in range(10)]
-    gemini = ScriptedGeminiClient(infinite_scan)
+    llm = ScriptedLlmProvider(infinite_scan)
     runner = AgentRunner(
         registry=registry,
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,
         runs_repository=runs_repo,  # type: ignore[arg-type]
         trace_recorder=in_memory_trace_recorder(),
         limits=AgentLimits(max_iterations=2, deadline_seconds=60),
@@ -41,10 +41,10 @@ def test_max_iterations_exceeded_marks_run_failed() -> None:
 def test_deadline_exceeded_marks_run_failed() -> None:
     runs_repo = InMemoryAgentRunsRepository()
     registry = build_stub_registry(runs_repository=runs_repo)
-    gemini = ScriptedGeminiClient([fn_call("scan_rules", {"text": "x"})])
+    llm = ScriptedLlmProvider([fn_call("scan_rules", {"text": "x"})])
     runner = AgentRunner(
         registry=registry,
-        gemini_client=gemini,  # type: ignore[arg-type]
+        llm_provider=llm,
         runs_repository=runs_repo,  # type: ignore[arg-type]
         trace_recorder=in_memory_trace_recorder(),
         limits=AgentLimits(max_iterations=8, deadline_seconds=0),

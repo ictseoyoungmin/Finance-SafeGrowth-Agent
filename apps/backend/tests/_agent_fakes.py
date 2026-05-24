@@ -1,4 +1,4 @@
-"""Shared fakes for Day 17 agent runner tests.
+"""Shared fakes for agent runner tests.
 
 Not collected by pytest because the filename does not match `test_*.py`.
 """
@@ -10,7 +10,7 @@ from app.agent.state import AgentState
 from app.agent.tools.registry import ToolRegistry
 from app.agent.tools.request_human_review import RequestHumanReviewTool
 from app.agent.trace import InMemoryTraceRecorder
-from app.integrations.gemini_client import GeminiFunctionCall, GeminiToolResponse
+from app.integrations.llm import LlmFunctionCall, LlmJsonResult, LlmToolResponse
 from app.schemas.agent import AgentFinal
 from app.schemas.compliance import FlaggedSpan, RiskLevel
 from app.schemas.report import ReportResponse
@@ -30,24 +30,27 @@ from app.schemas.tools import (
 
 
 # ---------------------------------------------------------------------------
-# Gemini fake
+# LLM fake
 # ---------------------------------------------------------------------------
 
 
-class ScriptedGeminiClient:
-    """Returns scripted GeminiToolResponse objects in order."""
+class ScriptedLlmProvider:
+    """Returns scripted LlmToolResponse objects in order."""
 
     def __init__(
         self,
-        responses: list[GeminiToolResponse | None] | None = None,
+        responses: list[LlmToolResponse | None] | None = None,
         *,
         configured: bool = True,
-        model: str = "fake-gemini-1.5-flash",
+        model: str = "fake-llm",
+        json_payload: dict[str, Any] | None = None,
     ) -> None:
-        self._responses: list[GeminiToolResponse | None] = list(responses or [])
+        self._responses: list[LlmToolResponse | None] = list(responses or [])
         self._configured = configured
         self._model = model
+        self._json_payload = json_payload
         self.calls: list[dict[str, Any]] = []
+        self.prompts: list[str] = []
 
     @property
     def is_configured(self) -> bool:
@@ -57,33 +60,36 @@ class ScriptedGeminiClient:
     def model(self) -> str:
         return self._model
 
-    def generate_with_tools(self, **kwargs: Any) -> GeminiToolResponse | None:
+    def generate_with_tools(self, **kwargs: Any) -> LlmToolResponse | None:
         self.calls.append(kwargs)
         if not self._responses:
             return None
         return self._responses.pop(0)
 
-    def generate_json(self, prompt: str):  # pragma: no cover - unused here
-        return None
+    def generate_json(self, prompt: str) -> LlmJsonResult | None:
+        self.prompts.append(prompt)
+        if self._json_payload is None:
+            return None
+        return LlmJsonResult(payload=self._json_payload, model_version=self._model)
 
 
-def fn_call(name: str, args: dict[str, Any], *, in_tokens: int = 0, out_tokens: int = 0) -> GeminiToolResponse:
-    return GeminiToolResponse(
-        function_call=GeminiFunctionCall(name=name, args=args),
+def fn_call(name: str, args: dict[str, Any], *, in_tokens: int = 0, out_tokens: int = 0) -> LlmToolResponse:
+    return LlmToolResponse(
+        function_call=LlmFunctionCall(name=name, args=args),
         text=None,
         input_tokens=in_tokens,
         output_tokens=out_tokens,
-        model_version="fake-gemini-1.5-flash",
+        model_version="fake-llm",
     )
 
 
-def text_response(text: str, *, in_tokens: int = 0, out_tokens: int = 0) -> GeminiToolResponse:
-    return GeminiToolResponse(
+def text_response(text: str, *, in_tokens: int = 0, out_tokens: int = 0) -> LlmToolResponse:
+    return LlmToolResponse(
         function_call=None,
         text=text,
         input_tokens=in_tokens,
         output_tokens=out_tokens,
-        model_version="fake-gemini-1.5-flash",
+        model_version="fake-llm",
     )
 
 
@@ -215,7 +221,7 @@ class StubDraftRewriteTool:
             revised_text_conservative="보수안",
             revised_text_marketing="마케팅안",
             changes=[],
-            source="gemini",
+            source="llm",
         )
 
 
@@ -287,7 +293,7 @@ def in_memory_trace_recorder() -> InMemoryTraceRecorder:
 
 __all__ = [
     "InMemoryAgentRunsRepository",
-    "ScriptedGeminiClient",
+    "ScriptedLlmProvider",
     "StubDraftRewriteTool",
     "StubFetchContentTool",
     "StubFinalizeReportTool",

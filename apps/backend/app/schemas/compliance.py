@@ -26,7 +26,7 @@ class FlaggedSpan(BaseModel):
     severity: RiskLevel
     reason: str
     confidence: float = Field(..., ge=0, le=1)
-    source: Literal["rule", "gemini"] = "rule"
+    source: Literal["rule", "llm", "gemini"] = "rule"
 
 
 class AnalyzeResponse(BaseModel):

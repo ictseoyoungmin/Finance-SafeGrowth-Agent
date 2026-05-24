@@ -205,9 +205,9 @@ docker compose down
   - **One source of truth for resume**: the initial request is JSON-serialized into the second `thought` step (`request_snapshot=...`). `resume()` reconstructs `AgentRunRequest` from that step. No new column was needed and the trace stays self-describing.
   - **Pause/done unification**: both terminal paths run through `AgentRunner._terminate`. Done path now also patches `token_input/token_output/ended_at` so finalize_report side-effects + token accounting stay consistent.
   - **Text-only response handling**: if Gemini returns plain text without a function_call, the runner forces a `finalize_report({decision:"none", summary:text[:500]})` instead of issuing a second Gemini call. Avoids an extra round-trip in failure modes.
-  - **SSE**: minimal replay-style implementation. On connect, the endpoint streams existing persisted steps as `event: step`, then `event: status`, then a comment for end-of-trace. The Day 20 frontend should treat polling as the primary live-update mechanism and SSE as a one-shot replay.
+  - **SSE**: minimal replay-style implementation. On connect, the endpoint streams existing persisted steps as `event: step`, then `event: status`, then a comment for end-of-trace. The Day 21 frontend should treat polling as the primary live-update mechanism and SSE as a one-shot replay.
 - Known issues:
   - SSE is replay-only; we do not push during an active run (the runner is synchronous and blocks until pause/done). Real-time streaming would require running the agent loop in a background task and a pub/sub queue — out of scope for Day 17.
   - `request_human_review` produces both a `tool_result` step and a `human_prompt` step; UI must decide which to render to avoid duplication.
   - Token usage on the fallback path is always 0 because no Gemini call is made; downstream cost tracking should treat fallback runs separately.
-  - Live Gemini function-calling was not exercised in this sandbox (no API key). Stubs cover the loop logic; Day 21 will run a public smoke against Render.
+  - Live Gemini function-calling was not exercised in this sandbox (no API key). Stubs cover the loop logic; Day 22 will run a public smoke against Render.

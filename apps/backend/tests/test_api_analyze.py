@@ -1,8 +1,15 @@
 from uuid import UUID
 
 from fastapi.testclient import TestClient
+import pytest
 
 from app.main import app
+from app.repositories.contents_repo import get_content_repository
+from app.repositories.risk_results_repo import get_risk_results_repository
+from app.rules.rule_engine import RuleEngine
+from app.services.analyze_service import AnalyzeService, get_analyze_service
+from app.services.audit_service import get_audit_service
+from tests._agent_fakes import ScriptedLlmProvider
 
 
 DEMO_PAYLOAD = {
@@ -15,6 +22,19 @@ DEMO_PAYLOAD = {
         "원금 걱정 없이 시작하세요."
     ),
 }
+
+
+@pytest.fixture(autouse=True)
+def fallback_analyze_service_override():
+    app.dependency_overrides[get_analyze_service] = lambda: AnalyzeService(
+        rule_engine=RuleEngine(),
+        llm_provider=ScriptedLlmProvider(configured=False),
+        content_repository=get_content_repository(),
+        risk_results_repository=get_risk_results_repository(),
+        audit_service=get_audit_service(),
+    )
+    yield
+    app.dependency_overrides.pop(get_analyze_service, None)
 
 
 def test_analyze_returns_high_risk_for_demo_sentence() -> None:

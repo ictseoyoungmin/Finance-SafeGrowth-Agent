@@ -19,7 +19,7 @@ VITE_API_BASE_URL=https://finance-safegrowth-agent.onrender.com
 NEXT_PUBLIC_API_BASE_URL=https://finance-safegrowth-agent.onrender.com
 ```
 
-Do not set `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `DATABASE_URL` in Vercel.
+Do not set `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `DATABASE_URL` in Vercel.
 
 ## Smoke Test
 

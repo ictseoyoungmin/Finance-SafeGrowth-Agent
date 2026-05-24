@@ -9,7 +9,7 @@ FALLBACK_MODEL_LABEL = "fallback-deterministic-agent"
 
 
 class FallbackAgentRunner:
-    """Deterministic four-step agent used when Gemini is unavailable.
+    """Deterministic four-step agent used when the LLM provider is unavailable.
 
     Step 1 (initial run): scan_rules.
     Step 2 (initial run): search_regulation if scan_rules surfaced any category.
