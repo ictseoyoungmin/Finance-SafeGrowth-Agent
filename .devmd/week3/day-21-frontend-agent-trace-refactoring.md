@@ -193,7 +193,7 @@ apps/frontend/tests/agent.spec.ts                                    (MOD)
 ### P1 — Agent Tool Trace
 
 - [x] trace event type별 icon/color/token 정의.
-- [ ] tool call/result pair가 같은 tool run으로 연결되어 보이도록 `tool_call_id` 또는 index 기반 grouping 적용.
+- [x] tool call/result pair가 같은 tool run으로 연결되어 보이도록 `tool_call_id` 또는 index 기반 grouping 적용.
 - [x] `StepDetailPanel`에 도구별 summary renderer 추가.
 - [x] raw payload는 접힌 상태가 기본.
 - [ ] fallback/polling 상태를 trace header에 표시: `실시간 연결`, `polling fallback`, `연결 끊김`.
@@ -213,7 +213,7 @@ apps/frontend/tests/agent.spec.ts                                    (MOD)
 - trace rail에는 agent tool 호출과 결과가 구분되어 보인다.
 - tool 결과 상세는 업무 요약을 먼저 보여주고 raw JSON은 접어서 볼 수 있다.
 - topbar의 긴 API URL이 레이아웃을 밀어내지 않는다.
-- Playwright smoke가 승인 완료 문구 `조건부 승인으로 저장되었습니다.`를 검증한다.
+- Playwright smoke가 승인 완료 배너와 내부 enum 미노출을 검증한다.
 
 ## Test Plan
 
@@ -229,7 +229,7 @@ Playwright 추가 검증:
 
 - 승인 패키지 진입 후 `CONDITIONALLY_APPROVED` 텍스트가 화면에 없는지 확인.
 - `조건부 승인` 버튼 클릭 후 `저장 중` 상태 확인.
-- 저장 완료 후 viewport 안에 `조건부 승인으로 저장되었습니다.`가 보이는지 확인.
+- 저장 완료 후 viewport 안에 `심의 결과: 조건부 승인`과 저장 완료 설명이 보이는지 확인.
 - trace panel에서 `도구 호출`, `도구 결과`, `사람 확인 요청` 항목이 구분되는지 확인.
 - fallback mode에서도 동일 문구와 layout이 유지되는지 확인.
 
@@ -250,14 +250,17 @@ Playwright 추가 검증:
 
 ## Completion Log
 
-- Status: PARTIAL DONE (2026-05-24)
+- Status: POLISH PASS DONE (2026-05-24)
 - Completed:
   - 사용자 화면의 `CONDITIONALLY_APPROVED` 노출을 `조건부 승인`으로 치환.
-  - legacy 승인 패키지에 pending action, 중앙 decision banner 완료 상태, inline success/error feedback 추가.
+  - legacy 승인 패키지에 pending action, 중앙 decision banner 완료 상태, error-only inline feedback 추가.
   - 조건부 승인 버튼 label과 저장 중 label을 업무 문구로 변경.
   - Agent trace timeline에 `도구 호출`, `도구 결과`, `사람 확인 요청` 타입 라벨 추가.
   - Agent step detail에 `scan_rules`, regulation search, rewrite tool 친화 요약 추가.
+  - Agent trace에서 생각 기록, 실제 함수명, 사용 이유, 입력 인자, RAG 근거 문서를 파싱해 표시.
   - topbar/API/fallback chip과 승인 패키지 typography/density 조정.
+  - topbar success pill과 global success notice를 제거해 중복 알림을 줄임.
+  - legacy right rail을 2-column 카드 배치로 조정하고 전체 글자 크기와 main panel 밀도를 낮춤.
   - Playwright config와 enum 노출 회귀 테스트 추가.
 - Verification:
   - Docker Node temp workspace: `npm run typecheck` passed.
@@ -265,6 +268,6 @@ Playwright 추가 검증:
   - Docker Node temp workspace: `npm run build` passed.
   - Local backend + Playwright Docker: `npm run test:e2e -- --project=chromium` passed, 2 tests.
 - Remaining:
-  - tool call/result grouping by `tool_call_id` or paired index.
+  - backend trace payload에 explicit `tool_call_id` 추가.
   - trace stream status chip: `실시간 연결`, `polling fallback`, `연결 끊김`.
-  - right rail detail consolidation and mobile ordering pass.
+  - mobile ordering pass.

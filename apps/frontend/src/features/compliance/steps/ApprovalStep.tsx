@@ -103,13 +103,13 @@ export function ApprovalStep({ workflow }: StepProps) {
         <p>{finalText}</p>
       </section>
 
-      {state.actionMessage || state.errorMessage ? (
+      {state.errorMessage ? (
         <div
-          className={`action-feedback ${state.errorMessage ? "is-error" : "is-success"}`}
-          role={state.errorMessage ? "alert" : "status"}
+          className="action-feedback is-error"
+          role="alert"
         >
-          <strong>{state.errorMessage ? "저장 실패" : "처리 결과"}</strong>
-          <span>{state.errorMessage ?? state.actionMessage}</span>
+          <strong>저장 실패</strong>
+          <span>{state.errorMessage}</span>
         </div>
       ) : null}
 

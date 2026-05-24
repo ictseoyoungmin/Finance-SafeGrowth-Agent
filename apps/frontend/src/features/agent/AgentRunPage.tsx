@@ -25,7 +25,7 @@ export function AgentRunPage() {
           selected={workflow.selectedStep}
           onSelect={workflow.selectStep}
         />
-        <StepDetailPanel step={workflow.selectedStep} />
+        <StepDetailPanel step={workflow.selectedStep} steps={workflow.runDetail?.steps ?? []} />
       </div>
       <HumanReviewPanel workflow={workflow} />
       <FinalReportPanel run={workflow.runDetail} onReset={workflow.reset} />

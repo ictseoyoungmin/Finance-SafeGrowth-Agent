@@ -1,4 +1,5 @@
 import type { AgentStep } from "../types";
+import { traceSubtitle, traceTitle, traceTypeLabel } from "../tracePresentation";
 
 interface TraceTimelineProps {
   steps: AgentStep[];
@@ -25,10 +26,11 @@ export function TraceTimeline({ steps, selected, onSelect }: TraceTimelineProps)
           >
             <span>{stepIcon(step)}</span>
             <div>
-              <em>{stepTypeLabel(step.step_type)}</em>
-              <strong>{stepTitle(step)}</strong>
+              <em>{traceTypeLabel(step.step_type)}</em>
+              <strong>{traceTitle(step)}</strong>
+              <small>{traceSubtitle(step)}</small>
             </div>
-            <small>{step.created_at ? new Date(step.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : `#${step.step_index}`}</small>
+            <time>{step.created_at ? new Date(step.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : `#${step.step_index}`}</time>
           </button>
         ))}
       </div>
@@ -43,27 +45,4 @@ function stepIcon(step: AgentStep) {
   if (step.step_type === "human_response") return "↵";
   if (step.step_type === "final") return "✓";
   return "•";
-}
-
-function stepTitle(step: AgentStep) {
-  if (step.tool_name) return step.tool_name;
-  const labels: Record<string, string> = {
-    thought: "생각",
-    human_prompt: "사람 검토 요청",
-    human_response: "사람 응답",
-    final: "최종 결과",
-  };
-  return labels[step.step_type] ?? step.step_type;
-}
-
-function stepTypeLabel(type: string) {
-  const labels: Record<string, string> = {
-    thought: "관찰",
-    tool_call: "도구 호출",
-    tool_result: "도구 결과",
-    human_prompt: "사람 확인 요청",
-    human_response: "사람 응답",
-    final: "최종 결과",
-  };
-  return labels[type] ?? type;
 }

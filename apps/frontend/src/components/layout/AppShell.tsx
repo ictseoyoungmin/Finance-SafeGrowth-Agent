@@ -29,7 +29,6 @@ export function AppShell({
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000",
   usedFallback = false,
   errorMessage,
-  actionMessage,
 }: AppShellProps) {
   const currentTitle =
     mode === "agent"
@@ -95,7 +94,6 @@ export function AppShell({
             <h1>{currentTitle}</h1>
           </div>
           <div className="status-stack">
-            {actionMessage && !errorMessage ? <span className="topbar-result">{actionMessage}</span> : null}
             <span className="bell">3</span>
             <span className="avatar">A</span>
             <span className="admin-block">
@@ -108,7 +106,6 @@ export function AppShell({
         </header>
 
         {errorMessage && <div className="notice">{errorMessage}</div>}
-        {!errorMessage && actionMessage && <div className="notice success">{actionMessage}</div>}
         {rightRail ? (
           <div className="workspace-with-rail">
             <section className="step-panel">{children}</section>
