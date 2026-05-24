@@ -165,6 +165,10 @@ docker run --rm \
 - Test result summary:
   - Frontend lint/typecheck/build passed in Docker.
   - Agent UI smoke passed: input → run trace → human approval → final report.
+- Follow-up UX updates:
+  - Redline risk pagination now shows multiple cards per page instead of one-card paging.
+  - Evidence cards were compacted for denser scanning when many references exist.
+  - Legacy 5-step wizard now includes a right-side Trace/detail rail using the available horizontal workspace.
 - Known issues:
   - npm audit reports existing dependency vulnerabilities in the frontend dependency tree.
   - `/admin/regulations` remains optional P2 follow-up and was not added in this slice.

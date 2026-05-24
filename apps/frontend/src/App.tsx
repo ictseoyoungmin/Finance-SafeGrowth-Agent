@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { AppShell } from "./components/layout/AppShell";
 import { AgentRunPage } from "./features/agent/AgentRunPage";
+import { ComplianceTraceRail } from "./features/compliance/components/ComplianceTraceRail";
 import { useComplianceWorkflow } from "./features/compliance/store";
 import { ApprovalStep } from "./features/compliance/steps/ApprovalStep";
 import { EvidenceStep } from "./features/compliance/steps/EvidenceStep";
@@ -34,6 +35,7 @@ function LegacyWizard() {
       usedFallback={workflow.state.usedFallback}
       errorMessage={workflow.state.errorMessage}
       actionMessage={workflow.state.actionMessage}
+      rightRail={<ComplianceTraceRail workflow={workflow} />}
     >
       {workflow.state.step === "input" && <InputStep workflow={workflow} />}
       {workflow.state.step === "redline" && <RedlineStep workflow={workflow} />}

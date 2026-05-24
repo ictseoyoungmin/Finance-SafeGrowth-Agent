@@ -12,6 +12,7 @@ const STEPS: Array<{ id: WorkflowStep; label: string; icon: string; title: strin
 
 interface AppShellProps {
   children: ReactNode;
+  rightRail?: ReactNode;
   mode?: "agent" | "legacy";
   currentStep?: WorkflowStep;
   apiBaseUrl?: string;
@@ -22,6 +23,7 @@ interface AppShellProps {
 
 export function AppShell({
   children,
+  rightRail,
   mode = "agent",
   currentStep,
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000",
@@ -106,7 +108,14 @@ export function AppShell({
 
         {errorMessage && <div className="notice">{errorMessage}</div>}
         {!errorMessage && actionMessage && <div className="notice success">{actionMessage}</div>}
-        <section className="step-panel">{children}</section>
+        {rightRail ? (
+          <div className="workspace-with-rail">
+            <section className="step-panel">{children}</section>
+            {rightRail}
+          </div>
+        ) : (
+          <section className="step-panel">{children}</section>
+        )}
       </main>
     </div>
   );

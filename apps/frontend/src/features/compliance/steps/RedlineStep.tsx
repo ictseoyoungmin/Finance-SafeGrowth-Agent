@@ -13,8 +13,10 @@ export function RedlineStep({ workflow }: StepProps) {
   const analyze = state.analyze;
   const [riskPage, setRiskPage] = useState(0);
   const flaggedSpans = useMemo(() => analyze?.flagged_spans ?? [], [analyze?.flagged_spans]);
-  const safePage = flaggedSpans.length ? Math.min(riskPage, flaggedSpans.length - 1) : 0;
-  const activeSpan = flaggedSpans[safePage];
+  const cardsPerPage = 3;
+  const totalPages = Math.max(1, Math.ceil(flaggedSpans.length / cardsPerPage));
+  const safePage = Math.min(riskPage, totalPages - 1);
+  const visibleSpans = flaggedSpans.slice(safePage * cardsPerPage, safePage * cardsPerPage + cardsPerPage);
   const categoryList = useMemo(
     () => Array.from(new Set(flaggedSpans.map((span) => span.risk_category))),
     [flaggedSpans],
@@ -89,17 +91,24 @@ export function RedlineStep({ workflow }: StepProps) {
         >
           &lt;
         </button>
-        <div className="risk-carousel-window">
-          {activeSpan ? (
-            <article key={`${activeSpan.span_text}-${activeSpan.start}`} className="span-card risk-slide">
-              <div className="risk-slide-index">{safePage + 1}</div>
-              <strong>{activeSpan.span_text}</strong>
-              <span>
-                {riskCategoryKo(activeSpan.risk_category)} · {sourceLabel(activeSpan.source)}
-              </span>
-              <small>{riskReasonKo(activeSpan)}</small>
-              <em>신뢰도 {Math.round(activeSpan.confidence * 100)}%</em>
-            </article>
+        <div className="risk-carousel-window" key={safePage}>
+          {visibleSpans.length ? (
+            <div className="risk-slide-list">
+              {visibleSpans.map((span, index) => {
+                const absoluteIndex = safePage * cardsPerPage + index;
+                return (
+                  <article key={`${span.span_text}-${span.start}`} className="span-card risk-slide">
+                    <div className="risk-slide-index">{absoluteIndex + 1}</div>
+                    <strong>{span.span_text}</strong>
+                    <span>
+                      {riskCategoryKo(span.risk_category)} · {sourceLabel(span.source)}
+                    </span>
+                    <small>{riskReasonKo(span)}</small>
+                    <em>신뢰도 {Math.round(span.confidence * 100)}%</em>
+                  </article>
+                );
+              })}
+            </div>
           ) : (
             <article className="span-card risk-slide">
               <strong>탐지된 리스크가 없습니다.</strong>
@@ -109,14 +118,14 @@ export function RedlineStep({ workflow }: StepProps) {
         </div>
         <button
           className="carousel-button"
-          onClick={() => setRiskPage((page) => Math.min(flaggedSpans.length - 1, page + 1))}
-          disabled={!flaggedSpans.length || safePage >= flaggedSpans.length - 1}
+          onClick={() => setRiskPage((page) => Math.min(totalPages - 1, page + 1))}
+          disabled={!flaggedSpans.length || safePage >= totalPages - 1}
           aria-label="다음 리스크"
         >
           &gt;
         </button>
         <span className="carousel-count">
-          {flaggedSpans.length ? safePage + 1 : 0} / {flaggedSpans.length}
+          {flaggedSpans.length ? safePage + 1 : 0} / {totalPages}
         </span>
       </section>
 
