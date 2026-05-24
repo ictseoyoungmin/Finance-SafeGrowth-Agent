@@ -3,6 +3,10 @@ from typing import Any
 
 from app.core.logging import get_logger
 from app.integrations.supabase_client import SupabaseClient, get_supabase_client
+from app.repositories.regulation_versions_repo import (
+    FALLBACK_REGULATION_CHUNKS,
+    FALLBACK_REGULATION_VERSIONS,
+)
 
 
 @dataclass(frozen=True)
@@ -15,6 +19,9 @@ class RegulationDoc:
     snippet: str
     guideline_snippet: str
     similarity: float
+    version_id: str | None = None
+    version_label: str | None = None
+    effective_date: str | None = None
 
 
 FALLBACK_REGULATION_DOCS = [
@@ -79,18 +86,27 @@ class RegulationDocsRepository:
         limit: int,
     ) -> list[RegulationDoc]:
         rows = self._supabase_client.select_many(
-            "regulation_docs",
+            "regulation_chunks",
             filters={},
             order="id.asc",
             limit=100,
         )
         requested = set(risk_categories)
-        docs = [
-            self._row_to_doc(row, requested)
-            for row in rows
-            if row.get("product_type") in {product_type, "공통"}
-            and (not requested or requested.intersection(row.get("risk_categories") or []))
-        ]
+        docs: list[RegulationDoc] = []
+        seen_versions: set[str] = set()
+        for row in rows:
+            if row.get("product_type") not in {product_type, "공통"}:
+                continue
+            if requested and not requested.intersection(row.get("risk_categories") or []):
+                continue
+            version_id = str(row.get("version_id") or "")
+            if not version_id or version_id in seen_versions:
+                continue
+            version = self._supabase_client.select_one("regulation_versions", {"id": version_id})
+            if not version or version.get("superseded_by"):
+                continue
+            docs.append(self._chunk_row_to_doc(row, version, requested))
+            seen_versions.add(version_id)
         return sorted(docs, key=lambda doc: (-doc.similarity, doc.evidence_id))[:limit]
 
     def _fallback_search(
@@ -100,6 +116,10 @@ class RegulationDocsRepository:
         limit: int,
     ) -> list[RegulationDoc]:
         requested = set(risk_categories)
+        ingested = self._fallback_ingested_search(requested, product_type, limit)
+        if ingested:
+            return ingested
+
         docs = [
             doc
             for doc in FALLBACK_REGULATION_DOCS
@@ -110,20 +130,60 @@ class RegulationDocsRepository:
             docs = FALLBACK_REGULATION_DOCS
         return sorted(docs, key=lambda doc: doc.similarity, reverse=True)[:limit]
 
-    def _row_to_doc(self, row: dict[str, Any], requested: set[str]) -> RegulationDoc:
+    def _fallback_ingested_search(
+        self,
+        requested: set[str],
+        product_type: str,
+        limit: int,
+    ) -> list[RegulationDoc]:
+        docs: list[RegulationDoc] = []
+        seen_versions: set[str] = set()
+        for row in FALLBACK_REGULATION_CHUNKS:
+            if row.get("product_type") not in {product_type, "공통"}:
+                continue
+            if requested and not requested.intersection(row.get("risk_categories") or []):
+                continue
+            version_id = str(row.get("version_id") or "")
+            if not version_id or version_id in seen_versions:
+                continue
+            version = FALLBACK_REGULATION_VERSIONS.get(version_id)
+            if not version or version.get("superseded_by"):
+                continue
+            docs.append(self._chunk_row_to_doc(row, version, requested))
+            seen_versions.add(version_id)
+        return sorted(docs, key=lambda doc: (-doc.similarity, doc.evidence_id))[:limit]
+
+    def _chunk_row_to_doc(
+        self,
+        row: dict[str, Any],
+        version: dict[str, Any],
+        requested: set[str],
+    ) -> RegulationDoc:
         row_categories = tuple(row.get("risk_categories") or ())
         overlap_count = len(requested.intersection(row_categories)) if requested else 1
         similarity = min(0.99, 0.72 + (0.05 * overlap_count))
+        chunk_text = str(row.get("chunk_text") or "")
         return RegulationDoc(
-            evidence_id=str(row.get("id")),
-            title=str(row.get("title") or ""),
-            version=str(row.get("version") or ""),
+            evidence_id=f"reg-chunk-{row.get('id')}",
+            title=str(version.get("title") or ""),
+            version=str(version.get("version_label") or version.get("id") or ""),
             product_type=str(row.get("product_type") or "공통"),
             risk_categories=row_categories,
-            snippet=str(row.get("snippet") or ""),
-            guideline_snippet=str(row.get("guideline_snippet") or ""),
+            snippet=chunk_text[:220],
+            guideline_snippet=_first_sentence(chunk_text),
             similarity=similarity,
+            version_id=str(version.get("id") or ""),
+            version_label=version.get("version_label"),
+            effective_date=version.get("effective_date"),
         )
+
+
+def _first_sentence(text: str) -> str:
+    for delimiter in (".", "。", "다.", "\n"):
+        if delimiter in text:
+            end = text.find(delimiter) + len(delimiter)
+            return text[:end].strip()
+    return text[:120].strip()
 
 
 def get_regulation_docs_repository() -> RegulationDocsRepository:

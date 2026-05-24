@@ -12,9 +12,9 @@ class SearchRegulationTool:
     description = (
         "Search the regulation knowledge base for evidence snippets that match the given "
         "risk_categories and product_type. Returns up to `limit` evidence items with "
-        "title, version, snippet, guideline_snippet, and similarity score. Prefer calling "
+        "title, version/version_id, snippet, guideline_snippet, and similarity score. Prefer calling "
         "this after scan_rules so the risk_categories list is meaningful. The optional "
-        "`query` string will be used by the Day 19 vector search; for now it is logged "
+        "`query` string will be used by the Day 20 vector search; for now it is logged "
         "for tracing but does not affect filtering."
     )
     args_model = SearchRegulationArgs
@@ -35,6 +35,9 @@ class SearchRegulationTool:
                     evidence_id=doc.evidence_id,
                     title=doc.title,
                     version=doc.version,
+                    version_id=doc.version_id,
+                    version_label=doc.version_label,
+                    effective_date=doc.effective_date,
                     snippet=doc.snippet,
                     guideline_snippet=doc.guideline_snippet,
                     similarity=max(0.0, min(float(doc.similarity), 1.0)),

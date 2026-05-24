@@ -51,6 +51,9 @@ class SearchRegulationHit(BaseModel):
     evidence_id: str
     title: str
     version: str
+    version_id: str | None = None
+    version_label: str | None = None
+    effective_date: str | None = None
     snippet: str
     guideline_snippet: str
     similarity: float = Field(..., ge=0, le=1)

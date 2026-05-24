@@ -179,8 +179,24 @@ curl -X POST http://localhost:8000/v1/admin/regulations/ingest \
 
 ## Completion Log
 
-- Status: NOT_STARTED
-- Implemented files: -
-- Test commands executed: -
-- Test result summary: -
-- Known issues: -
+- Status: DONE (2026-05-24)
+- Implemented files:
+  - `infra/supabase/migrations/2026-05-26_regulation_tracking.sql`
+  - `infra/supabase/seed_regulation_sources.sql`
+  - `apps/backend/app/schemas/regulation.py`
+  - `apps/backend/app/repositories/regulation_sources_repo.py`
+  - `apps/backend/app/repositories/regulation_versions_repo.py`
+  - `apps/backend/app/services/regulation_ingestion_service.py`
+  - `apps/backend/app/ingestion/**`
+  - `apps/backend/app/jobs/regulation_refresh.py`
+  - `apps/backend/app/api/v1/admin.py`
+  - `apps/backend/tests/test_regulation_ingestion.py`
+  - `apps/backend/tests/test_regulation_versions.py`
+  - `apps/backend/tests/test_admin_upload_endpoint.py`
+- Test commands executed:
+  - `ruff check app tests`
+  - `docker run --rm --add-host=host.docker.internal:host-gateway -e OPENAI_BASE_URL=http://host.docker.internal:18080/v1 ... "ruff check app tests && pytest"`
+- Test result summary: Docker backend validation passed: 104 passed, 1 warning. Local LLM integration smoke executed and passed.
+- Known issues:
+  - RSS connector defaults to metadata-only behavior unless `--fetch-full-text` is explicitly set, to avoid copyright/terms risk.
+  - PDF extraction ignores tables/images. Day 20 embedding/backfill still owns `regulation_chunks.embedding`.

@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     database_url: str | None = None
     agent_max_iterations: int = 8
     agent_deadline_seconds: int = 60
+    admin_api_token: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
