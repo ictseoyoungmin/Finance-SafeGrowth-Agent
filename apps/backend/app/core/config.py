@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     supabase_anon_key: str | None = None
     supabase_service_role_key: str | None = None
     database_url: str | None = None
+    agent_max_iterations: int = 8
+    agent_deadline_seconds: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",

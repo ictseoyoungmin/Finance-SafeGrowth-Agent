@@ -139,8 +139,75 @@ curl -X POST http://localhost:8000/v1/agent/run \
 
 ## Completion Log
 
-- Status: NOT_STARTED
-- Implemented files: -
-- Test commands executed: -
-- Test result summary: -
-- Known issues: -
+- Status: COMPLETE (2026-05-24)
+- Deviation from plan (intentional): Day 17 design pinned `google-generativeai>=0.7,<0.9` as the Gemini transport. The implementation **does not add the SDK**. Instead `GeminiClient.generate_with_tools` extends the existing urllib-based POST. Rationale:
+  - The existing `generate_json` already uses urllib; adding the SDK would create two transport paths in one client.
+  - The Gemini REST `:generateContent` endpoint supports `tools`, `toolConfig`, and `systemInstruction` natively. Function-calling worked end-to-end via urllib in docker smoke.
+  - Keeps `requirements.txt` lean (still `fastapi/httpx/pydantic-settings/uvicorn`). The SDK pulls in protobuf + grpc + numpy which we did not need.
+  - This deviation is logged here so Day 18+ work and the handover doc reflect reality.
+- Implemented files:
+  - [x] `apps/backend/app/integrations/gemini_client.py` (extended with `generate_with_tools`, `GeminiFunctionCall`, `GeminiToolResponse`)
+  - [x] `apps/backend/app/core/config.py` (added `agent_max_iterations`, `agent_deadline_seconds`)
+  - [x] `apps/backend/app/agent/limits.py`
+  - [x] `apps/backend/app/agent/transcript.py` (system prompt + state↔Gemini contents)
+  - [x] `apps/backend/app/agent/fallback_runner.py` (deterministic 4-step chain)
+  - [x] `apps/backend/app/agent/runner.py` (`AgentRunner.run/resume/cancel/get`)
+  - [x] `apps/backend/app/api/v1/agent.py` (REST + SSE endpoints)
+  - [x] `apps/backend/app/api/v1/router.py` (agent router wired under `/v1/agent`)
+  - [x] `apps/backend/tests/_agent_fakes.py` (shared scripted Gemini + stub tools, not auto-collected)
+  - [x] `apps/backend/tests/test_agent_runner_happy.py`
+  - [x] `apps/backend/tests/test_agent_runner_pause.py`
+  - [x] `apps/backend/tests/test_agent_runner_fallback.py`
+  - [x] `apps/backend/tests/test_agent_runner_limits.py`
+  - [x] `apps/backend/tests/test_api_agent.py`
+- Test commands executed (via docker):
+
+```bash
+# image build (only if Dockerfile/requirements changed)
+docker build -t dacon-backend-dev -f apps/backend/Dockerfile apps/backend
+
+# ruff + full pytest
+docker run --rm \
+  -v "$PWD/apps/backend:/app" -w /app \
+  dacon-backend-dev sh -c \
+  "pip install --no-cache-dir -q -r requirements-dev.txt && ruff check app tests && pytest -q"
+```
+
+- Test result summary:
+  - ruff: All checks passed
+  - pytest (full suite): 91 passed, 1 warning (existing starlette/python_multipart deprecation)
+  - 14 new Day-17 tests added (happy, pause, fallback, limits, api) on top of Day-15/16 coverage
+- Live HTTP smoke (via docker compose):
+
+```bash
+docker compose up --build -d backend
+# wait until /v1/health responds
+until curl -fs http://localhost:8000/v1/health > /dev/null; do sleep 1; done
+
+# analyze -> agent run -> respond
+CID=$(curl -s -X POST http://localhost:8000/v1/compliance/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"product_type":"투자상품","channel":"앱 푸시","target_customer":"30대 직장인","language":"ko","original_text":"누구나 연 8% 수익을 안정적으로..."}' \
+  | python3 -c "import json,sys; print(json.load(sys.stdin)['content_id'])")
+RUN=$(curl -s -X POST http://localhost:8000/v1/agent/run \
+  -H "Content-Type: application/json" \
+  -d "{\"content_id\":\"$CID\",\"text\":\"검토 요청\",\"mode\":\"review\"}")
+RUN_ID=$(echo "$RUN" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+curl -s -X POST "http://localhost:8000/v1/agent/runs/$RUN_ID/respond" \
+  -H "Content-Type: application/json" \
+  -d '{"response":{"decision":"approve","selected_revision":"마케팅안 최종 텍스트"}}'
+docker compose down
+```
+
+  - `/v1/agent/run` returned `status=awaiting_human`, `model=fallback-deterministic-agent`, 4 tool calls (`scan_rules → search_regulation → draft_rewrite → request_human_review`).
+  - `/v1/agent/runs/{id}/respond` returned `status=done`, `final_decision=approve`, `final_summary="Approved after review (risk_level=HIGH)."`, `final_report.final_text="마케팅안 최종 텍스트"`.
+- Design highlights vs the plan:
+  - **One source of truth for resume**: the initial request is JSON-serialized into the second `thought` step (`request_snapshot=...`). `resume()` reconstructs `AgentRunRequest` from that step. No new column was needed and the trace stays self-describing.
+  - **Pause/done unification**: both terminal paths run through `AgentRunner._terminate`. Done path now also patches `token_input/token_output/ended_at` so finalize_report side-effects + token accounting stay consistent.
+  - **Text-only response handling**: if Gemini returns plain text without a function_call, the runner forces a `finalize_report({decision:"none", summary:text[:500]})` instead of issuing a second Gemini call. Avoids an extra round-trip in failure modes.
+  - **SSE**: minimal replay-style implementation. On connect, the endpoint streams existing persisted steps as `event: step`, then `event: status`, then a comment for end-of-trace. The Day 20 frontend should treat polling as the primary live-update mechanism and SSE as a one-shot replay.
+- Known issues:
+  - SSE is replay-only; we do not push during an active run (the runner is synchronous and blocks until pause/done). Real-time streaming would require running the agent loop in a background task and a pub/sub queue — out of scope for Day 17.
+  - `request_human_review` produces both a `tool_result` step and a `human_prompt` step; UI must decide which to render to avoid duplication.
+  - Token usage on the fallback path is always 0 because no Gemini call is made; downstream cost tracking should treat fallback runs separately.
+  - Live Gemini function-calling was not exercised in this sandbox (no API key). Stubs cover the loop logic; Day 21 will run a public smoke against Render.
