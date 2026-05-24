@@ -107,8 +107,56 @@ timeout 60 .venv/bin/pytest -q tests/test_agent_tools_*.py
 
 ## Completion Log
 
-- Status: NOT_STARTED
-- Implemented files: -
-- Test commands executed: -
-- Test result summary: -
-- Known issues: -
+- Status: COMPLETE (2026-05-24)
+- Implemented files:
+  - [x] `apps/backend/app/agent/tools/__init__.py`
+  - [x] `apps/backend/app/agent/tools/base.py`
+  - [x] `apps/backend/app/agent/tools/registry.py`
+  - [x] `apps/backend/app/agent/tools/fetch_content.py`
+  - [x] `apps/backend/app/agent/tools/scan_rules.py`
+  - [x] `apps/backend/app/agent/tools/search_regulation.py`
+  - [x] `apps/backend/app/agent/tools/draft_rewrite.py`
+  - [x] `apps/backend/app/agent/tools/request_human_review.py`
+  - [x] `apps/backend/app/agent/tools/finalize_report.py`
+  - [x] `apps/backend/tests/test_agent_tools_fetch_content.py`
+  - [x] `apps/backend/tests/test_agent_tools_scan_rules.py`
+  - [x] `apps/backend/tests/test_agent_tools_search_regulation.py`
+  - [x] `apps/backend/tests/test_agent_tools_draft_rewrite.py`
+  - [x] `apps/backend/tests/test_agent_tools_request_human_review.py`
+  - [x] `apps/backend/tests/test_agent_tools_finalize_report.py`
+  - [x] `apps/backend/tests/test_agent_tools_registry.py`
+- Test commands executed (via docker):
+
+```bash
+docker build -t dacon-backend-dev -f apps/backend/Dockerfile apps/backend
+docker run --rm \
+  -v "$PWD/apps/backend:/app" -w /app \
+  dacon-backend-dev sh -c \
+  "pip install --no-cache-dir -q -r requirements-dev.txt && ruff check app tests && pytest -q"
+```
+
+- Test result summary:
+  - ruff: All checks passed
+  - pytest (full suite): 77 passed, 1 warning (existing starlette/python_multipart deprecation)
+  - 28 new Day-16 tests added; 49 prior tests still green (no regression)
+- Local sanity command (registry import + declarations dump):
+
+```bash
+docker run --rm \
+  -v "$PWD/apps/backend:/app" -w /app \
+  dacon-backend-dev sh -c \
+  "pip install -q -r requirements-dev.txt && python -c 'from app.agent.tools import get_default_registry; r = get_default_registry(); print(r.names())'"
+# -> ['fetch_content', 'scan_rules', 'search_regulation', 'draft_rewrite', 'request_human_review', 'finalize_report']
+```
+
+- Design notes carried out:
+  - Existing service layer (`AnalyzeService`, `RewriteService`, `RegulationRetriever`, `ApprovalService`, `ReportService`) is **not modified** — tools are pure wrappers.
+  - Each tool takes its dependencies via constructor injection; default factory uses production `get_*` helpers.
+  - `ToolRegistry.invoke` catches `ValidationError`, `ToolError`, and arbitrary `Exception`s and returns them as JSON-serializable payloads (the agent loop never raises mid-iteration).
+  - `gemini_declaration` produces a Gemini-compatible JSON schema dict (inlines `$defs`, drops `title`, collapses `Optional[T]` `anyOf` into `nullable: true`) — Day 17 wraps these into `Tool(function_declarations=[...])`.
+  - `request_human_review` mutates `state.pending_human` and `state.status = "awaiting_human"`; Day 17 runner detects this and halts the loop.
+  - `finalize_report` writes through to `ApprovalService`, builds the `ReportResponse`, mutates `state.final`/`state.status="done"`, and patches `agent_runs.final_report` via the Day 15 repository.
+- Known notes:
+  - `SearchRegulationArgs.query` is accepted but not yet routed — Day 19 wires it into vector search.
+  - `FinalizeReportTool` performs three side-effects (approval insert + report build + agent_runs patch) in sequence and is not transactional. Day 17 runner handles partial failure by leaving the run in `running` and surfacing the `ToolError` in the trace.
+  - `DraftRewriteTool` calls `RewriteService` which re-reads context from repositories. Day 17/18 may optimize to share resolved context, but for now the redundancy is acceptable.
