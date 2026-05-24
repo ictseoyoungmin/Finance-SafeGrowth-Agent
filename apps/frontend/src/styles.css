@@ -1566,7 +1566,7 @@ dd {
   position: sticky;
   top: 18px;
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .trace-rail-card {
@@ -1579,6 +1579,10 @@ dd {
 
 .trace-rail-card.detail {
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+}
+
+.trace-rail-card .panel-heading.compact {
+  margin-bottom: 14px;
 }
 
 .legacy-trace-list {
@@ -1677,6 +1681,119 @@ dd {
   margin-bottom: 2px;
   color: #0f172a;
   font-size: 1.1rem;
+}
+
+.agent-judgment-card {
+  border-color: #c7d7fe;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.agent-judgment-list {
+  position: relative;
+  display: grid;
+  gap: 10px;
+}
+
+.agent-judgment-list::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: 14px;
+  width: 2px;
+  background: #dbeafe;
+}
+
+.agent-judgment-item {
+  position: relative;
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+  color: #0f172a;
+  text-align: left;
+}
+
+.agent-judgment-item > span {
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.agent-judgment-item strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.agent-judgment-item small {
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.agent-judgment-item.is-done > span {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.agent-judgment-item.is-active {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.agent-judgment-item.is-active > span {
+  background: var(--blue);
+  color: #ffffff;
+}
+
+.agent-judgment-item.is-pending {
+  opacity: 0.72;
+}
+
+.agent-judgment-item.is-selected {
+  box-shadow: inset 0 0 0 2px rgba(7, 90, 223, 0.16);
+}
+
+.judgment-detail {
+  border-color: #d8e8ff;
+}
+
+.judgment-detail-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.judgment-detail-list div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.judgment-detail-list dt {
+  margin-bottom: 5px;
+  color: #075adf;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.judgment-detail-list dd {
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1.55;
 }
 
 @media (max-width: 1080px) {

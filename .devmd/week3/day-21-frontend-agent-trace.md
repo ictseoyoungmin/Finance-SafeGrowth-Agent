@@ -169,6 +169,7 @@ docker run --rm \
   - Redline risk pagination now shows multiple cards per page instead of one-card paging.
   - Evidence cards were compacted for denser scanning when many references exist.
   - Legacy 5-step wizard now includes a right-side Trace/detail rail using the available horizontal workspace.
+  - The right rail now separates workflow progress from Agent judgment flow, showing observation → decision → next action.
 - Known issues:
   - npm audit reports existing dependency vulnerabilities in the frontend dependency tree.
   - `/admin/regulations` remains optional P2 follow-up and was not added in this slice.
