@@ -41,6 +41,22 @@ export interface EvidenceItem {
   version: string;
   snippet: string;
   similarity: number;
+  version_id?: string | null;
+  effective_date?: string | null;
+  risk_categories?: string[];
+}
+
+export interface RegulationVersionDetail {
+  id: string;
+  source_id: string;
+  title: string;
+  version_label?: string | null;
+  effective_date?: string | null;
+  content_hash: string;
+  raw_text?: string | null;
+  chunk_count: number;
+  superseded_by?: string | null;
+  ingested_at?: string | null;
 }
 
 export interface EvidenceResponse {

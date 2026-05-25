@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   DEFAULT_INPUT,
@@ -37,6 +37,48 @@ const INITIAL_STATE: ComplianceState = {
   isLoading: false,
 };
 
+const STORAGE_KEY = "compliance.workflow.v1";
+
+function loadPersisted(): ComplianceState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ComplianceState>;
+    if (!parsed || typeof parsed !== "object" || !parsed.input) return null;
+    return {
+      ...INITIAL_STATE,
+      ...parsed,
+      // always reset volatile flags on reload
+      isLoading: false,
+      pendingAction: undefined,
+      errorMessage: undefined,
+      actionMessage: undefined,
+    } as ComplianceState;
+  } catch {
+    return null;
+  }
+}
+
+function persist(state: ComplianceState) {
+  if (typeof window === "undefined") return;
+  try {
+    const { isLoading: _il, pendingAction: _pa, errorMessage: _em, actionMessage: _am, ...persistable } = state;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable));
+  } catch {
+    // quota or serialization issues — silently ignore
+  }
+}
+
+function clearPersisted() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function pendingActionForDecision(decision: ApprovalDecision): ComplianceState["pendingAction"] {
   if (decision === "REJECTED") return "reject";
   if (decision === "REVISION_REQUESTED") return "request_revision";
@@ -44,8 +86,12 @@ function pendingActionForDecision(decision: ApprovalDecision): ComplianceState["
 }
 
 export function useComplianceWorkflow(): ComplianceWorkflow {
-  const [state, setState] = useState<ComplianceState>(INITIAL_STATE);
+  const [state, setState] = useState<ComplianceState>(() => loadPersisted() ?? INITIAL_STATE);
   const apiBaseUrl = useMemo(() => getApiBaseUrl(), []);
+
+  useEffect(() => {
+    persist(state);
+  }, [state]);
 
   const updateInput = (patch: Partial<AnalyzeRequest>) => {
     setState((current) => ({
@@ -232,6 +278,7 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
   };
 
   const reset = () => {
+    clearPersisted();
     setState(INITIAL_STATE);
   };
 

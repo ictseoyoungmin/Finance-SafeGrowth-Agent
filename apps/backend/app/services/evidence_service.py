@@ -21,6 +21,9 @@ class EvidenceService:
                     version=doc.version,
                     snippet=doc.snippet,
                     similarity=doc.similarity,
+                    version_id=doc.version_id,
+                    effective_date=str(doc.effective_date) if doc.effective_date else None,
+                    risk_categories=list(doc.risk_categories),
                 )
                 for doc in docs
             ],

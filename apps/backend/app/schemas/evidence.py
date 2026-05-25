@@ -13,6 +13,9 @@ class EvidenceItem(BaseModel):
     version: str
     snippet: str
     similarity: float = Field(..., ge=0, le=1)
+    version_id: str | None = None
+    effective_date: str | None = None
+    risk_categories: list[str] = Field(default_factory=list)
 
 
 class EvidenceResponse(BaseModel):

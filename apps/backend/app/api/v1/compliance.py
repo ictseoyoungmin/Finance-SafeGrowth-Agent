@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.repositories.regulation_versions_repo import (
+    RegulationVersionsRepository,
+    get_regulation_versions_repository,
+)
 from app.schemas.approval import ApprovalRequest, ApprovalResponse
 from app.schemas.audit import AuditLogResponse
 from app.schemas.compliance import AnalyzeRequest, AnalyzeResponse
 from app.schemas.evidence import EvidenceRequest, EvidenceResponse
 from app.schemas.history import RecentContentsResponse
+from app.schemas.regulation import RegulationVersion
 from app.schemas.report import ReportResponse
 from app.schemas.rewrite import RewriteRequest, RewriteResponse
 from app.services.approval_service import ApprovalService, get_approval_service
@@ -72,3 +77,14 @@ def list_recent_contents(
     service: ReportService = Depends(get_report_service),
 ) -> RecentContentsResponse:
     return service.list_recent(limit=limit)
+
+
+@router.get("/regulation-versions/{version_id}", response_model=RegulationVersion)
+def get_regulation_version(
+    version_id: str,
+    repository: RegulationVersionsRepository = Depends(get_regulation_versions_repository),
+) -> RegulationVersion:
+    version = repository.get(version_id)
+    if version is None:
+        raise HTTPException(status_code=404, detail="regulation version not found")
+    return version

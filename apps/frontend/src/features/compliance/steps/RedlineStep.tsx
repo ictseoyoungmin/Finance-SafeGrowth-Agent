@@ -1,8 +1,14 @@
 import { useMemo, useState } from "react";
 
+import { HelpHint } from "../../../components/HelpHint";
 import { renderRedline } from "../../../components/redline/renderRedline";
 import { riskCategoryKo, riskReasonKo, sourceLabel } from "../riskPresentation";
 import type { ComplianceWorkflow } from "../store";
+
+const CONFIDENCE_HINT =
+  "AI가 탐지한 모든 표현의 평균 신뢰도입니다. 100%에 가까울수록 자동 탐지 결과가 더 확실합니다. 70% 미만은 사람 검토를 권장합니다.";
+const RISK_LEVEL_HINT =
+  "탐지된 표현의 심각도를 종합한 레벨입니다. HIGH 는 배포 전 표현 완화·필수 고지 추가가 필요합니다.";
 
 interface StepProps {
   workflow: ComplianceWorkflow;
@@ -61,11 +67,15 @@ export function RedlineStep({ workflow }: StepProps) {
 
       <aside className="inspector">
         <div className={`risk-score risk-${analyze.risk_level.toLowerCase()}`}>
-          <span>위험도</span>
+          <span>
+            위험도 <HelpHint hint={RISK_LEVEL_HINT} />
+          </span>
           <strong>{analyze.risk_level}</strong>
         </div>
         <div className="confidence-row">
-          <span>신뢰도</span>
+          <span>
+            신뢰도 <HelpHint hint={CONFIDENCE_HINT} />
+          </span>
           <strong>{confidence}%</strong>
         </div>
         <h2>탐지 리스크</h2>

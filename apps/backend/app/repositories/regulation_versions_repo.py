@@ -44,6 +44,13 @@ class RegulationVersionsRepository:
         rows.sort(key=lambda row: str(row.get("ingested_at") or ""), reverse=True)
         return RegulationVersion.model_validate(rows[0]) if rows else None
 
+    def get(self, version_id: str) -> RegulationVersion | None:
+        if self._supabase_client.is_configured:
+            row = self._supabase_client.select_one("regulation_versions", {"id": version_id})
+            return RegulationVersion.model_validate(row) if row else None
+        row = FALLBACK_REGULATION_VERSIONS.get(version_id)
+        return RegulationVersion.model_validate(row) if row else None
+
     def list_by_source(self, source_id: str, limit: int = 20) -> list[RegulationVersion]:
         if self._supabase_client.is_configured:
             rows = self._supabase_client.select_many(
