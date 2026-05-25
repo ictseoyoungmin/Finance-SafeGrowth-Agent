@@ -343,12 +343,6 @@ function lastDoneJudgment(items: JudgmentItem[]) {
   return doneItems[doneItems.length - 1];
 }
 
-function statusFor(index: number, currentIndex: number): TraceItem["status"] {
-  if (index < currentIndex) return "done";
-  if (index === currentIndex) return "active";
-  return "pending";
-}
-
 function statusWithData(
   index: number,
   currentIndex: number,

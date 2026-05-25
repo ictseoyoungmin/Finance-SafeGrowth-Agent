@@ -63,7 +63,13 @@ function loadPersisted(): ComplianceState | null {
 function persist(state: ComplianceState) {
   if (typeof window === "undefined") return;
   try {
-    const { isLoading: _il, pendingAction: _pa, errorMessage: _em, actionMessage: _am, ...persistable } = state;
+    const persistable = {
+      ...state,
+      isLoading: undefined,
+      pendingAction: undefined,
+      errorMessage: undefined,
+      actionMessage: undefined,
+    };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable));
   } catch {
     // quota or serialization issues — silently ignore

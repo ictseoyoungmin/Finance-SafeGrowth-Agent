@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 
 import { ArrowLeftIcon } from "../../components/icons";
 import { ReportPackagePanel } from "./components/ReportPackagePanel";
@@ -54,7 +54,7 @@ export function HistoryPage() {
   const [deleting, setDeleting] = useState<string | "all" | undefined>();
   const [deleteError, setDeleteError] = useState<string | undefined>();
 
-  const handleDeleteOne = async (id: string, event: React.MouseEvent) => {
+  const handleDeleteOne = async (id: string, event: MouseEvent) => {
     event.stopPropagation();
     if (!window.confirm("이 검토 건을 삭제할까요? 관련 분석·승인 로그도 함께 삭제됩니다.")) return;
     setDeleting(id);
