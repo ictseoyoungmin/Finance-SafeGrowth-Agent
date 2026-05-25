@@ -102,9 +102,19 @@ async function postJson<TResponse>(path: string, body: unknown): Promise<TRespon
   return response.json() as Promise<TResponse>;
 }
 
+export class ApiNotAvailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ApiNotAvailableError";
+  }
+}
+
 async function getJson<TResponse>(path: string): Promise<TResponse> {
   const response = await fetch(`${API_BASE_URL}${path}`);
 
+  if (response.status === 404) {
+    throw new ApiNotAvailableError(`해당 엔드포인트가 백엔드에 없습니다 (404): ${path}`);
+  }
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status}`);
   }

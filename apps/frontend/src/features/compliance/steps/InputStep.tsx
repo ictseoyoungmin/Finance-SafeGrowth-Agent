@@ -106,19 +106,17 @@ export function InputStep({ workflow }: StepProps) {
       </div>
 
       <label className="copy-field">
-        <span>
-          <span className="copy-field__label">
-            콘텐츠 입력 <HelpHint hint={HINTS.text} />
-          </span>
-          <small className="character-count">
-            <strong>{characterCount.toLocaleString()}</strong> / 2,000
-          </small>
+        <span className="copy-field__label">
+          콘텐츠 입력 <HelpHint hint={HINTS.text} />
         </span>
         <textarea
           rows={8}
           value={state.input.original_text}
           onChange={(event) => updateInput({ original_text: event.target.value })}
         />
+        <small className="character-count character-count--floating">
+          <strong>{characterCount.toLocaleString()}</strong> / 2,000
+        </small>
       </label>
 
       <div className="analysis-note">준법 리스크를 분석하고, 근거와 함께 수정안을 생성합니다.</div>

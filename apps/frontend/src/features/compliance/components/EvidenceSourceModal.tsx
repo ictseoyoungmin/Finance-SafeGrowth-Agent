@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { fetchRegulationVersion } from "../api";
+import { ApiNotAvailableError, fetchRegulationVersion } from "../api";
 import type { RegulationVersionDetail } from "../types";
 
 interface EvidenceSourceModalProps {
@@ -29,13 +29,14 @@ export function EvidenceSourceModal({ versionId, evidenceTitle, onClose }: Evide
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-        setState({
-          status: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "규정 원문을 불러오지 못했습니다.",
-        });
+        let message = "규정 원문을 불러오지 못했습니다.";
+        if (error instanceof ApiNotAvailableError) {
+          message =
+            "이 환경에는 규정 원문 조회 API가 아직 배포되지 않았습니다. 백엔드 업데이트 후 다시 시도해 주세요.";
+        } else if (error instanceof Error) {
+          message = `규정 원문을 불러오지 못했습니다 (${error.message}).`;
+        }
+        setState({ status: "error", message });
       });
     return () => {
       cancelled = true;
@@ -72,6 +73,7 @@ export function EvidenceSourceModal({ versionId, evidenceTitle, onClose }: Evide
         {state.status === "error" ? (
           <div className="notice" role="alert">
             {state.message}
+            <small className="modal-card__error-cid">요청한 버전 ID: {versionId}</small>
           </div>
         ) : null}
 

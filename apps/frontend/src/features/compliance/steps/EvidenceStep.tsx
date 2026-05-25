@@ -115,7 +115,11 @@ export function EvidenceStep({ workflow }: StepProps) {
               ))}
             </div>
           ) : (
-            <p className="evidence-empty">선택한 리스크 카테고리에 직접 매칭된 근거가 없습니다.</p>
+            <p className="evidence-empty">
+              {selectedRisk
+                ? `선택한 카테고리(${riskCategoryKo(selectedRisk.risk_category)})에 직접 매칭된 근거가 없습니다. 아래 같은 검토에 포함된 근거를 참고하세요.`
+                : "리스크를 선택하면 매칭된 근거가 표시됩니다."}
+            </p>
           )}
 
           {otherEvidence.length > 0 ? (
@@ -216,12 +220,9 @@ function EvidenceCard({ item, emphasized = false, onOpenSource }: EvidenceCardPr
 
 function matchEvidenceForRisk(items: EvidenceItem[], risk: FlaggedSpan | undefined): EvidenceItem[] {
   if (!risk) return items;
-  const matched = items.filter((item) =>
+  return items.filter((item) =>
     (item.risk_categories ?? []).some((cat) => cat === risk.risk_category),
   );
-  if (matched.length > 0) return matched;
-  // fallback: positional matching by index (first risk → first evidence)
-  return items.length > 0 ? [items[0]] : [];
 }
 
 function severityBadgeClass(severity: FlaggedSpan["severity"]): string {

@@ -32,6 +32,8 @@ interface AppShellProps {
   actionMessage?: string;
   isLoading?: boolean;
   title?: string;
+  onNavigateStep?: (step: WorkflowStep) => void;
+  availableSteps?: ReadonlySet<WorkflowStep>;
 }
 
 export function AppShell({
@@ -43,6 +45,8 @@ export function AppShell({
   errorMessage,
   isLoading = false,
   title,
+  onNavigateStep,
+  availableSteps,
 }: AppShellProps) {
   const [guideOpen, setGuideOpen] = useState(false);
   const currentTitle =
@@ -58,15 +62,36 @@ export function AppShell({
         <nav className="step-list">
           {STEPS.map((step, index) => {
             const Icon = step.Icon;
-            return (
-              <div
-                key={step.id}
-                className={`step-item ${step.id === currentStep ? "is-active" : ""}`}
-              >
+            const isActive = step.id === currentStep;
+            const navigable =
+              Boolean(onNavigateStep) && (availableSteps?.has(step.id) ?? false);
+            const className = `step-item ${isActive ? "is-active" : ""} ${
+              navigable ? "is-navigable" : ""
+            }`;
+            const inner = (
+              <>
                 <span>{index + 1}</span>
                 <Icon className="step-item__icon" />
                 <p>{step.label}</p>
-              </div>
+              </>
+            );
+            if (!navigable) {
+              return (
+                <div key={step.id} className={className} aria-current={isActive ? "step" : undefined}>
+                  {inner}
+                </div>
+              );
+            }
+            return (
+              <button
+                key={step.id}
+                type="button"
+                className={className}
+                aria-current={isActive ? "step" : undefined}
+                onClick={() => onNavigateStep?.(step.id)}
+              >
+                {inner}
+              </button>
             );
           })}
         </nav>

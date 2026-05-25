@@ -10,6 +10,7 @@ import { EvidenceStep } from "./features/compliance/steps/EvidenceStep";
 import { InputStep } from "./features/compliance/steps/InputStep";
 import { RedlineStep } from "./features/compliance/steps/RedlineStep";
 import { RewriteStep } from "./features/compliance/steps/RewriteStep";
+import type { WorkflowStep } from "./features/compliance/types";
 
 export function App() {
   const route = useHashRoute();
@@ -35,6 +36,12 @@ export function App() {
 
 function ComplianceWizard() {
   const workflow = useComplianceWorkflow();
+  const { state } = workflow;
+  const availableSteps = new Set<WorkflowStep>(["input"]);
+  if (state.analyze) availableSteps.add("redline");
+  if (state.evidence) availableSteps.add("evidence");
+  if (state.rewrite) availableSteps.add("rewrite");
+  if (state.approval || state.step === "approval") availableSteps.add("approval");
 
   return (
     <AppShell
@@ -44,6 +51,8 @@ function ComplianceWizard() {
       errorMessage={workflow.state.errorMessage}
       actionMessage={workflow.state.actionMessage}
       isLoading={workflow.state.isLoading}
+      onNavigateStep={workflow.goTo}
+      availableSteps={availableSteps}
       rightRail={<ComplianceTraceRail workflow={workflow} />}
     >
       {workflow.state.step === "input" && <InputStep workflow={workflow} />}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { fetchRecentAuditEvents, type RecentAuditEntry } from "../features/compliance/api";
 
@@ -9,6 +9,8 @@ const ACTION_LABELS: Record<string, string> = {
   approve: "승인 저장",
   report: "리포트 생성",
 };
+
+const DISMISSED_KEY = "notifications.dismissed.v1";
 
 function actionLabel(action: string): string {
   return ACTION_LABELS[action] ?? action;
@@ -26,6 +28,31 @@ function formatTime(value?: string | null): string {
   });
 }
 
+function entryKey(entry: RecentAuditEntry): string {
+  return `${entry.created_at ?? ""}::${entry.content_id}::${entry.action}`;
+}
+
+function loadDismissed(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(DISMISSED_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? new Set(parsed.filter((v) => typeof v === "string")) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function persistDismissed(set: Set<string>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(DISMISSED_KEY, JSON.stringify(Array.from(set)));
+  } catch {
+    // ignore
+  }
+}
+
 type LoadState =
   | { status: "idle" }
   | { status: "loading" }
@@ -35,29 +62,30 @@ type LoadState =
 export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<LoadState>({ status: "idle" });
+  const [dismissed, setDismissed] = useState<Set<string>>(() => loadDismissed());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
+  const loadOnce = (force = false) => {
+    if (!force && state.status !== "idle") return;
     setState({ status: "loading" });
-    fetchRecentAuditEvents(10)
+    fetchRecentAuditEvents(20)
       .then((response) => {
-        if (cancelled) return;
         setState({ status: "ready", entries: response.entries });
       })
       .catch((error: unknown) => {
-        if (cancelled) return;
         setState({
           status: "error",
           message:
             error instanceof Error ? error.message : "알림을 불러오지 못했습니다.",
         });
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
+  };
+
+  // Initial load — fetch once on mount so the badge shows even before opening
+  useEffect(() => {
+    loadOnce();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -69,7 +97,30 @@ export function NotificationsBell() {
     return () => window.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const count = state.status === "ready" ? state.entries.length : undefined;
+  const visibleEntries = useMemo(() => {
+    if (state.status !== "ready") return [];
+    return state.entries.filter((entry) => !dismissed.has(entryKey(entry)));
+  }, [state, dismissed]);
+
+  const dismissOne = (key: string) => {
+    setDismissed((current) => {
+      const next = new Set(current);
+      next.add(key);
+      persistDismissed(next);
+      return next;
+    });
+  };
+
+  const dismissAll = () => {
+    setDismissed((current) => {
+      const next = new Set(current);
+      visibleEntries.forEach((entry) => next.add(entryKey(entry)));
+      persistDismissed(next);
+      return next;
+    });
+  };
+
+  const count = visibleEntries.length;
 
   return (
     <div className="notifications" ref={containerRef}>
@@ -78,7 +129,10 @@ export function NotificationsBell() {
         className="notifications__trigger"
         aria-label="알림"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setOpen((value) => !value);
+          loadOnce(true);
+        }}
       >
         <svg
           width={20}
@@ -94,16 +148,25 @@ export function NotificationsBell() {
           <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
           <path d="M10 21a2 2 0 0 0 4 0" />
         </svg>
-        {count !== undefined && count > 0 ? (
-          <span className="notifications__badge">{count}</span>
-        ) : null}
+        {count > 0 ? <span className="notifications__badge">{count}</span> : null}
       </button>
 
       {open ? (
         <div className="notifications__panel" role="dialog" aria-label="최근 활동">
           <header className="notifications__head">
-            <strong>최근 활동</strong>
-            <small>최근 audit log 10건</small>
+            <div>
+              <strong>최근 활동</strong>
+              <small>읽지 않은 audit log {count}건</small>
+            </div>
+            {count > 0 ? (
+              <button
+                type="button"
+                className="notifications__action"
+                onClick={dismissAll}
+              >
+                모두 읽음
+              </button>
+            ) : null}
           </header>
 
           {state.status === "loading" ? (
@@ -112,23 +175,35 @@ export function NotificationsBell() {
           {state.status === "error" ? (
             <div className="notice" role="alert">{state.message}</div>
           ) : null}
-          {state.status === "ready" && state.entries.length === 0 ? (
-            <p className="history-empty">아직 활동이 없습니다.</p>
+          {state.status === "ready" && count === 0 ? (
+            <p className="history-empty">모두 읽었습니다.</p>
           ) : null}
-          {state.status === "ready" && state.entries.length > 0 ? (
+          {state.status === "ready" && count > 0 ? (
             <ul className="notifications__list">
-              {state.entries.map((entry, index) => (
-                <li key={`${entry.created_at}-${index}`}>
-                  <div className="notifications__row">
-                    <strong>{actionLabel(entry.action)}</strong>
-                    <small>{formatTime(entry.created_at)}</small>
-                  </div>
-                  <small className="notifications__cid">
-                    검토 ID {entry.content_id ? entry.content_id.slice(0, 8) : "—"}
-                    {entry.model_version ? ` · ${entry.model_version}` : ""}
-                  </small>
-                </li>
-              ))}
+              {visibleEntries.map((entry) => {
+                const key = entryKey(entry);
+                return (
+                  <li key={key}>
+                    <div className="notifications__row">
+                      <strong>{actionLabel(entry.action)}</strong>
+                      <small>{formatTime(entry.created_at)}</small>
+                    </div>
+                    <small className="notifications__cid">
+                      검토 ID {entry.content_id ? entry.content_id.slice(0, 8) : "—"}
+                      {entry.model_version ? ` · ${entry.model_version}` : ""}
+                    </small>
+                    <button
+                      type="button"
+                      className="notifications__dismiss"
+                      onClick={() => dismissOne(key)}
+                      aria-label="이 알림 읽음"
+                      title="읽음"
+                    >
+                      읽음
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
         </div>
