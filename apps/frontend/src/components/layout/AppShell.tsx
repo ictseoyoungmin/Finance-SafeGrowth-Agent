@@ -1,13 +1,24 @@
-import type { ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 
 import type { WorkflowStep } from "../../features/compliance/types";
+import {
+  ApproveIcon,
+  ArchiveIcon,
+  ChevronIcon,
+  CompareIcon,
+  DocumentIcon,
+  EvidenceIcon,
+  RiskIcon,
+} from "../icons";
 
-const STEPS: Array<{ id: WorkflowStep; label: string; title: string }> = [
-  { id: "input", label: "콘텐츠 입력", title: "콘텐츠 입력" },
-  { id: "redline", label: "리스크 분석", title: "리스크 분석" },
-  { id: "evidence", label: "근거 패널", title: "근거 패널" },
-  { id: "rewrite", label: "수정안 비교", title: "수정안 비교" },
-  { id: "approval", label: "승인 패키지", title: "승인 패키지" },
+type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
+
+const STEPS: Array<{ id: WorkflowStep; label: string; title: string; Icon: IconComponent }> = [
+  { id: "input", label: "콘텐츠 입력", title: "콘텐츠 입력", Icon: DocumentIcon },
+  { id: "redline", label: "리스크 분석", title: "리스크 분석", Icon: RiskIcon },
+  { id: "evidence", label: "근거 패널", title: "근거 패널", Icon: EvidenceIcon },
+  { id: "rewrite", label: "수정안 비교", title: "수정안 비교", Icon: CompareIcon },
+  { id: "approval", label: "승인 패키지", title: "승인 패키지", Icon: ApproveIcon },
 ];
 
 interface AppShellProps {
@@ -32,6 +43,7 @@ export function AppShell({
   isLoading = false,
   title,
 }: AppShellProps) {
+  const [guideOpen, setGuideOpen] = useState(false);
   const currentTitle =
     title ?? STEPS.find((step) => step.id === currentStep)?.title ?? "콘텐츠 입력";
 
@@ -43,38 +55,57 @@ export function AppShell({
           <strong>준법감시 AI</strong>
         </div>
         <nav className="step-list">
-          {STEPS.map((step, index) => (
-            <div
-              key={step.id}
-              className={`step-item ${step.id === currentStep ? "is-active" : ""}`}
-            >
-              <span>{index + 1}</span>
-              <p>{step.label}</p>
-            </div>
-          ))}
+          {STEPS.map((step, index) => {
+            const Icon = step.Icon;
+            return (
+              <div
+                key={step.id}
+                className={`step-item ${step.id === currentStep ? "is-active" : ""}`}
+              >
+                <span>{index + 1}</span>
+                <Icon className="step-item__icon" />
+                <p>{step.label}</p>
+              </div>
+            );
+          })}
         </nav>
 
         <div className="side-foot">
           <a className="side-link" href="#/history">
-            <strong>검토 이력</strong>
-            <small>DB에 저장된 최근 검토 보기</small>
+            <ArchiveIcon className="side-link__icon" size={20} />
+            <div>
+              <strong>검토 이력</strong>
+              <small>DB에 저장된 최근 검토 보기</small>
+            </div>
           </a>
-          <div className="side-info-card">
-            <p className="side-info-title">규정 기반 검토 가이드</p>
-            <p className="side-info-desc">
-              리스크 분석은 규정·가이드라인 매칭 결과를 기준으로 진행됩니다. Gemini 응답이 없을 때는
-              입력 문장 기반 fallback 으로 작동합니다.
-            </p>
-            <dl className="side-info-meta">
-              <div>
-                <dt>API</dt>
-                <dd>{apiBaseUrl}</dd>
+          <div className={`side-guide ${guideOpen ? "is-open" : ""}`}>
+            <button
+              type="button"
+              className="side-guide__toggle"
+              aria-expanded={guideOpen}
+              onClick={() => setGuideOpen((open) => !open)}
+            >
+              <span>규정 기반 검토 가이드</span>
+              <ChevronIcon className="side-guide__chevron" size={16} />
+            </button>
+            {guideOpen ? (
+              <div className="side-guide__body">
+                <p className="side-guide__desc">
+                  리스크 분석은 규정·가이드라인 매칭 결과를 기준으로 진행됩니다. Gemini 응답이
+                  없을 때는 입력 문장 기반 fallback 으로 작동합니다.
+                </p>
+                <dl className="side-guide__meta">
+                  <div>
+                    <dt>API</dt>
+                    <dd>{apiBaseUrl}</dd>
+                  </div>
+                  <div>
+                    <dt>모드</dt>
+                    <dd>{usedFallback ? "Fallback" : "Live"}</dd>
+                  </div>
+                </dl>
               </div>
-              <div>
-                <dt>모드</dt>
-                <dd>{usedFallback ? "Fallback" : "Live"}</dd>
-              </div>
-            </dl>
+            ) : null}
           </div>
         </div>
       </aside>
@@ -91,7 +122,7 @@ export function AppShell({
               <strong>관리자</strong>
               <small>준법감시팀</small>
             </span>
-            <span className="api-chip">API {apiBaseUrl}</span>
+            <span className="api-chip" title={apiBaseUrl}>API {apiBaseUrl}</span>
             {usedFallback && <span className="fallback-badge">Fallback</span>}
           </div>
           <div

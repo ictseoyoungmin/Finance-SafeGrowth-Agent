@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { ArrowLeftIcon } from "../../components/icons";
 import { ReportPackagePanel } from "./components/ReportPackagePanel";
 import { fetchRecentContents, fetchReport } from "./api";
 import { approvalDecisionLabel } from "./approvalDecisionLabels";
@@ -46,6 +47,12 @@ export function HistoryPage() {
   }, []);
 
   const handleSelect = (id: string) => {
+    if (selectedId === id) {
+      setSelectedId(undefined);
+      setReport(undefined);
+      setReportError(undefined);
+      return;
+    }
     setSelectedId(id);
     setReport(undefined);
     setReportError(undefined);
@@ -67,13 +74,18 @@ export function HistoryPage() {
 
   return (
     <div className="history-page">
+      <a className="back-link" href="#/">
+        <ArrowLeftIcon size={16} />
+        검토로 돌아가기
+      </a>
+
       <header className="panel-heading">
         <h2>검토 이력</h2>
         <p>최근에 저장된 검토 건을 선택해 리포트 패키지를 다시 확인할 수 있습니다.</p>
       </header>
 
       {state.status === "loading" ? (
-        <p className="history-empty" aria-busy>
+        <p className="loading-block" aria-busy>
           최근 검토 목록을 불러오는 중...
         </p>
       ) : null}
@@ -98,7 +110,7 @@ export function HistoryPage() {
                   type="button"
                   className={`history-item ${isActive ? "is-active" : ""}`}
                   onClick={() => handleSelect(item.id)}
-                  aria-pressed={isActive}
+                  aria-expanded={isActive}
                 >
                   <div className="history-item__head">
                     <span className="history-item__time">
@@ -112,31 +124,30 @@ export function HistoryPage() {
                   </p>
                   <p className="history-item__preview">{item.original_text_preview}</p>
                 </button>
+                {isActive ? (
+                  <div className="history-item__report">
+                    {reportLoading ? (
+                      <p className="loading-block" aria-busy>
+                        리포트 패키지를 불러오는 중...
+                      </p>
+                    ) : null}
+                    {reportError ? (
+                      <div className="notice" role="alert">
+                        {reportError}
+                      </div>
+                    ) : null}
+                    {report ? (
+                      <ReportPackagePanel
+                        report={report}
+                        helperText="이력에서 다른 건을 선택해 비교하거나, 같은 항목을 다시 눌러 닫을 수 있습니다."
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
               </li>
             );
           })}
         </ul>
-      ) : null}
-
-      {selectedId ? (
-        <div className="history-report">
-          {reportLoading ? (
-            <p className="history-empty" aria-busy>
-              리포트를 불러오는 중...
-            </p>
-          ) : null}
-          {reportError ? (
-            <div className="notice" role="alert">
-              {reportError}
-            </div>
-          ) : null}
-          {report ? (
-            <ReportPackagePanel
-              report={report}
-              helperText="좌측 검토 이력에서 다른 건을 선택해 비교할 수 있습니다."
-            />
-          ) : null}
-        </div>
       ) : null}
     </div>
   );
@@ -171,5 +182,5 @@ interface DecisionBadgeProps {
 function DecisionBadge({ decision }: DecisionBadgeProps) {
   if (!decision) return <span className="badge badge--neutral">미승인</span>;
   const label = approvalDecisionLabel(decision as ApprovalDecision);
-  return <span className="badge badge--decision">{label}</span>;
+  return <span className={`badge badge--decision`}>{label}</span>;
 }

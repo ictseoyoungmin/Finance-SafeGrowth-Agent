@@ -66,14 +66,16 @@ export function InputStep({ workflow }: StepProps) {
 
       <label className="copy-field">
         <span>
-          콘텐츠 입력 <small>?</small>
+          <span className="copy-field__label">
+            콘텐츠 입력 <small>?</small>
+          </span>
+          <small className="character-count">{characterCount.toLocaleString()} / 2,000</small>
         </span>
         <textarea
           rows={8}
           value={state.input.original_text}
           onChange={(event) => updateInput({ original_text: event.target.value })}
         />
-        <small className="character-count">{characterCount.toLocaleString()} / 2,000</small>
       </label>
 
       <div className="analysis-note">준법 리스크를 분석하고, 근거와 함께 수정안을 생성합니다.</div>
