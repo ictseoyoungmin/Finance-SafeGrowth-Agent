@@ -6,6 +6,7 @@ import type {
   EvidenceRequest,
   EvidenceResponse,
   FlaggedSpan,
+  RecentContentsResponse,
   ReportResponse,
   RewriteRequest,
   RewriteResponse,
@@ -46,6 +47,10 @@ export async function approveContent(request: ApprovalRequest): Promise<Approval
 
 export async function fetchReport(contentId: string): Promise<ReportResponse> {
   return getJson<ReportResponse>(`/v1/compliance/report?content_id=${encodeURIComponent(contentId)}`);
+}
+
+export async function fetchRecentContents(limit = 20): Promise<RecentContentsResponse> {
+  return getJson<RecentContentsResponse>(`/v1/compliance/contents/recent?limit=${limit}`);
 }
 
 async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {

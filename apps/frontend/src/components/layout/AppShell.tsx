@@ -19,6 +19,7 @@ interface AppShellProps {
   errorMessage?: string;
   actionMessage?: string;
   isLoading?: boolean;
+  title?: string;
 }
 
 export function AppShell({
@@ -29,9 +30,10 @@ export function AppShell({
   usedFallback = false,
   errorMessage,
   isLoading = false,
+  title,
 }: AppShellProps) {
   const currentTitle =
-    STEPS.find((step) => step.id === currentStep)?.title ?? "콘텐츠 입력";
+    title ?? STEPS.find((step) => step.id === currentStep)?.title ?? "콘텐츠 입력";
 
   return (
     <div className="app-frame">
@@ -52,10 +54,28 @@ export function AppShell({
           ))}
         </nav>
 
-        <div className="side-card">
-          <span className="brand-kicker small" aria-hidden="true" />
-          <p>AI가 규정·가이드라인 기반으로 리스크를 분석하고 수정안을 제안합니다.</p>
-          <strong>자세히 보기 ›</strong>
+        <div className="side-foot">
+          <a className="side-link" href="#/history">
+            <strong>검토 이력</strong>
+            <small>DB에 저장된 최근 검토 보기</small>
+          </a>
+          <div className="side-info-card">
+            <p className="side-info-title">규정 기반 검토 가이드</p>
+            <p className="side-info-desc">
+              리스크 분석은 규정·가이드라인 매칭 결과를 기준으로 진행됩니다. Gemini 응답이 없을 때는
+              입력 문장 기반 fallback 으로 작동합니다.
+            </p>
+            <dl className="side-info-meta">
+              <div>
+                <dt>API</dt>
+                <dd>{apiBaseUrl}</dd>
+              </div>
+              <div>
+                <dt>모드</dt>
+                <dd>{usedFallback ? "Fallback" : "Live"}</dd>
+              </div>
+            </dl>
+          </div>
         </div>
       </aside>
 

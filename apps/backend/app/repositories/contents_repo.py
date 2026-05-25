@@ -40,6 +40,21 @@ class ContentRepository:
 
         return FALLBACK_CONTENTS.get(content_id)
 
+    def list_recent(self, limit: int = 20) -> list[dict[str, str]]:
+        if self._supabase_client.is_configured:
+            try:
+                return self._supabase_client.select_many(
+                    "contents",
+                    filters={},
+                    order="created_at.desc",
+                    limit=limit,
+                )
+            except Exception:
+                logger.exception("Supabase contents list failed; falling back to memory store.")
+
+        records = list(FALLBACK_CONTENTS.values())
+        return list(reversed(records))[:limit]
+
     def _save_fallback(self, payload: dict[str, str]) -> str:
         content_id = str(uuid4())
         FALLBACK_CONTENTS[content_id] = {"id": content_id, **payload}

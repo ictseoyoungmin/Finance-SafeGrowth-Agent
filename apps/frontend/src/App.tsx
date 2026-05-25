@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "./components/layout/AppShell";
 import { AgentRunPage } from "./features/agent/AgentRunPage";
 import { ComplianceTraceRail } from "./features/compliance/components/ComplianceTraceRail";
+import { HistoryPage } from "./features/compliance/HistoryPage";
 import { useComplianceWorkflow } from "./features/compliance/store";
 import { ApprovalStep } from "./features/compliance/steps/ApprovalStep";
 import { EvidenceStep } from "./features/compliance/steps/EvidenceStep";
@@ -17,6 +18,14 @@ export function App() {
     return (
       <AppShell>
         <AgentRunPage />
+      </AppShell>
+    );
+  }
+
+  if (route === "/history") {
+    return (
+      <AppShell title="검토 이력">
+        <HistoryPage />
       </AppShell>
     );
   }

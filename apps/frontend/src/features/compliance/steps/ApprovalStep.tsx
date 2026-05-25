@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { ReportPackagePanel } from "../components/ReportPackagePanel";
 import { approvalDecisionLabel } from "../approvalDecisionLabels";
 import type { ComplianceWorkflow } from "../store";
 
@@ -17,7 +18,6 @@ export function ApprovalStep({ workflow }: StepProps) {
       ? rewrite?.revised_text_conservative
       : rewrite?.revised_text_marketing;
   const evidenceCount = state.evidence?.evidence_list.length ?? 0;
-  const auditCount = state.report?.audit_log.length ?? 0;
   const decisionLabel = approvalDecisionLabel(state.approval?.decision);
   const isSavingDecision =
     state.pendingAction === "approve" ||
@@ -90,8 +90,6 @@ export function ApprovalStep({ workflow }: StepProps) {
             <p key={item.evidence_id}>{item.title}</p>
           ))}
           <p>검토 ID: {analyze?.content_id ?? "demo-content"}</p>
-          {state.report ? <p>리포트: {state.report.summary}</p> : null}
-          {state.report ? <p>감사 로그 {auditCount}건</p> : null}
         </article>
       </section>
 
@@ -102,6 +100,13 @@ export function ApprovalStep({ workflow }: StepProps) {
         </div>
         <p>{finalText}</p>
       </section>
+
+      {state.report ? (
+        <ReportPackagePanel
+          report={state.report}
+          helperText="이 리포트는 DB에 저장되었습니다. 좌측 '검토 이력'에서 다시 조회할 수 있습니다."
+        />
+      ) : null}
 
       {state.errorMessage ? (
         <div
@@ -144,7 +149,11 @@ export function ApprovalStep({ workflow }: StepProps) {
           aria-busy={state.pendingAction === "load_report"}
           onClick={loadReport}
         >
-          {state.pendingAction === "load_report" ? "리포트 불러오는 중..." : "리포트 확인"}
+          {state.pendingAction === "load_report"
+            ? "리포트 불러오는 중..."
+            : state.report
+              ? "리포트 패키지 다시 보기"
+              : "리포트 패키지 보기"}
         </button>
         <button className="secondary-button" onClick={() => goTo("rewrite")}>
           수정안으로

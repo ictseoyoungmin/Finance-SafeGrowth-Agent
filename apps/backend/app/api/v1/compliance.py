@@ -4,6 +4,7 @@ from app.schemas.approval import ApprovalRequest, ApprovalResponse
 from app.schemas.audit import AuditLogResponse
 from app.schemas.compliance import AnalyzeRequest, AnalyzeResponse
 from app.schemas.evidence import EvidenceRequest, EvidenceResponse
+from app.schemas.history import RecentContentsResponse
 from app.schemas.report import ReportResponse
 from app.schemas.rewrite import RewriteRequest, RewriteResponse
 from app.services.approval_service import ApprovalService, get_approval_service
@@ -63,3 +64,11 @@ def get_report(
     service: ReportService = Depends(get_report_service),
 ) -> ReportResponse:
     return service.build(content_id)
+
+
+@router.get("/contents/recent", response_model=RecentContentsResponse)
+def list_recent_contents(
+    limit: int = Query(20, ge=1, le=100),
+    service: ReportService = Depends(get_report_service),
+) -> RecentContentsResponse:
+    return service.list_recent(limit=limit)

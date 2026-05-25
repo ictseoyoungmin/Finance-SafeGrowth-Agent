@@ -97,6 +97,23 @@ export interface ReportResponse {
   audit_log: Record<string, unknown>[];
 }
 
+export interface RecentContentItem {
+  id: string;
+  created_at?: string | null;
+  product_type: string;
+  channel: string;
+  target_customer: string;
+  language: string;
+  original_text_preview: string;
+  risk_level?: string | null;
+  decision?: ApprovalDecision | string | null;
+  reviewer?: string | null;
+}
+
+export interface RecentContentsResponse {
+  items: RecentContentItem[];
+}
+
 export interface ComplianceState {
   step: WorkflowStep;
   input: AnalyzeRequest;
