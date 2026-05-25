@@ -133,8 +133,13 @@ export function RedlineStep({ workflow }: StepProps) {
         <button className="secondary-button" onClick={() => goTo("input")}>
           문구 수정
         </button>
-        <button className="primary-button" onClick={loadEvidence} disabled={state.isLoading}>
-          근거 확인
+        <button
+          className="primary-button"
+          onClick={loadEvidence}
+          disabled={state.isLoading}
+          aria-busy={state.isLoading}
+        >
+          {state.isLoading ? "근거 불러오는 중..." : "근거 확인"}
         </button>
       </div>
     </div>

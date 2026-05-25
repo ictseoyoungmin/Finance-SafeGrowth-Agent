@@ -85,8 +85,13 @@ export function InputStep({ workflow }: StepProps) {
       </div>
 
       <div className="action-row centered">
-        <button className="primary-button" onClick={startReview} disabled={state.isLoading}>
-          {state.isLoading ? "검토 중" : "준법검토 시작"}
+        <button
+          className="primary-button"
+          onClick={startReview}
+          disabled={state.isLoading}
+          aria-busy={state.isLoading}
+        >
+          {state.isLoading ? "검토 중..." : "준법검토 시작"}
         </button>
       </div>
     </div>

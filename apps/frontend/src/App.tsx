@@ -13,28 +13,28 @@ import { RewriteStep } from "./features/compliance/steps/RewriteStep";
 export function App() {
   const route = useHashRoute();
 
-  if (route === "/legacy/wizard") {
-    return <LegacyWizard />;
+  if (route === "/agent") {
+    return (
+      <AppShell>
+        <AgentRunPage />
+      </AppShell>
+    );
   }
 
-  return (
-    <AppShell mode="agent">
-      <AgentRunPage />
-    </AppShell>
-  );
+  return <ComplianceWizard />;
 }
 
-function LegacyWizard() {
+function ComplianceWizard() {
   const workflow = useComplianceWorkflow();
 
   return (
     <AppShell
-      mode="legacy"
       currentStep={workflow.state.step}
       apiBaseUrl={workflow.apiBaseUrl}
       usedFallback={workflow.state.usedFallback}
       errorMessage={workflow.state.errorMessage}
       actionMessage={workflow.state.actionMessage}
+      isLoading={workflow.state.isLoading}
       rightRail={<ComplianceTraceRail workflow={workflow} />}
     >
       {workflow.state.step === "input" && <InputStep workflow={workflow} />}

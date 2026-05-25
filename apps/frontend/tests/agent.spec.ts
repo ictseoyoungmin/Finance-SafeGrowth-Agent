@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("agent trace flow reaches final report", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/agent");
   await page.getByRole("button", { name: "Agent 실행" }).click();
 
   await expect(page.getByText("실행 Trace")).toBeVisible();
@@ -19,7 +19,7 @@ test("agent trace flow reaches final report", async ({ page }) => {
 });
 
 test("legacy approval feedback is visible and localized", async ({ page }) => {
-  await page.goto("/#/legacy/wizard");
+  await page.goto("/");
   await page.getByRole("button", { name: "준법검토 시작" }).click();
   await page.getByRole("button", { name: "근거 확인", exact: true }).click();
   await page.getByRole("button", { name: "수정안 생성", exact: true }).click();

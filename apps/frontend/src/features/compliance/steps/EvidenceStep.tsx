@@ -131,8 +131,13 @@ export function EvidenceStep({ workflow }: StepProps) {
         <button className="secondary-button" onClick={() => goTo("redline")}>
           Redline으로
         </button>
-        <button className="primary-button" onClick={loadRewrite} disabled={state.isLoading}>
-          수정안 생성
+        <button
+          className="primary-button"
+          onClick={loadRewrite}
+          disabled={state.isLoading}
+          aria-busy={state.isLoading}
+        >
+          {state.isLoading ? "수정안 생성 중..." : "수정안 생성"}
         </button>
       </div>
     </div>
