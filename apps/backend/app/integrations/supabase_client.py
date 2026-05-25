@@ -72,6 +72,21 @@ class SupabaseClient:
             raise RuntimeError(f"Supabase patch on {table} returned a non-list response.")
         return rows[0] if rows else None
 
+    def delete(self, table: str, filters: dict[str, Any]) -> int:
+        if not self.is_configured:
+            raise RuntimeError("Supabase is not configured.")
+
+        params = {key: f"eq.{value}" for key, value in filters.items()}
+        response = httpx.delete(
+            self._table_url(table),
+            headers=self._headers(prefer="return=representation"),
+            params=params,
+            timeout=10,
+        )
+        response.raise_for_status()
+        rows = response.json()
+        return len(rows) if isinstance(rows, list) else 0
+
     def rpc(self, function_name: str, payload: dict[str, Any]) -> list[dict[str, Any]]:
         if not self.is_configured:
             raise RuntimeError("Supabase is not configured.")

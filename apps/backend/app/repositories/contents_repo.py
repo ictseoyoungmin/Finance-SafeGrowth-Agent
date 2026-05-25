@@ -40,6 +40,28 @@ class ContentRepository:
 
         return FALLBACK_CONTENTS.get(content_id)
 
+    def delete(self, content_id: str) -> bool:
+        if self._supabase_client.is_configured:
+            try:
+                self._supabase_client.delete("contents", {"id": content_id})
+            except Exception:
+                logger.exception("Supabase contents delete failed; falling back to memory store.")
+
+        return FALLBACK_CONTENTS.pop(content_id, None) is not None
+
+    def delete_all(self) -> int:
+        if self._supabase_client.is_configured:
+            # bulk delete via PostgREST requires an explicit filter; iterate over known ids
+            for content_id in list(self.list_recent(limit=1000)):
+                try:
+                    self._supabase_client.delete("contents", {"id": content_id.get("id")})
+                except Exception:
+                    logger.exception("Supabase contents bulk delete partial failure.")
+
+        removed = len(FALLBACK_CONTENTS)
+        FALLBACK_CONTENTS.clear()
+        return removed
+
     def list_recent(self, limit: int = 20) -> list[dict[str, str]]:
         if self._supabase_client.is_configured:
             try:

@@ -186,7 +186,7 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
         usedFallback: current.usedFallback || rewriteUsedFallback,
         isLoading: false,
         actionMessage: rewriteUsedFallback
-          ? "Gemini 응답 대신 입력 문장 기반 deterministic fallback 수정안을 표시합니다."
+          ? "Gemini 응답 대신 입력 문장 기반 기본 패턴 수정안을 표시합니다."
           : "Gemini 검수 수정안을 불러왔습니다.",
       }));
     } catch {

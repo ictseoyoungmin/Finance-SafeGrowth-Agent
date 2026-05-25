@@ -16,7 +16,8 @@ export function RewriteStep({ workflow }: StepProps) {
     state.selectedRevision === "conservative"
       ? rewrite.revised_text_conservative
       : rewrite.revised_text_marketing;
-  const sourceLabel = rewrite.source === "gemini" ? "Gemini 검수 결과" : "Deterministic fallback";
+  const sourceLabel =
+    rewrite.source === "gemini" ? "Gemini 검수 결과" : "기본 패턴 기반 (fallback)";
 
   return (
     <div className="rewrite-screen">

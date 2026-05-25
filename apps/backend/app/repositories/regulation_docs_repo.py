@@ -36,6 +36,9 @@ FALLBACK_REGULATION_DOCS = [
         snippet="투자성 상품 광고에서는 수익률을 확정적으로 표현하지 않아야 하며 손실 가능성을 함께 안내해야 합니다.",
         guideline_snippet="수익률 확정 표현 금지",
         similarity=0.87,
+        version_id="ver-demo-001",
+        version_label="demo-v1",
+        effective_date="2026-01-15",
     ),
     RegulationDoc(
         evidence_id="doc-demo-002",
@@ -46,6 +49,9 @@ FALLBACK_REGULATION_DOCS = [
         snippet="원금 손실 가능성이 있는 상품은 원금 보장 또는 원금 걱정이 없다는 취지로 안내하지 않아야 합니다.",
         guideline_snippet="원금 손실 가능성 고지 필요",
         similarity=0.84,
+        version_id="ver-demo-002",
+        version_label="demo-v1",
+        effective_date="2025-11-01",
     ),
     RegulationDoc(
         evidence_id="doc-demo-003",
@@ -56,6 +62,9 @@ FALLBACK_REGULATION_DOCS = [
         snippet="마케팅 커뮤니케이션은 보편적 혜택, 확정적 결과, 심의 누락으로 오인되는 표현을 사전 점검해야 합니다.",
         guideline_snippet="마케팅 문구 배포 전 준법 심의 필요",
         similarity=0.79,
+        version_id="ver-demo-003",
+        version_label="demo-v1",
+        effective_date="2025-08-20",
     ),
 ]
 logger = get_logger(__name__)

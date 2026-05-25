@@ -53,6 +53,41 @@ class AuditLogsRepository:
 
         return list(FALLBACK_AUDIT_LOGS.get(content_id, []))
 
+    def list_recent(self, limit: int = 20) -> list[dict[str, Any]]:
+        if self._supabase_client.is_configured:
+            try:
+                return self._supabase_client.select_many(
+                    "audit_logs",
+                    filters={},
+                    order="created_at.desc",
+                    limit=limit,
+                )
+            except Exception:
+                logger.exception("Supabase audit_logs list_recent failed; falling back to memory store.")
+
+        records: list[dict[str, Any]] = []
+        for entries in FALLBACK_AUDIT_LOGS.values():
+            records.extend(entries)
+        records.sort(key=lambda row: str(row.get("created_at") or ""), reverse=True)
+        return records[:limit]
+
+    def delete_by_content_id(self, content_id: str) -> None:
+        if self._supabase_client.is_configured:
+            try:
+                self._supabase_client.delete("audit_logs", {"content_id": content_id})
+            except Exception:
+                logger.exception("Supabase audit_logs delete failed; falling back to memory store.")
+        FALLBACK_AUDIT_LOGS.pop(content_id, None)
+
+    def delete_all(self) -> None:
+        if self._supabase_client.is_configured:
+            for content_id in list(FALLBACK_AUDIT_LOGS.keys()):
+                try:
+                    self._supabase_client.delete("audit_logs", {"content_id": content_id})
+                except Exception:
+                    logger.exception("Supabase audit_logs bulk delete partial failure.")
+        FALLBACK_AUDIT_LOGS.clear()
+
     def _save_fallback(self, content_id: str, payload: dict[str, Any]) -> None:
         FALLBACK_AUDIT_LOGS.setdefault(content_id, []).append(payload)
         logger.info("Supabase not configured; stored audit log in fallback memory.")

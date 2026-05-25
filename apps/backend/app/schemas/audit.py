@@ -12,3 +12,14 @@ class AuditLogEntry(BaseModel):
 class AuditLogResponse(BaseModel):
     content_id: str
     entries: list[AuditLogEntry]
+
+
+class RecentAuditEntry(BaseModel):
+    content_id: str
+    action: str
+    model_version: str | None = None
+    created_at: str | None = None
+
+
+class RecentAuditResponse(BaseModel):
+    entries: list[RecentAuditEntry]

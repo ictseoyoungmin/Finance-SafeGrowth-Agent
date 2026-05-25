@@ -11,6 +11,84 @@ FALLBACK_REGULATION_CHUNKS: list[dict[str, Any]] = []
 _NEXT_CHUNK_ID = 1
 
 
+_DEMO_RAW_TEXTS: dict[str, str] = {
+    "ver-demo-001": (
+        "제3조(허위·과장 광고 금지)\n"
+        "금융상품 광고를 함에 있어서는 다음 각 호에 해당하는 표현을 사용해서는 안 된다.\n"
+        "1. 수익률을 확정적으로 안내하는 표현\n"
+        "2. 원금 손실 가능성이 없는 것으로 오인할 수 있는 표현\n"
+        "3. 보편적 혜택, 전 고객 적용 등 무조건적 보장으로 해석될 수 있는 표현\n\n"
+        "제4조(필수 고지 사항)\n"
+        "투자성 상품 광고에는 손실 가능성, 예금자보호 비대상 여부, 운용 책임 등을 함께 안내하여야 한다.\n\n"
+        "제5조(심사 절차)\n"
+        "준법감시팀의 사전 검토를 거치지 않은 광고 문구는 외부에 게시하거나 발송할 수 없다.\n"
+    ),
+    "ver-demo-002": (
+        "제2조(원금 보장 오인 표현)\n"
+        "원금 손실 가능성이 있는 금융상품에 대하여는 \"원금 보장\", \"안전하게\", \"걱정 없이\" 등 손실 가능성을 부인하는 표현을 사용하여서는 안 된다.\n\n"
+        "제3조(권유 시 설명 의무)\n"
+        "고객에게 상품을 권유하는 경우 손실 발생 가능성, 환매 제한, 수수료 체계를 사전에 충분히 설명하여야 한다.\n\n"
+        "제4조(피해구제)\n"
+        "위반 광고로 인한 소비자 피해 발생 시 회사는 즉시 광고를 중지하고 피해 구제 절차를 안내하여야 한다.\n"
+    ),
+    "ver-demo-003": (
+        "제1장 총칙\n"
+        "본 규정은 회사 내부의 모든 대외 마케팅 커뮤니케이션이 법령·가이드라인을 준수하도록 사전 검토 절차를 규정함을 목적으로 한다.\n\n"
+        "제2장 사전 검토\n"
+        "1. 모든 광고 문안은 배포 전 준법감시팀의 검토를 거쳐야 한다.\n"
+        "2. 보편적 혜택, 확정적 결과, 심의 누락으로 오인될 수 있는 표현은 사전 점검 대상이다.\n"
+        "3. 사후 발견 시 즉시 광고를 중단하고 시정 조치를 이행한다.\n"
+    ),
+}
+
+
+def _seed_demo_versions() -> None:
+    """Populate fallback regulation versions for demo / DB instance modal."""
+    demo_versions = [
+        {
+            "id": "ver-demo-001",
+            "source_id": "src-internal-guidelines",
+            "title": "금융상품 광고 심사 가이드라인",
+            "version_label": "demo-v1",
+            "effective_date": "2026-01-15",
+            "content_hash": "sha256:demo-001-1f4b9c2e7d8a06f5c3b2e1a8d9f6c4e2a7b5d3f1",
+            "raw_text": _DEMO_RAW_TEXTS["ver-demo-001"],
+            "chunk_count": 8,
+            "superseded_by": None,
+            "ingested_at": "2026-01-15T09:00:00+00:00",
+        },
+        {
+            "id": "ver-demo-002",
+            "source_id": "src-consumer-protection",
+            "title": "금융소비자 보호 가이드라인",
+            "version_label": "demo-v1",
+            "effective_date": "2025-11-01",
+            "content_hash": "sha256:demo-002-9b8a72d4e6f0c1d2b3a4e5d6c7f8901a2b3c4d5e",
+            "raw_text": _DEMO_RAW_TEXTS["ver-demo-002"],
+            "chunk_count": 6,
+            "superseded_by": None,
+            "ingested_at": "2025-11-01T09:00:00+00:00",
+        },
+        {
+            "id": "ver-demo-003",
+            "source_id": "src-internal-control",
+            "title": "내부 통제 규정",
+            "version_label": "demo-v1",
+            "effective_date": "2025-08-20",
+            "content_hash": "sha256:demo-003-3e5d7c8b1a92f4e6c5b8a7d9e0f2c4b6a8d0e2f4",
+            "raw_text": _DEMO_RAW_TEXTS["ver-demo-003"],
+            "chunk_count": 5,
+            "superseded_by": None,
+            "ingested_at": "2025-08-20T09:00:00+00:00",
+        },
+    ]
+    for version in demo_versions:
+        FALLBACK_REGULATION_VERSIONS.setdefault(version["id"], version)
+
+
+_seed_demo_versions()
+
+
 class RegulationVersionsRepository:
     def __init__(self, supabase_client: SupabaseClient) -> None:
         self._supabase_client = supabase_client

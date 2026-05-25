@@ -10,6 +10,7 @@ import {
   EvidenceIcon,
   RiskIcon,
 } from "../icons";
+import { NotificationsBell } from "../NotificationsBell";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
 
@@ -116,13 +117,12 @@ export function AppShell({
             <h1>{currentTitle}</h1>
           </div>
           <div className="status-stack">
-            <span className="bell">3</span>
+            <NotificationsBell />
             <span className="avatar">A</span>
             <span className="admin-block">
               <strong>관리자</strong>
               <small>준법감시팀</small>
             </span>
-            <span className="api-chip" title={apiBaseUrl}>API {apiBaseUrl}</span>
             {usedFallback && <span className="fallback-badge">Fallback</span>}
           </div>
           <div

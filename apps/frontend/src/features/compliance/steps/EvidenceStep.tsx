@@ -62,7 +62,7 @@ export function EvidenceStep({ workflow }: StepProps) {
                   <li key={`${risk.span_text}-${risk.start}`}>
                     <button
                       type="button"
-                      className={`evidence-risk-button ${isActive ? "is-active" : ""}`}
+                      className={`evidence-risk-button severity-${risk.severity} ${isActive ? "is-active" : ""}`}
                       onClick={() => setSelectedRiskIndex(index)}
                       aria-pressed={isActive}
                     >

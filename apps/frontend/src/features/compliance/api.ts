@@ -60,6 +60,34 @@ export async function fetchRegulationVersion(versionId: string): Promise<Regulat
   );
 }
 
+export async function deleteContent(contentId: string): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/v1/compliance/contents/${encodeURIComponent(contentId)}`,
+    { method: "DELETE" },
+  );
+  if (!response.ok && response.status !== 204) {
+    throw new Error(`API request failed: ${response.status}`);
+  }
+}
+
+export async function deleteAllContents(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/v1/compliance/contents`, { method: "DELETE" });
+  if (!response.ok && response.status !== 204) {
+    throw new Error(`API request failed: ${response.status}`);
+  }
+}
+
+export interface RecentAuditEntry {
+  content_id: string;
+  action: string;
+  model_version?: string | null;
+  created_at?: string | null;
+}
+
+export async function fetchRecentAuditEvents(limit = 10): Promise<{ entries: RecentAuditEntry[] }> {
+  return getJson(`/v1/compliance/audit-log/recent?limit=${limit}`);
+}
+
 async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
@@ -112,6 +140,9 @@ export function fallbackEvidence(contentId: string): EvidenceResponse {
         version: "demo-v1",
         snippet: "투자성 상품 광고에서는 수익률을 확정적으로 표현하지 않아야 하며 손실 가능성을 함께 안내해야 합니다.",
         similarity: 0.87,
+        version_id: "ver-demo-001",
+        effective_date: "2026-01-15",
+        risk_categories: ["확정 수익 오인", "안정성 오인"],
       },
       {
         evidence_id: "doc-demo-002",
@@ -119,6 +150,9 @@ export function fallbackEvidence(contentId: string): EvidenceResponse {
         version: "demo-v1",
         snippet: "원금 손실 가능성이 있는 상품은 원금 보장 또는 원금 걱정이 없다는 취지로 안내하지 않아야 합니다.",
         similarity: 0.84,
+        version_id: "ver-demo-002",
+        effective_date: "2025-11-01",
+        risk_categories: ["원금 보장 오인"],
       },
     ],
     guideline_snippets: ["수익률 확정 표현 금지", "원금 손실 가능성 고지 필요"],

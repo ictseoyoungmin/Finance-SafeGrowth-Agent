@@ -54,6 +54,23 @@ class RiskResultsRepository:
             return None
         return records[-1]
 
+    def delete_by_content_id(self, content_id: str) -> None:
+        if self._supabase_client.is_configured:
+            try:
+                self._supabase_client.delete("risk_results", {"content_id": content_id})
+            except Exception:
+                logger.exception("Supabase risk_results delete failed; falling back to memory store.")
+        FALLBACK_RISK_RESULTS.pop(content_id, None)
+
+    def delete_all(self) -> None:
+        if self._supabase_client.is_configured:
+            for content_id in list(FALLBACK_RISK_RESULTS.keys()) or []:
+                try:
+                    self._supabase_client.delete("risk_results", {"content_id": content_id})
+                except Exception:
+                    logger.exception("Supabase risk_results bulk delete partial failure.")
+        FALLBACK_RISK_RESULTS.clear()
+
     def _save_fallback(self, content_id: str, payload: dict[str, Any]) -> None:
         FALLBACK_RISK_RESULTS.setdefault(content_id, []).append(payload)
         logger.info("Supabase not configured; stored risk result in fallback memory.")

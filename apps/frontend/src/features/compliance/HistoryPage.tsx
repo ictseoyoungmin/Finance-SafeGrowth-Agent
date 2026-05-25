@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 
 import { ArrowLeftIcon } from "../../components/icons";
 import { ReportPackagePanel } from "./components/ReportPackagePanel";
-import { fetchRecentContents, fetchReport } from "./api";
+import {
+  deleteAllContents,
+  deleteContent,
+  fetchRecentContents,
+  fetchReport,
+} from "./api";
 import { approvalDecisionLabel } from "./approvalDecisionLabels";
 import type {
   ApprovalDecision,
@@ -46,6 +51,48 @@ export function HistoryPage() {
     };
   }, []);
 
+  const [deleting, setDeleting] = useState<string | "all" | undefined>();
+  const [deleteError, setDeleteError] = useState<string | undefined>();
+
+  const handleDeleteOne = async (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!window.confirm("이 검토 건을 삭제할까요? 관련 분석·승인 로그도 함께 삭제됩니다.")) return;
+    setDeleting(id);
+    setDeleteError(undefined);
+    try {
+      await deleteContent(id);
+      setState((current) =>
+        current.status === "ready"
+          ? { status: "ready", items: current.items.filter((item) => item.id !== id) }
+          : current,
+      );
+      if (selectedId === id) {
+        setSelectedId(undefined);
+        setReport(undefined);
+      }
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "삭제에 실패했습니다.");
+    } finally {
+      setDeleting(undefined);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm("저장된 모든 검토 이력을 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) return;
+    setDeleting("all");
+    setDeleteError(undefined);
+    try {
+      await deleteAllContents();
+      setState({ status: "ready", items: [] });
+      setSelectedId(undefined);
+      setReport(undefined);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "전체 삭제에 실패했습니다.");
+    } finally {
+      setDeleting(undefined);
+    }
+  };
+
   const handleSelect = (id: string) => {
     if (selectedId === id) {
       setSelectedId(undefined);
@@ -79,10 +126,29 @@ export function HistoryPage() {
         검토로 돌아가기
       </a>
 
-      <header className="panel-heading">
-        <h2>검토 이력</h2>
-        <p>최근에 저장된 검토 건을 선택해 리포트 패키지를 다시 확인할 수 있습니다.</p>
+      <header className="panel-heading history-page__head">
+        <div>
+          <h2>검토 이력</h2>
+          <p>최근에 저장된 검토 건을 선택해 리포트 패키지를 다시 확인할 수 있습니다.</p>
+        </div>
+        {state.status === "ready" && state.items.length > 0 ? (
+          <button
+            type="button"
+            className="danger-button"
+            onClick={handleDeleteAll}
+            disabled={deleting === "all"}
+            aria-busy={deleting === "all"}
+          >
+            {deleting === "all" ? "전체 삭제 중..." : "전체 삭제"}
+          </button>
+        ) : null}
       </header>
+
+      {deleteError ? (
+        <div className="notice" role="alert">
+          {deleteError}
+        </div>
+      ) : null}
 
       {state.status === "loading" ? (
         <p className="loading-block" aria-busy>
@@ -105,7 +171,7 @@ export function HistoryPage() {
           {state.items.map((item) => {
             const isActive = selectedId === item.id;
             return (
-              <li key={item.id}>
+              <li key={item.id} className="history-list__item">
                 <button
                   type="button"
                   className={`history-item ${isActive ? "is-active" : ""}`}
@@ -123,6 +189,17 @@ export function HistoryPage() {
                     {item.product_type} · {item.channel} · {item.target_customer}
                   </p>
                   <p className="history-item__preview">{item.original_text_preview}</p>
+                </button>
+                <button
+                  type="button"
+                  className="history-item__delete"
+                  onClick={(event) => handleDeleteOne(item.id, event)}
+                  disabled={deleting === item.id}
+                  aria-busy={deleting === item.id}
+                  aria-label="이 검토 건 삭제"
+                  title="이 검토 건 삭제"
+                >
+                  ✕
                 </button>
                 {isActive ? (
                   <div className="history-item__report">

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { ApprovalStamp } from "../components/ApprovalStamp";
 import { ReportPackagePanel } from "../components/ReportPackagePanel";
 import { approvalDecisionLabel } from "../approvalDecisionLabels";
 import type { ComplianceWorkflow } from "../store";
@@ -46,7 +47,7 @@ export function ApprovalStep({ workflow }: StepProps) {
           <strong>김준법 수석</strong>
           <small>Compliance Manager</small>
         </div>
-        <div className="approval-stamp">준법 검토 준비</div>
+        <ApprovalStamp decision={state.approval?.decision} />
       </section>
 
       <section

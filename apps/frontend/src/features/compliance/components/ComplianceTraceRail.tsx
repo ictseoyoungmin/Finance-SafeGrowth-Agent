@@ -215,7 +215,7 @@ function buildTraceItems(workflow: ComplianceWorkflow): TraceItem[] {
     {
       id: "input",
       label: "콘텐츠 입력",
-      status: statusFor(0, currentIndex),
+      status: statusWithData(0, currentIndex, true),
       detail: `${state.input.product_type} · ${state.input.channel} · ${state.input.target_customer}`,
       meta: [
         { label: "문자 수", value: String(state.input.original_text.length) },
@@ -225,7 +225,7 @@ function buildTraceItems(workflow: ComplianceWorkflow): TraceItem[] {
     {
       id: "redline",
       label: "리스크 분석",
-      status: state.analyze ? statusFor(1, currentIndex) : "pending",
+      status: statusWithData(1, currentIndex, Boolean(state.analyze)),
       detail: state.analyze
         ? `${state.analyze.risk_level} · 탐지 표현 ${riskCount}건`
         : "준법 리스크 분석 대기",
@@ -237,7 +237,7 @@ function buildTraceItems(workflow: ComplianceWorkflow): TraceItem[] {
     {
       id: "evidence",
       label: "근거 매칭",
-      status: state.evidence ? statusFor(2, currentIndex) : "pending",
+      status: statusWithData(2, currentIndex, Boolean(state.evidence)),
       detail: state.evidence ? `참조 근거 ${evidenceCount}건 연결` : "규정·가이드라인 검색 대기",
       meta: [
         { label: "근거", value: String(evidenceCount) },
@@ -247,7 +247,7 @@ function buildTraceItems(workflow: ComplianceWorkflow): TraceItem[] {
     {
       id: "rewrite",
       label: "수정안 생성",
-      status: state.rewrite ? statusFor(3, currentIndex) : "pending",
+      status: statusWithData(3, currentIndex, Boolean(state.rewrite)),
       detail: state.rewrite ? `변경 포인트 ${rewriteCount}건 · ${state.rewrite.source ?? "llm"}` : "문구 수정안 생성 대기",
       meta: [
         { label: "변경", value: String(rewriteCount) },
@@ -257,7 +257,7 @@ function buildTraceItems(workflow: ComplianceWorkflow): TraceItem[] {
     {
       id: "approval",
       label: "승인 패키지",
-      status: state.approval || state.step === "approval" ? statusFor(4, currentIndex) : "pending",
+      status: statusWithData(4, currentIndex, Boolean(state.approval) || state.step === "approval"),
       detail: state.approval
         ? `심의 결과 ${approvalDecisionLabel(state.approval.decision)}`
         : "최종 승인 및 리포트 확인",
@@ -346,6 +346,17 @@ function lastDoneJudgment(items: JudgmentItem[]) {
 function statusFor(index: number, currentIndex: number): TraceItem["status"] {
   if (index < currentIndex) return "done";
   if (index === currentIndex) return "active";
+  return "pending";
+}
+
+function statusWithData(
+  index: number,
+  currentIndex: number,
+  hasData: boolean,
+): TraceItem["status"] {
+  if (index === currentIndex) return "active";
+  if (hasData) return "done";
+  if (index < currentIndex) return "done";
   return "pending";
 }
 

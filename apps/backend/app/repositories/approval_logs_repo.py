@@ -55,6 +55,23 @@ class ApprovalLogsRepository:
         records = self.list_by_content_id(content_id)
         return records[-1] if records else None
 
+    def delete_by_content_id(self, content_id: str) -> None:
+        if self._supabase_client.is_configured:
+            try:
+                self._supabase_client.delete("approval_logs", {"content_id": content_id})
+            except Exception:
+                logger.exception("Supabase approval_logs delete failed; falling back to memory store.")
+        FALLBACK_APPROVAL_LOGS.pop(content_id, None)
+
+    def delete_all(self) -> None:
+        if self._supabase_client.is_configured:
+            for content_id in list(FALLBACK_APPROVAL_LOGS.keys()):
+                try:
+                    self._supabase_client.delete("approval_logs", {"content_id": content_id})
+                except Exception:
+                    logger.exception("Supabase approval_logs bulk delete partial failure.")
+        FALLBACK_APPROVAL_LOGS.clear()
+
     def _save_fallback(self, payload: dict[str, Any]) -> str:
         approval_id = str(uuid4())
         fallback_payload = {"id": approval_id, **payload}

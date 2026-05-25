@@ -1,11 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
+from app.repositories.approval_logs_repo import (
+    ApprovalLogsRepository,
+    get_approval_logs_repository,
+)
+from app.repositories.audit_logs_repo import (
+    AuditLogsRepository,
+    get_audit_logs_repository,
+)
+from app.repositories.contents_repo import ContentRepository, get_content_repository
 from app.repositories.regulation_versions_repo import (
     RegulationVersionsRepository,
     get_regulation_versions_repository,
 )
+from app.repositories.risk_results_repo import (
+    RiskResultsRepository,
+    get_risk_results_repository,
+)
 from app.schemas.approval import ApprovalRequest, ApprovalResponse
-from app.schemas.audit import AuditLogResponse
+from app.schemas.audit import AuditLogResponse, RecentAuditEntry, RecentAuditResponse
 from app.schemas.compliance import AnalyzeRequest, AnalyzeResponse
 from app.schemas.evidence import EvidenceRequest, EvidenceResponse
 from app.schemas.history import RecentContentsResponse
@@ -88,3 +101,52 @@ def get_regulation_version(
     if version is None:
         raise HTTPException(status_code=404, detail="regulation version not found")
     return version
+
+
+@router.delete("/contents/{content_id}", status_code=204)
+def delete_content(
+    content_id: str,
+    contents: ContentRepository = Depends(get_content_repository),
+    risks: RiskResultsRepository = Depends(get_risk_results_repository),
+    approvals: ApprovalLogsRepository = Depends(get_approval_logs_repository),
+    audits: AuditLogsRepository = Depends(get_audit_logs_repository),
+) -> Response:
+    existed = contents.delete(content_id)
+    risks.delete_by_content_id(content_id)
+    approvals.delete_by_content_id(content_id)
+    audits.delete_by_content_id(content_id)
+    if not existed:
+        raise HTTPException(status_code=404, detail="content not found")
+    return Response(status_code=204)
+
+
+@router.delete("/contents", status_code=204)
+def delete_all_contents(
+    contents: ContentRepository = Depends(get_content_repository),
+    risks: RiskResultsRepository = Depends(get_risk_results_repository),
+    approvals: ApprovalLogsRepository = Depends(get_approval_logs_repository),
+    audits: AuditLogsRepository = Depends(get_audit_logs_repository),
+) -> Response:
+    contents.delete_all()
+    risks.delete_all()
+    approvals.delete_all()
+    audits.delete_all()
+    return Response(status_code=204)
+
+
+@router.get("/audit-log/recent", response_model=RecentAuditResponse)
+def list_recent_audit_events(
+    limit: int = Query(10, ge=1, le=100),
+    repository: AuditLogsRepository = Depends(get_audit_logs_repository),
+) -> RecentAuditResponse:
+    rows = repository.list_recent(limit=limit)
+    entries = [
+        RecentAuditEntry(
+            content_id=str(row.get("content_id") or ""),
+            action=str(row.get("action") or ""),
+            model_version=str(row.get("model_version")) if row.get("model_version") else None,
+            created_at=str(row.get("created_at")) if row.get("created_at") else None,
+        )
+        for row in rows
+    ]
+    return RecentAuditResponse(entries=entries)

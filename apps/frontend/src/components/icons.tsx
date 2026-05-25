@@ -100,3 +100,34 @@ export function ArrowLeftIcon(props: IconProps) {
     </Base>
   );
 }
+
+export function ScalesIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 3v18" />
+      <path d="M5 21h14" />
+      <path d="M5 6h14" />
+      <path d="M5 6 2 13a3 3 0 0 0 6 0z" />
+      <path d="M19 6l-3 7a3 3 0 0 0 6 0z" />
+    </Base>
+  );
+}
+
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8 12 3 3 5-6" />
+    </Base>
+  );
+}
+
+export function XCircleIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m9 9 6 6" />
+      <path d="m15 9-6 6" />
+    </Base>
+  );
+}

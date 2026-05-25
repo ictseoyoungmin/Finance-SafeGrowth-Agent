@@ -1460,21 +1460,6 @@ dd {
   color: #667085;
 }
 
-.approval-stamp {
-  display: grid;
-  place-items: center;
-  width: 98px;
-  height: 98px;
-  flex: 0 0 auto;
-  border: 3px solid #10b981;
-  border-radius: 50%;
-  color: #047857;
-  font-size: 0.86rem;
-  font-weight: 900;
-  text-align: center;
-  transform: rotate(-8deg);
-}
-
 .decision-banner {
   display: flex;
   align-items: center;
@@ -2395,6 +2380,7 @@ dd {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  padding-right: 34px;
   font-size: 0.82rem;
   font-weight: 800;
   color: #0f172a;
@@ -2944,6 +2930,281 @@ dd {
   overflow-y: auto;
 }
 
+/* Severity color treatment for evidence risk buttons */
+.evidence-risk-button.severity-HIGH {
+  box-shadow: inset 4px 0 0 #ef4444;
+}
+.evidence-risk-button.severity-MEDIUM {
+  box-shadow: inset 4px 0 0 #f59e0b;
+}
+.evidence-risk-button.severity-LOW {
+  box-shadow: inset 4px 0 0 #10b981;
+}
+.evidence-risk-button.severity-HIGH.is-active {
+  background: #fef2f2;
+  border-color: #ef4444;
+  box-shadow: inset 4px 0 0 #ef4444, inset 0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+.evidence-risk-button.severity-MEDIUM.is-active {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  box-shadow: inset 4px 0 0 #f59e0b, inset 0 0 0 1px rgba(245, 158, 11, 0.25);
+}
+.evidence-risk-button.severity-LOW.is-active {
+  background: #ecfdf5;
+  border-color: #10b981;
+  box-shadow: inset 4px 0 0 #10b981, inset 0 0 0 1px rgba(16, 185, 129, 0.25);
+}
+
+/* History page head + delete buttons */
+.history-page__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.history-list__item {
+  position: relative;
+}
+
+.history-item__delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-height: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  z-index: 1;
+}
+
+.history-item__delete:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.history-item__delete:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Approval stamp v2 */
+.approval-stamp {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 6px;
+}
+
+.approval-stamp__svg {
+  display: block;
+}
+
+.approval-stamp__ring {
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.approval-stamp__ring--outer {
+  stroke-width: 3.5;
+  opacity: 0.95;
+}
+
+.approval-stamp__ring--inner {
+  stroke-dasharray: 2 3;
+  opacity: 0.65;
+}
+
+.approval-stamp__legend {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+.approval-stamp__legend--bottom {
+  font-size: 8px;
+  letter-spacing: 0.22em;
+}
+
+.approval-stamp__glyph svg {
+  display: block;
+}
+
+.approval-stamp__label {
+  font-size: 0.84rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.approval-stamp--pending {
+  color: #94a3b8;
+}
+.approval-stamp--pending .approval-stamp__ring {
+  stroke: #94a3b8;
+}
+.approval-stamp--pending .approval-stamp__legend {
+  fill: #94a3b8;
+}
+
+.approval-stamp--approved {
+  color: #0f766e;
+}
+.approval-stamp--approved .approval-stamp__ring {
+  stroke: #0f766e;
+}
+.approval-stamp--approved .approval-stamp__legend {
+  fill: #0f766e;
+}
+
+.approval-stamp--rejected {
+  color: #b91c1c;
+}
+.approval-stamp--rejected .approval-stamp__ring {
+  stroke: #b91c1c;
+}
+.approval-stamp--rejected .approval-stamp__legend {
+  fill: #b91c1c;
+}
+
+.approval-stamp--revision {
+  color: #b45309;
+}
+.approval-stamp--revision .approval-stamp__ring {
+  stroke: #b45309;
+}
+.approval-stamp--revision .approval-stamp__legend {
+  fill: #b45309;
+}
+
+/* Notifications bell + dropdown */
+.notifications {
+  position: relative;
+}
+
+.notifications__trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.notifications__trigger:hover,
+.notifications__trigger[aria-expanded="true"] {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.notifications__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+}
+
+.notifications__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  z-index: 40;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.notifications__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.notifications__head strong {
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.notifications__head small {
+  color: #94a3b8;
+  font-size: 0.7rem;
+}
+
+.notifications__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notifications__list li {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  display: grid;
+  gap: 4px;
+}
+
+.notifications__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.notifications__row strong {
+  font-size: 0.84rem;
+  color: #0f172a;
+}
+
+.notifications__row small {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.notifications__cid {
+  font-size: 0.72rem;
+  color: #475569;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
 @media (max-width: 1280px) {
   .workspace-with-rail {
     grid-template-columns: minmax(0, 1fr);
@@ -3131,7 +3392,7 @@ dd {
     width: fit-content;
   }
 
-  .approval-stamp {
+  .approval-stamp__svg {
     width: 96px;
     height: 96px;
   }
