@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { approvalDecisionLabel } from "../approvalDecisionLabels";
 import { riskCategoryKo, riskReasonKo } from "../riskPresentation";
@@ -26,6 +26,9 @@ interface JudgmentItem {
   nextAction: string;
 }
 
+type FlowTab = "workflow" | "judgment";
+type DetailTab = "step" | "judgment";
+
 const STEP_ORDER: WorkflowStep[] = ["input", "redline", "evidence", "rewrite", "approval"];
 
 export function ComplianceTraceRail({ workflow }: ComplianceTraceRailProps) {
@@ -39,110 +42,165 @@ export function ComplianceTraceRail({ workflow }: ComplianceTraceRailProps) {
     judgments[0];
   const [selectedId, setSelectedId] = useState<WorkflowStep | undefined>();
   const [selectedJudgmentId, setSelectedJudgmentId] = useState<string | undefined>();
+  const [flowTab, setFlowTab] = useState<FlowTab>("workflow");
+  const [detailTab, setDetailTab] = useState<DetailTab>("step");
   const selected = items.find((item) => item.id === selectedId) ?? currentItem;
   const selectedJudgment =
     judgments.find((item) => item.id === selectedJudgmentId) ?? currentJudgment;
 
+  const flowBadgeStatus =
+    flowTab === "workflow" ? currentItem.status : currentJudgment.status;
+
   return (
     <aside className="compliance-trace-rail" aria-label="검토 trace와 상세 정보">
-      <section className="trace-rail-card">
-        <div className="panel-heading compact">
-          <div>
-            <h2>검토 흐름</h2>
-            <p>5-step 진행 상태</p>
-          </div>
-          <span className={`run-pill trace-${currentItem.status}`}>{statusLabel(currentItem.status)}</span>
-        </div>
-        <div className="legacy-trace-list">
-          {items.map((item, index) => (
-            <button
-              key={item.id}
-              className={`legacy-trace-item is-${item.status} ${selected.id === item.id ? "is-selected" : ""}`}
-              onClick={() => {
-                setSelectedId(item.id);
-                if (item.status !== "pending") goTo(item.id);
-              }}
-            >
-              <span>{index + 1}</span>
-              <div>
-                <strong>{item.label}</strong>
-                <small>{item.detail}</small>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="trace-rail-card agent-judgment-card">
-        <div className="panel-heading compact">
-          <div>
-            <h2>Agent 판단 흐름</h2>
-            <p>관찰 → 판단 → 다음 행동</p>
-          </div>
-        </div>
-        <div className="agent-judgment-list">
-          {judgments.map((item, index) => (
-            <button
-              key={item.id}
-              className={`agent-judgment-item is-${item.status} ${
-                selectedJudgment.id === item.id ? "is-selected" : ""
-              }`}
-              onClick={() => setSelectedJudgmentId(item.id)}
-            >
-              <span>{index + 1}</span>
-              <div>
-                <strong>{item.label}</strong>
-                <small>{item.decision}</small>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="trace-rail-card detail">
-        <div className="panel-heading compact">
-          <div>
-            <h2>상세 정보</h2>
-            <p>{selected.label}</p>
-          </div>
-        </div>
-        <p className="trace-detail-copy">{selected.detail}</p>
-        <div className="trace-meta-grid">
-          {selected.meta.map((item) => (
-            <span key={item.label}>
-              <strong>{item.value}</strong>
-              {item.label}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section className="trace-rail-card judgment-detail">
-        <div className="panel-heading compact">
-          <div>
-            <h2>판단 상세</h2>
-            <p>{selectedJudgment.label}</p>
-          </div>
-          <span className={`run-pill trace-${selectedJudgment.status}`}>
-            {statusLabel(selectedJudgment.status)}
+      <TabCard
+        className="trace-rail-card"
+        tabs={[
+          { key: "workflow", label: "검토 흐름" },
+          { key: "judgment", label: "Agent 판단" },
+        ]}
+        activeKey={flowTab}
+        onChange={(key) => setFlowTab(key as FlowTab)}
+        badge={
+          <span className={`run-pill trace-${flowBadgeStatus}`}>
+            {statusLabel(flowBadgeStatus)}
           </span>
-        </div>
-        <dl className="judgment-detail-list">
-          <div>
-            <dt>관찰</dt>
-            <dd>{selectedJudgment.observation}</dd>
+        }
+      >
+        {flowTab === "workflow" ? (
+          <div className="legacy-trace-list">
+            {items.map((item, index) => (
+              <button
+                key={item.id}
+                className={`legacy-trace-item is-${item.status} ${
+                  selected.id === item.id ? "is-selected" : ""
+                }`}
+                onClick={() => {
+                  setSelectedId(item.id);
+                  setDetailTab("step");
+                  if (item.status !== "pending") goTo(item.id);
+                }}
+              >
+                <span>{index + 1}</span>
+                <div>
+                  <strong>{item.label}</strong>
+                  <small>{item.detail}</small>
+                </div>
+              </button>
+            ))}
           </div>
-          <div>
-            <dt>판단</dt>
-            <dd>{selectedJudgment.decision}</dd>
+        ) : (
+          <div className="agent-judgment-list">
+            {judgments.map((item, index) => (
+              <button
+                key={item.id}
+                className={`agent-judgment-item is-${item.status} ${
+                  selectedJudgment.id === item.id ? "is-selected" : ""
+                }`}
+                onClick={() => {
+                  setSelectedJudgmentId(item.id);
+                  setDetailTab("judgment");
+                }}
+              >
+                <span>{index + 1}</span>
+                <div>
+                  <strong>{item.label}</strong>
+                  <small>{item.decision}</small>
+                </div>
+              </button>
+            ))}
           </div>
-          <div>
-            <dt>다음 행동</dt>
-            <dd>{selectedJudgment.nextAction}</dd>
-          </div>
-        </dl>
-      </section>
+        )}
+      </TabCard>
+
+      <TabCard
+        className="trace-rail-card detail"
+        tabs={[
+          { key: "step", label: "단계 상세" },
+          { key: "judgment", label: "판단 상세" },
+        ]}
+        activeKey={detailTab}
+        onChange={(key) => setDetailTab(key as DetailTab)}
+        badge={
+          detailTab === "judgment" ? (
+            <span className={`run-pill trace-${selectedJudgment.status}`}>
+              {statusLabel(selectedJudgment.status)}
+            </span>
+          ) : null
+        }
+      >
+        {detailTab === "step" ? (
+          <>
+            <p className="trace-detail-subtitle">{selected.label}</p>
+            <p className="trace-detail-copy">{selected.detail}</p>
+            <div className="trace-meta-grid">
+              {selected.meta.map((item) => (
+                <span key={item.label}>
+                  <strong>{item.value}</strong>
+                  {item.label}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="trace-detail-subtitle">{selectedJudgment.label}</p>
+            <dl className="judgment-detail-list">
+              <div>
+                <dt>관찰</dt>
+                <dd>{selectedJudgment.observation}</dd>
+              </div>
+              <div>
+                <dt>판단</dt>
+                <dd>{selectedJudgment.decision}</dd>
+              </div>
+              <div>
+                <dt>다음 행동</dt>
+                <dd>{selectedJudgment.nextAction}</dd>
+              </div>
+            </dl>
+          </>
+        )}
+      </TabCard>
     </aside>
+  );
+}
+
+interface TabSpec {
+  key: string;
+  label: string;
+}
+
+interface TabCardProps {
+  tabs: TabSpec[];
+  activeKey: string;
+  onChange: (key: string) => void;
+  badge?: ReactNode;
+  className?: string;
+  children: ReactNode;
+}
+
+function TabCard({ tabs, activeKey, onChange, badge, className, children }: TabCardProps) {
+  return (
+    <section className={className}>
+      <div className="trace-rail-tabbar" role="tablist">
+        <div className="trace-rail-tabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              role="tab"
+              aria-selected={tab.key === activeKey}
+              className={`trace-rail-tab ${tab.key === activeKey ? "is-active" : ""}`}
+              onClick={() => onChange(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {badge ? <div className="trace-rail-tab-badge">{badge}</div> : null}
+      </div>
+      {children}
+    </section>
   );
 }
 

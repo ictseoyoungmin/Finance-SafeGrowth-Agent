@@ -1711,7 +1711,7 @@ dd {
   position: sticky;
   top: 18px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -1729,6 +1729,54 @@ dd {
 
 .trace-rail-card .panel-heading.compact {
   margin-bottom: 10px;
+}
+
+.trace-rail-tabbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.trace-rail-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.trace-rail-tab {
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.trace-rail-tab.is-active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+}
+
+.trace-rail-tab:hover:not(.is-active) {
+  color: #0f172a;
+}
+
+.trace-rail-tab-badge {
+  padding-bottom: 6px;
+}
+
+.trace-detail-subtitle {
+  margin: 0 0 8px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .legacy-trace-list {
@@ -1960,7 +2008,7 @@ dd {
 
   .compliance-trace-rail {
     position: static;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .sidebar {
