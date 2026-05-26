@@ -3,7 +3,7 @@ import json
 import re
 from typing import Any
 
-from app.integrations.llm import LlmAttempt, LlmJsonResult, LlmProvider, get_llm_provider
+from app.integrations.llm import LlmAttempt, LlmProvider, get_llm_provider
 from app.repositories.contents_repo import ContentRepository, get_content_repository
 from app.repositories.regulation_docs_repo import RegulationDocsRepository, get_regulation_docs_repository
 from app.repositories.risk_results_repo import RiskResultsRepository, get_risk_results_repository
