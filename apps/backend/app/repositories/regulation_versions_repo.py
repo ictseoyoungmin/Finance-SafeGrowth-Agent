@@ -2,8 +2,11 @@ from datetime import date, datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from app.core.logging import get_logger
 from app.integrations.supabase_client import SupabaseClient, get_supabase_client
 from app.schemas.regulation import RegulationVersion
+
+logger = get_logger(__name__)
 
 
 FALLBACK_REGULATION_VERSIONS: dict[str, dict[str, Any]] = {}
@@ -124,8 +127,14 @@ class RegulationVersionsRepository:
 
     def get(self, version_id: str) -> RegulationVersion | None:
         if self._supabase_client.is_configured:
-            row = self._supabase_client.select_one("regulation_versions", {"id": version_id})
-            return RegulationVersion.model_validate(row) if row else None
+            try:
+                row = self._supabase_client.select_one("regulation_versions", {"id": version_id})
+                if row:
+                    return RegulationVersion.model_validate(row)
+            except Exception:
+                logger.exception(
+                    "Supabase regulation version get failed; falling back to demo seed.",
+                )
         row = FALLBACK_REGULATION_VERSIONS.get(version_id)
         return RegulationVersion.model_validate(row) if row else None
 

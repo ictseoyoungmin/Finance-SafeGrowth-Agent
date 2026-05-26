@@ -644,7 +644,9 @@ textarea {
 }
 
 .copy-field__label {
-  padding-right: 92px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .character-count--floating {
@@ -652,6 +654,43 @@ textarea {
   top: 0;
   right: 0;
   margin-left: 0;
+}
+
+.textarea-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.textarea-wrap textarea {
+  padding-bottom: 36px;
+}
+
+.character-count--inside {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  margin-left: 0;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.92);
+}
+
+.approval-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.approval-actions > button {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .approval-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .analysis-note,
@@ -1303,6 +1342,9 @@ dd {
 }
 
 .rewrite-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 8px 12px;

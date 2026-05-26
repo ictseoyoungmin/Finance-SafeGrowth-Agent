@@ -57,7 +57,7 @@ export function AppShell({
       <aside className="sidebar" aria-label="workflow steps">
         <div className="brand-block">
           <span className="brand-kicker" aria-hidden="true" />
-          <strong>준법감시 AI</strong>
+          <strong>Compliance AI</strong>
         </div>
         <nav className="step-list">
           {STEPS.map((step, index) => {

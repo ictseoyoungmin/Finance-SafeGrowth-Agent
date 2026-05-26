@@ -1,8 +1,12 @@
+import { HelpHint } from "../../../components/HelpHint";
 import type { ComplianceWorkflow } from "../store";
 
 interface StepProps {
   workflow: ComplianceWorkflow;
 }
+
+const FALLBACK_HINT =
+  "Gemini API 호출이 실패했거나 응답 형식이 예상과 달라, 입력 문장 기반 결정형 규칙(rule-based)으로 수정안을 생성했습니다. 결과는 안전한 표현 완화 중심이며, 실제 LLM 결과 대비 다양성이 낮을 수 있습니다.";
 
 export function RewriteStep({ workflow }: StepProps) {
   const { state, goTo, selectRevision } = workflow;
@@ -30,6 +34,7 @@ export function RewriteStep({ workflow }: StepProps) {
         <div className="mode-strip">비교 모드: 마케팅 의도 유지 모드</div>
         <span className={`rewrite-source ${rewrite.source === "gemini" ? "is-gemini" : "is-fallback"}`}>
           {sourceLabel}
+          {rewrite.source === "gemini" ? null : <HelpHint hint={FALLBACK_HINT} align="right" />}
         </span>
       </div>
 

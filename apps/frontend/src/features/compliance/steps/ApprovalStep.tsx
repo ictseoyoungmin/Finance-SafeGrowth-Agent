@@ -119,7 +119,7 @@ export function ApprovalStep({ workflow }: StepProps) {
         </div>
       ) : null}
 
-      <div className="action-row">
+      <div className="approval-actions">
         <button
           className="primary-button"
           disabled={state.isLoading}
