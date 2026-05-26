@@ -5,6 +5,51 @@ from re import Pattern
 from app.schemas.compliance import FlaggedSpan, RiskLevel
 
 
+# Disclosure phrases that, when found in the same sentence as a risk match,
+# indicate the author has paired the claim with a required disclaimer.
+DISCLOSURE_KEYWORDS: tuple[str, ...] = (
+    "투자 위험",
+    "투자위험",
+    "원금 손실 가능",  # 의도적으로 "원금 손실 없이" 같은 부정구는 매치 안 함
+    "손실 가능성",
+    "변동 가능성",
+    "변동될 수 있",
+    "유의사항",
+    "상품설명서",
+    "예금자보호",
+    "운용 책임",
+)
+
+# Sentence boundary: ., !, ?, !, newline (Korean punctuation also OK).
+_SENTENCE_BOUNDARY = re.compile(r"[.!?\n]+")
+
+_DOWNGRADE: dict[RiskLevel, RiskLevel] = {
+    RiskLevel.HIGH: RiskLevel.MEDIUM,
+    RiskLevel.MEDIUM: RiskLevel.LOW,
+    RiskLevel.LOW: RiskLevel.LOW,
+}
+
+
+def _sentence_spans(text: str) -> list[tuple[int, int]]:
+    spans: list[tuple[int, int]] = []
+    cursor = 0
+    for match in _SENTENCE_BOUNDARY.finditer(text):
+        end = match.end()
+        if end > cursor:
+            spans.append((cursor, end))
+        cursor = end
+    if cursor < len(text):
+        spans.append((cursor, len(text)))
+    return spans
+
+
+def _sentence_for(spans: list[tuple[int, int]], position: int) -> tuple[int, int] | None:
+    for start, end in spans:
+        if start <= position < end:
+            return start, end
+    return None
+
+
 @dataclass(frozen=True)
 class Rule:
     pattern: Pattern[str]
@@ -68,7 +113,44 @@ class RuleEngine:
                     )
                 )
 
-        return self._dedupe_overlaps(hits)
+        deduped = self._dedupe_overlaps(hits)
+        return self._apply_disclosure_downgrade(text, deduped)
+
+    def _apply_disclosure_downgrade(
+        self,
+        text: str,
+        hits: list[FlaggedSpan],
+    ) -> list[FlaggedSpan]:
+        if not hits:
+            return hits
+
+        sentences = _sentence_spans(text)
+        adjusted: list[FlaggedSpan] = []
+        for hit in hits:
+            sentence_span = _sentence_for(sentences, hit.start)
+            if sentence_span is None:
+                adjusted.append(hit)
+                continue
+            sentence_text = text[sentence_span[0] : sentence_span[1]]
+            if not any(keyword in sentence_text for keyword in DISCLOSURE_KEYWORDS):
+                adjusted.append(hit)
+                continue
+
+            downgraded_severity = _DOWNGRADE.get(hit.severity, hit.severity)
+            if downgraded_severity == hit.severity:
+                adjusted.append(hit)
+                continue
+
+            adjusted.append(
+                hit.model_copy(
+                    update={
+                        "severity": downgraded_severity,
+                        "reason": f"{hit.reason} (같은 문장의 고지 문구로 위험도가 한 단계 완화됨)",
+                        "confidence": max(0.0, hit.confidence - 0.05),
+                    }
+                )
+            )
+        return adjusted
 
     def _dedupe_overlaps(self, hits: list[FlaggedSpan]) -> list[FlaggedSpan]:
         selected: list[FlaggedSpan] = []
