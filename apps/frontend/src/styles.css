@@ -1365,6 +1365,37 @@ dd {
   color: #a16207;
 }
 
+.rewrite-attempts {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  margin: -8px 0 0;
+}
+
+.rewrite-attempts.is-recovered {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.rewrite-attempts.is-failed {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.rewrite-attempts strong {
+  font-size: 0.84rem;
+  color: #0f172a;
+}
+
+.rewrite-attempts small {
+  font-size: 0.74rem;
+  color: #475569;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
 .rewrite-table {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) 60px minmax(0, 1fr);

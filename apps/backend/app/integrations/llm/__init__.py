@@ -1,4 +1,5 @@
 from app.integrations.llm.base import (
+    LlmAttempt,
     LlmFunctionCall,
     LlmJsonResult,
     LlmMessage,
@@ -11,6 +12,7 @@ from app.integrations.llm.openai_compatible import OpenAICompatibleLlmProvider
 
 __all__ = [
     "GeminiLlmProvider",
+    "LlmAttempt",
     "LlmFunctionCall",
     "LlmJsonResult",
     "LlmMessage",

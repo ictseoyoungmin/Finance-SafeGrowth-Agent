@@ -3,11 +3,23 @@ import json
 import re
 from typing import Any
 
-from app.integrations.llm import LlmProvider, get_llm_provider
+from app.integrations.llm import LlmAttempt, LlmJsonResult, LlmProvider, get_llm_provider
 from app.repositories.contents_repo import ContentRepository, get_content_repository
 from app.repositories.regulation_docs_repo import RegulationDocsRepository, get_regulation_docs_repository
 from app.repositories.risk_results_repo import RiskResultsRepository, get_risk_results_repository
-from app.schemas.rewrite import RewriteChange, RewriteRequest, RewriteResponse
+from app.schemas.rewrite import RewriteAttempt, RewriteChange, RewriteRequest, RewriteResponse
+
+
+def _llm_attempts_to_schema(attempts: list[LlmAttempt]) -> list[RewriteAttempt]:
+    return [
+        RewriteAttempt(
+            model=item.model,
+            status=item.status,
+            error_code=item.error_code,
+            detail=item.detail,
+        )
+        for item in attempts
+    ]
 
 
 FALLBACK_REWRITE = RewriteResponse(
@@ -52,12 +64,21 @@ class RewriteService:
         context = self._resolve_context(request.content_id)
         prompt = self._build_prompt(request, context)
         result = self._llm.generate_json(prompt)
-        if result:
+        if result and result.payload:
             parsed = self._parse_response(request.content_id, result.payload, context)
             if parsed:
-                return parsed
+                return parsed.model_copy(
+                    update={
+                        "model_version": result.model_version,
+                        "attempts": _llm_attempts_to_schema(result.attempts),
+                    }
+                )
 
-        return self._build_fallback_response(request.content_id, context)
+        return self._build_fallback_response(
+            request.content_id,
+            context,
+            attempts=_llm_attempts_to_schema(result.attempts) if result else [],
+        )
 
     def prompt_hash(self, request: RewriteRequest) -> str:
         context = self._resolve_context(request.content_id)
@@ -227,7 +248,13 @@ class RewriteService:
                 return span_text
         return "전체 문안" if replacement else ""
 
-    def _build_fallback_response(self, content_id: str, context: dict[str, Any]) -> RewriteResponse:
+    def _build_fallback_response(
+        self,
+        content_id: str,
+        context: dict[str, Any],
+        attempts: list[RewriteAttempt] | None = None,
+    ) -> RewriteResponse:
+        attempts = attempts or []
         original_text = str(context["content"].get("original_text") or self._fallback_content(content_id)["original_text"])
         flagged_spans = list(context["risk_result"].get("flagged_spans") or [])
         changes = self._fallback_changes(original_text, flagged_spans)
@@ -246,6 +273,8 @@ class RewriteService:
                         )
                     ],
                     "source": "fallback",
+                    "model_version": None,
+                    "attempts": attempts,
                 }
             )
 
@@ -258,6 +287,8 @@ class RewriteService:
                 for change in changes
             ],
             source="fallback",
+            model_version=None,
+            attempts=attempts,
         )
 
     def _fallback_changes(self, original_text: str, flagged_spans: list[Any]) -> list[dict[str, Any]]:

@@ -1,5 +1,6 @@
 import { HelpHint } from "../../../components/HelpHint";
 import type { ComplianceWorkflow } from "../store";
+import type { RewriteAttempt } from "../types";
 
 interface StepProps {
   workflow: ComplianceWorkflow;
@@ -7,6 +8,25 @@ interface StepProps {
 
 const FALLBACK_HINT =
   "Gemini API 호출이 실패했거나 응답 형식이 예상과 달라, 입력 문장 기반 결정형 규칙(rule-based)으로 수정안을 생성했습니다. 결과는 안전한 표현 완화 중심이며, 실제 LLM 결과 대비 다양성이 낮을 수 있습니다.";
+
+const STATUS_LABEL: Record<string, string> = {
+  ok: "성공",
+  rate_limited: "사용량 초과",
+  auth_error: "인증 실패",
+  transient: "일시 오류",
+  parse_error: "형식 오류",
+  empty: "응답 없음",
+};
+
+function summarizeAttempts(attempts: RewriteAttempt[]): string {
+  if (attempts.length === 0) return "";
+  return attempts
+    .map((attempt, index) => {
+      const label = STATUS_LABEL[attempt.status] ?? attempt.status;
+      return `${index + 1}/${attempts.length} ${attempt.model} · ${label}`;
+    })
+    .join("  →  ");
+}
 
 export function RewriteStep({ workflow }: StepProps) {
   const { state, goTo, selectRevision } = workflow;
@@ -20,8 +40,14 @@ export function RewriteStep({ workflow }: StepProps) {
     state.selectedRevision === "conservative"
       ? rewrite.revised_text_conservative
       : rewrite.revised_text_marketing;
-  const sourceLabel =
-    rewrite.source === "gemini" ? "Gemini 검수 결과" : "기본 패턴 기반 (fallback)";
+  const isLlmSource = rewrite.source === "gemini" || rewrite.source === "llm";
+  const sourceLabel = isLlmSource
+    ? `Gemini 검수 결과${rewrite.model_version ? ` · ${rewrite.model_version}` : ""}`
+    : "기본 패턴 기반 (fallback)";
+  const attempts = rewrite.attempts ?? [];
+  const attemptSummary = summarizeAttempts(attempts);
+  const successAttemptIndex = attempts.findIndex((a) => a.status === "ok");
+  const showAttemptSummary = attempts.length > 1 || (attempts.length === 1 && attempts[0].status !== "ok");
 
   return (
     <div className="rewrite-screen">
@@ -32,11 +58,27 @@ export function RewriteStep({ workflow }: StepProps) {
 
       <div className="rewrite-status-row">
         <div className="mode-strip">비교 모드: 마케팅 의도 유지 모드</div>
-        <span className={`rewrite-source ${rewrite.source === "gemini" ? "is-gemini" : "is-fallback"}`}>
+        <span className={`rewrite-source ${isLlmSource ? "is-gemini" : "is-fallback"}`}>
           {sourceLabel}
-          {rewrite.source === "gemini" ? null : <HelpHint hint={FALLBACK_HINT} align="right" />}
+          {isLlmSource ? null : <HelpHint hint={FALLBACK_HINT} align="right" />}
         </span>
       </div>
+
+      {showAttemptSummary ? (
+        <div
+          className={`rewrite-attempts ${
+            isLlmSource && successAttemptIndex >= 0 ? "is-recovered" : "is-failed"
+          }`}
+          role="status"
+        >
+          <strong>
+            {isLlmSource && successAttemptIndex >= 0
+              ? `Gemini 호출 ${successAttemptIndex + 1}/${attempts.length} 회만에 성공`
+              : `Gemini 호출 ${attempts.length}/${attempts.length} 모두 실패 → 기본 패턴으로 응답`}
+          </strong>
+          <small>{attemptSummary}</small>
+        </div>
+      ) : null}
 
       <div className="rewrite-table">
         <div className="rewrite-header">항목</div>

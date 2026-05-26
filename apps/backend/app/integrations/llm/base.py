@@ -6,9 +6,18 @@ LlmMessage = dict[str, Any]
 
 
 @dataclass(frozen=True)
+class LlmAttempt:
+    model: str
+    status: str
+    error_code: int | None = None
+    detail: str | None = None
+
+
+@dataclass(frozen=True)
 class LlmJsonResult:
     payload: dict[str, Any]
     model_version: str
+    attempts: list[LlmAttempt] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -25,6 +34,7 @@ class LlmToolResponse:
     output_tokens: int
     model_version: str
     raw: dict[str, Any] = field(default_factory=dict)
+    attempts: list[LlmAttempt] = field(default_factory=list)
 
 
 class LlmProvider(Protocol):

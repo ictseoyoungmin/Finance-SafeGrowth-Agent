@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     )
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-1.5-flash"
+    gemini_models: str = "gemini-2.5-flash,gemini-3-flash,gemini-2.5-flash-lite"
     gemini_embedding_model: str = "gemini-embedding-001"
     llm_provider: str = "gemini"
     openai_base_url: str = "http://127.0.0.1:18080/v1"
@@ -37,6 +38,12 @@ class Settings(BaseSettings):
     @cached_property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @cached_property
+    def gemini_models_list(self) -> list[str]:
+        raw = self.gemini_models or self.gemini_model or ""
+        models = [m.strip() for m in raw.split(",") if m.strip()]
+        return models or [self.gemini_model]
 
 
 settings = Settings()

@@ -150,7 +150,7 @@ export function EvidenceStep({ workflow }: StepProps) {
 
       <div className="action-row">
         <button className="secondary-button" onClick={() => goTo("redline")}>
-          Redline으로
+          이전으로
         </button>
         <button
           className="primary-button"

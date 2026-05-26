@@ -1,12 +1,25 @@
 from typing import Any
 
-from app.integrations.gemini_client import GeminiClient
+from app.integrations.gemini_client import GeminiAttempt, GeminiClient
 from app.integrations.llm.base import (
+    LlmAttempt,
     LlmFunctionCall,
     LlmJsonResult,
     LlmMessage,
     LlmToolResponse,
 )
+
+
+def _to_llm_attempts(attempts: list[GeminiAttempt]) -> list[LlmAttempt]:
+    return [
+        LlmAttempt(
+            model=item.model,
+            status=item.status,
+            error_code=item.error_code,
+            detail=item.detail,
+        )
+        for item in attempts
+    ]
 
 
 class GeminiLlmProvider:
@@ -25,7 +38,11 @@ class GeminiLlmProvider:
         result = self._client.generate_json(prompt)
         if result is None:
             return None
-        return LlmJsonResult(payload=result.payload, model_version=result.model_version)
+        return LlmJsonResult(
+            payload=result.payload,
+            model_version=result.model_version,
+            attempts=_to_llm_attempts(result.attempts),
+        )
 
     def generate_with_tools(
         self,
@@ -61,4 +78,5 @@ class GeminiLlmProvider:
             output_tokens=response.output_tokens,
             model_version=response.model_version,
             raw=response.raw,
+            attempts=_to_llm_attempts(response.attempts),
         )

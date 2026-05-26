@@ -76,12 +76,21 @@ export interface RewriteChange {
   reason: string;
 }
 
+export interface RewriteAttempt {
+  model: string;
+  status: string;
+  error_code?: number | null;
+  detail?: string | null;
+}
+
 export interface RewriteResponse {
   content_id: string;
   revised_text_conservative: string;
   revised_text_marketing: string;
   changes: RewriteChange[];
-  source?: "gemini" | "fallback";
+  source?: "gemini" | "llm" | "fallback";
+  model_version?: string | null;
+  attempts?: RewriteAttempt[];
 }
 
 export type ApprovalDecision = "APPROVED" | "CONDITIONALLY_APPROVED" | "REJECTED" | "REVISION_REQUESTED";

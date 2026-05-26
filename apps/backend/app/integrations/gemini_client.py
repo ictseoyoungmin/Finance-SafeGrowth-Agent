@@ -13,9 +13,18 @@ logger = get_logger(__name__)
 
 
 @dataclass(frozen=True)
+class GeminiAttempt:
+    model: str
+    status: str  # "ok" | "rate_limited" | "auth_error" | "transient" | "parse_error" | "empty"
+    error_code: int | None = None
+    detail: str | None = None
+
+
+@dataclass(frozen=True)
 class GeminiResult:
     payload: dict[str, Any]
     model_version: str
+    attempts: list[GeminiAttempt] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -32,16 +41,71 @@ class GeminiToolResponse:
     output_tokens: int
     model_version: str
     raw: dict[str, Any] = field(default_factory=dict)
+    attempts: list[GeminiAttempt] = field(default_factory=list)
+
+
+class QuotaExceededError(Exception):
+    def __init__(self, code: int, detail: str | None = None) -> None:
+        super().__init__(f"Gemini quota exceeded (HTTP {code})")
+        self.code = code
+        self.detail = detail
+
+
+class AuthError(Exception):
+    def __init__(self, code: int, detail: str | None = None) -> None:
+        super().__init__(f"Gemini auth error (HTTP {code})")
+        self.code = code
+        self.detail = detail
+
+
+class TransientGeminiError(Exception):
+    def __init__(self, code: int, detail: str | None = None) -> None:
+        super().__init__(f"Gemini transient error (HTTP {code})")
+        self.code = code
+        self.detail = detail
+
+
+def _classify_http_error(error: urllib.error.HTTPError) -> Exception:
+    code = error.code
+    try:
+        body = error.read().decode("utf-8", errors="replace")
+    except Exception:
+        body = ""
+    if code == 429 or "RESOURCE_EXHAUSTED" in body or "quotaExceeded" in body:
+        return QuotaExceededError(code, detail=_first_line(body))
+    if code in (401, 403):
+        # 403 can be permission-denied too; treat as auth (chain ends)
+        return AuthError(code, detail=_first_line(body))
+    if 500 <= code < 600:
+        return TransientGeminiError(code, detail=_first_line(body))
+    return TransientGeminiError(code, detail=_first_line(body))
+
+
+def _first_line(text: str) -> str:
+    return text.splitlines()[0][:240] if text else ""
 
 
 class GeminiClient:
-    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str | None = None,
+        models: list[str] | None = None,
+    ) -> None:
         self._api_key = api_key or settings.gemini_api_key
-        self._model = model or settings.gemini_model
+        configured_models = models if models is not None else list(settings.gemini_models_list)
+        if model:
+            # explicit single model takes precedence (back-compat)
+            configured_models = [model]
+        self._models = configured_models or [settings.gemini_model]
 
     @property
     def model(self) -> str:
-        return self._model
+        return self._models[0]
+
+    @property
+    def models(self) -> list[str]:
+        return list(self._models)
 
     @property
     def is_configured(self) -> bool:
@@ -52,21 +116,51 @@ class GeminiClient:
             return None
 
         body = {"contents": [{"parts": [{"text": prompt}]}]}
-        raw = self._post(body)
-        if raw is None:
-            return None
+        attempts: list[GeminiAttempt] = []
 
-        text = self._extract_text(raw)
-        if not text:
-            logger.warning("Gemini response did not contain text output.")
-            return None
+        for model in self._models:
+            try:
+                raw = self._post(body, model=model)
+            except QuotaExceededError as exc:
+                attempts.append(
+                    GeminiAttempt(model=model, status="rate_limited", error_code=exc.code, detail=exc.detail),
+                )
+                logger.warning("Gemini quota exceeded on %s; trying next model.", model)
+                continue
+            except AuthError as exc:
+                attempts.append(
+                    GeminiAttempt(model=model, status="auth_error", error_code=exc.code, detail=exc.detail),
+                )
+                logger.error("Gemini auth error on %s; aborting fallback chain.", model)
+                # surface attempts even when chain aborts
+                return GeminiResult(payload={}, model_version="", attempts=attempts)
+            except TransientGeminiError as exc:
+                attempts.append(
+                    GeminiAttempt(model=model, status="transient", error_code=exc.code, detail=exc.detail),
+                )
+                continue
+            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+                logger.exception("Gemini network call failed for %s; trying next model.", model)
+                attempts.append(GeminiAttempt(model=model, status="transient"))
+                continue
 
-        payload = parse_json_payload(text)
-        if payload is None:
-            logger.warning("Gemini returned non-parseable JSON.")
-            return None
+            text = self._extract_text(raw)
+            if not text:
+                logger.warning("Gemini response did not contain text output (%s).", model)
+                attempts.append(GeminiAttempt(model=model, status="empty"))
+                continue
 
-        return GeminiResult(payload=payload, model_version=self._model)
+            payload = parse_json_payload(text)
+            if payload is None:
+                logger.warning("Gemini returned non-parseable JSON (%s).", model)
+                attempts.append(GeminiAttempt(model=model, status="parse_error"))
+                continue
+
+            attempts.append(GeminiAttempt(model=model, status="ok"))
+            return GeminiResult(payload=payload, model_version=model, attempts=attempts)
+
+        # All models failed — surface attempts (empty payload signals failure to caller)
+        return GeminiResult(payload={}, model_version="", attempts=attempts)
 
     def generate_with_tools(
         self,
@@ -90,27 +184,53 @@ class GeminiClient:
         if tool_config:
             body["toolConfig"] = tool_config
 
-        raw = self._post(body)
-        if raw is None:
-            return None
+        attempts: list[GeminiAttempt] = []
+        for model in self._models:
+            try:
+                raw = self._post(body, model=model)
+            except QuotaExceededError as exc:
+                attempts.append(
+                    GeminiAttempt(model=model, status="rate_limited", error_code=exc.code, detail=exc.detail),
+                )
+                logger.warning("Gemini quota exceeded on %s; trying next model.", model)
+                continue
+            except AuthError as exc:
+                attempts.append(
+                    GeminiAttempt(model=model, status="auth_error", error_code=exc.code, detail=exc.detail),
+                )
+                return None
+            except TransientGeminiError as exc:
+                attempts.append(
+                    GeminiAttempt(model=model, status="transient", error_code=exc.code, detail=exc.detail),
+                )
+                continue
+            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+                logger.exception("Gemini network call failed for %s; trying next model.", model)
+                attempts.append(GeminiAttempt(model=model, status="transient"))
+                continue
 
-        function_call = _extract_function_call(raw)
-        text = self._extract_text(raw) if function_call is None else None
-        usage = raw.get("usageMetadata") or {}
+            function_call = _extract_function_call(raw)
+            text = self._extract_text(raw) if function_call is None else None
+            usage = raw.get("usageMetadata") or {}
 
-        return GeminiToolResponse(
-            function_call=function_call,
-            text=text,
-            input_tokens=int(usage.get("promptTokenCount") or 0),
-            output_tokens=int(usage.get("candidatesTokenCount") or 0),
-            model_version=self._model,
-            raw=raw,
-        )
+            attempts.append(GeminiAttempt(model=model, status="ok"))
+            return GeminiToolResponse(
+                function_call=function_call,
+                text=text,
+                input_tokens=int(usage.get("promptTokenCount") or 0),
+                output_tokens=int(usage.get("candidatesTokenCount") or 0),
+                model_version=model,
+                raw=raw,
+                attempts=attempts,
+            )
 
-    def _post(self, body: dict[str, Any]) -> dict[str, Any] | None:
+        return None
+
+    def _post(self, body: dict[str, Any], model: str | None = None) -> dict[str, Any]:
+        active_model = model or self._models[0]
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self._model}:generateContent?key={self._api_key}"
+            f"{active_model}:generateContent?key={self._api_key}"
         )
         request = urllib.request.Request(
             url,
@@ -122,9 +242,8 @@ class GeminiClient:
         try:
             with urllib.request.urlopen(request, timeout=15) as response:
                 return json.loads(response.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
-            logger.exception("Gemini call failed.")
-            return None
+        except urllib.error.HTTPError as http_err:
+            raise _classify_http_error(http_err) from http_err
 
     def _extract_text(self, raw: dict[str, Any]) -> str | None:
         candidates = raw.get("candidates") or []
