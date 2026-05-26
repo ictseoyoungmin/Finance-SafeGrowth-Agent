@@ -14,7 +14,7 @@ import type {
 } from "./types";
 
 export const DEMO_TEXT =
-  "지금 가입하면 누구나 연 8% 수익을 안정적으로 받을 수 있는 JB 투자상품! 원금 걱정 없이 시작하세요.";
+  "[JB Bank] 신규 고객 특별 혜택! 누구나 가입 가능한 프리미엄 정기예금으로 연 5.0% 이자를 안정적으로 받아보세요. 원금 걱정 없이 시작하는 든든한 자산관리, 지금 신청하세요.";
 
 export const DEFAULT_INPUT: AnalyzeRequest = {
   product_type: "투자상품",
@@ -125,7 +125,7 @@ async function getJson<TResponse>(path: string): Promise<TResponse> {
 export function fallbackAnalyze(request: AnalyzeRequest): AnalyzeResponse {
   const spans: FlaggedSpan[] = [
     buildSpan(request.original_text, "누구나", "과장 표현", "HIGH", "보편적 수혜 또는 조건 없는 혜택으로 오인될 수 있습니다.", 0.92),
-    buildSpan(request.original_text, "연 8% 수익", "확정 수익 오인", "HIGH", "투자상품의 수익률을 확정적으로 받을 수 있는 것처럼 해석될 수 있습니다.", 0.95),
+    buildSpan(request.original_text, "연 5.0% 이자", "확정 수익 오인", "HIGH", "투자상품의 수익률을 확정적으로 받을 수 있는 것처럼 해석될 수 있습니다.", 0.95),
     buildSpan(request.original_text, "안정적으로", "안정성 오인", "MEDIUM", "투자 위험이나 변동 가능성이 낮은 것처럼 오인될 수 있습니다.", 0.87),
     buildSpan(request.original_text, "원금 걱정 없이", "원금 보장 오인", "HIGH", "원금 손실 가능성이 없는 것처럼 오인될 수 있습니다.", 0.96),
   ].filter((span) => span.start >= 0);
@@ -178,8 +178,8 @@ export function fallbackRewrite(contentId: string): RewriteResponse {
       "시장 상황에 따라 수익은 변동될 수 있으며, 원금 손실 가능성이 있습니다. 가입 전 상품설명서와 유의사항을 확인해 주세요.",
     changes: [
       {
-        original: "연 8% 수익을 안정적으로",
-        replacement: "시장 상황에 따라 수익은 변동될 수 있으며",
+        original: "연 5.0% 이자를 안정적으로",
+        replacement: "시장 상황에 따라 이자율은 변동될 수 있으며",
         reason: "확정 수익 및 안정성 오인 표현 완화",
       },
       {

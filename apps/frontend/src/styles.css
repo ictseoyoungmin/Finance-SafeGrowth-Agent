@@ -959,7 +959,6 @@ p[aria-busy="true"]::before {
 }
 
 .risk-score strong {
-  color: #ef4444;
   font-size: 1.8rem;
 }
 
@@ -970,7 +969,6 @@ p[aria-busy="true"]::before {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: #ef4444;
   color: #ffffff;
   font-size: 1.4rem;
   font-weight: 900;
@@ -981,14 +979,43 @@ p[aria-busy="true"]::before {
   background: var(--red-soft);
 }
 
+.risk-score.risk-high::before {
+  content: "!";
+  background: #ef4444;
+}
+
+.risk-score.risk-high strong {
+  color: #ef4444;
+}
+
 .risk-score.risk-medium {
   border-color: #fdba74;
   background: var(--orange-soft);
 }
 
+.risk-score.risk-medium::before {
+  content: "⚠";
+  background: #f59e0b;
+  font-size: 1.2rem;
+}
+
+.risk-score.risk-medium strong {
+  color: #b45309;
+}
+
 .risk-score.risk-low {
   border-color: #86efac;
   background: var(--green-soft);
+}
+
+.risk-score.risk-low::before {
+  content: "✓";
+  background: #10b981;
+  font-size: 1.4rem;
+}
+
+.risk-score.risk-low strong {
+  color: #0f766e;
 }
 
 .confidence-row {
@@ -2013,7 +2040,9 @@ dd {
 
 .compliance-trace-rail {
   position: sticky;
-  top: 18px;
+  top: 100px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;

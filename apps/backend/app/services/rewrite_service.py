@@ -34,7 +34,7 @@ FALLBACK_REWRITE = RewriteResponse(
     ),
     changes=[
         RewriteChange(
-            original="연 8% 수익을 안정적으로",
+            original="연 5.0% 이자를 안정적으로",
             replacement="시장 상황에 따라 수익은 변동될 수 있으며",
             reason="확정 수익 및 안정성 오인 표현 완화",
         ),
@@ -156,8 +156,9 @@ class RewriteService:
             "target_customer": "30대 직장인",
             "language": "ko",
             "original_text": (
-                "지금 가입하면 누구나 연 8% 수익을 안정적으로 받을 수 있는 JB 투자상품! "
-                "원금 걱정 없이 시작하세요."
+                "[JB Bank] 신규 고객 특별 혜택! 누구나 가입 가능한 프리미엄 정기예금으로 "
+                "연 5.0% 이자를 안정적으로 받아보세요. 원금 걱정 없이 시작하는 든든한 "
+                "자산관리, 지금 신청하세요."
             ),
         }
 
@@ -167,7 +168,7 @@ class RewriteService:
             "risk_categories": ["과장 표현", "확정 수익 오인", "안정성 오인", "원금 보장 오인"],
             "flagged_spans": [
                 {"span_text": "누구나", "risk_category": "과장 표현", "severity": "HIGH"},
-                {"span_text": "연 8% 수익", "risk_category": "확정 수익 오인", "severity": "HIGH"},
+                {"span_text": "연 5.0% 이자", "risk_category": "확정 수익 오인", "severity": "HIGH"},
                 {"span_text": "안정적으로", "risk_category": "안정성 오인", "severity": "MEDIUM"},
                 {"span_text": "원금 걱정 없이", "risk_category": "원금 보장 오인", "severity": "HIGH"},
             ],
