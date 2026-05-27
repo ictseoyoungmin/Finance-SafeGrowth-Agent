@@ -115,7 +115,13 @@ class GeminiClient:
         if not self.is_configured:
             return None
 
-        body = {"contents": [{"parts": [{"text": prompt}]}]}
+        # Use the configured temperature (default 0.2) so analyze/rewrite are
+        # stable across runs. Without this, Gemini defaults to ~1.0 and the
+        # same input yields meaningfully different spans + rewrite suggestions.
+        body = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": settings.llm_temperature},
+        }
         attempts: list[GeminiAttempt] = []
 
         for model in self._models:
