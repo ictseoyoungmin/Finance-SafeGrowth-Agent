@@ -667,12 +667,15 @@ textarea {
 
 .character-count--inside {
   position: absolute;
-  bottom: 10px;
-  right: 14px;
+  /* Sit safely inside the textarea's padding box (textarea has padding: 14px 16px
+     and a resize handle in the bottom-right). The chip is offset slightly more
+     than the textarea padding so its rounded edge never crosses the border. */
+  bottom: 18px;
+  right: 22px;
   margin-left: 0;
   pointer-events: none;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.92);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
 }
 
 .approval-actions {
