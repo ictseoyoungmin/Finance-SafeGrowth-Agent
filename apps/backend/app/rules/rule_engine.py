@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass
 from re import Pattern
 
+from app.rules.patterns import PATTERN_DEFINITIONS
 from app.schemas.compliance import FlaggedSpan, RiskLevel
 
 
@@ -18,37 +19,13 @@ class RuleEngine:
     def __init__(self) -> None:
         self._rules = [
             Rule(
-                pattern=re.compile(r"누구나|무조건|반드시|절대|업계\s*최고|최고의?"),
-                risk_category="과장 표현",
-                severity=RiskLevel.HIGH,
-                reason="보편적 수혜 또는 조건 없는 혜택으로 오인될 수 있습니다.",
-                confidence=0.92,
-            ),
-            Rule(
-                pattern=re.compile(
-                    r"연\s*\d+(?:\.\d+)?\s*%\s*(?:수익|수익률|이자)|"
-                    r"(?:확정|고정)\s*(?:수익률|수익|이자)|"
-                    r"매월\s*\d+(?:\.\d+)?\s*%\s*(?:지급|수익)"
-                ),
-                risk_category="확정 수익 오인",
-                severity=RiskLevel.HIGH,
-                reason="투자상품의 수익률을 확정적으로 받을 수 있는 것처럼 해석될 수 있습니다.",
-                confidence=0.95,
-            ),
-            Rule(
-                pattern=re.compile(r"안정적으로|안전하게|위험\s*없이|리스크\s*없이|걱정\s*없이"),
-                risk_category="안정성 오인",
-                severity=RiskLevel.MEDIUM,
-                reason="투자 위험이나 변동 가능성이 낮은 것처럼 오인될 수 있습니다.",
-                confidence=0.87,
-            ),
-            Rule(
-                pattern=re.compile(r"원금\s*걱정\s*없이|원금\s*보장|원금\s*손실\s*없(?:음|이)|손실\s*없이"),
-                risk_category="원금 보장 오인",
-                severity=RiskLevel.HIGH,
-                reason="원금 손실 가능성이 없는 것처럼 오인될 수 있습니다.",
-                confidence=0.96,
-            ),
+                pattern=re.compile(pattern),
+                risk_category=category,
+                severity=severity,
+                reason=reason,
+                confidence=confidence,
+            )
+            for pattern, category, severity, reason, confidence in PATTERN_DEFINITIONS
         ]
 
     def scan(self, text: str) -> list[FlaggedSpan]:
