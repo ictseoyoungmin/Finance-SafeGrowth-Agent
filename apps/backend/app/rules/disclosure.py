@@ -35,7 +35,8 @@ DOWNGRADE: dict[RiskLevel, RiskLevel] = {
 
 DOWNGRADE_REASON_SUFFIX = "(인접 고지 문구로 위험도가 한 단계 완화됨)"
 
-_SENTENCE_BOUNDARY = re.compile(r"[.!?\n]+")
+# 숫자 사이의 마침표(예: "5.0")는 문장 경계로 인식하지 않는다.
+_SENTENCE_BOUNDARY = re.compile(r"(?<!\d)[.!?](?!\d)|\n")
 
 
 def sentence_spans(text: str) -> list[tuple[int, int]]:
