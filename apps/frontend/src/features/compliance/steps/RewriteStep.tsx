@@ -1,6 +1,8 @@
+import { useMemo } from "react";
+
 import { HelpHint } from "../../../components/HelpHint";
 import type { ComplianceWorkflow } from "../store";
-import type { RewriteAttempt } from "../types";
+import type { FlaggedSpan, RewriteAttempt, RiskLevel } from "../types";
 
 interface StepProps {
   workflow: ComplianceWorkflow;
@@ -28,14 +30,38 @@ function summarizeAttempts(attempts: RewriteAttempt[]): string {
     .join("  →  ");
 }
 
+function lookupSeverity(
+  original: string,
+  spans: FlaggedSpan[],
+): RiskLevel | undefined {
+  const trimmed = original.trim();
+  if (!trimmed) return undefined;
+  // exact match first
+  const exact = spans.find((span) => span.span_text === trimmed);
+  if (exact) return exact.severity;
+  // original contains span_text
+  const contains = spans.find(
+    (span) => span.span_text && trimmed.includes(span.span_text),
+  );
+  if (contains) return contains.severity;
+  // span_text contains original
+  const contained = spans.find(
+    (span) => span.span_text && span.span_text.includes(trimmed),
+  );
+  return contained?.severity;
+}
+
 export function RewriteStep({ workflow }: StepProps) {
   const { state, goTo, selectRevision } = workflow;
   const rewrite = state.rewrite;
+  const analyzeSpans = useMemo(
+    () => state.analyze?.flagged_spans ?? [],
+    [state.analyze?.flagged_spans],
+  );
 
   if (!rewrite) {
     return null;
   }
-
   const selectedFinalText =
     state.selectedRevision === "conservative"
       ? rewrite.revised_text_conservative
@@ -85,22 +111,32 @@ export function RewriteStep({ workflow }: StepProps) {
         <div className="rewrite-header">원문 (위험 표현)</div>
         <div className="rewrite-header arrow-cell" />
         <div className="rewrite-header">수정안 (AI 제안)</div>
-        {rewrite.changes.length > 0 ? rewrite.changes.map((change, index) => (
-          <article key={`${change.original}-${change.replacement}`} className="rewrite-row">
+        {rewrite.changes.length > 0 ? rewrite.changes.map((change, index) => {
+          const unchanged = change.original.trim() === change.replacement.trim();
+          const severity = lookupSeverity(change.original, analyzeSpans);
+          const severityClass = severity ? ` severity-${severity}` : "";
+          const unchangedClass = unchanged ? " is-unchanged" : "";
+          return (
+          <article key={`${change.original}-${change.replacement}-${index}`} className={`rewrite-row${unchangedClass}`}>
             <strong>{index + 1}</strong>
             <div>
-              <mark className="delete-mark">{change.original}</mark>
-              <small>위험 사유</small>
-              <p>{change.reason}</p>
+              <mark className={`delete-mark${severityClass}${unchangedClass}`}>{change.original}</mark>
+              <small className={unchanged ? "is-unchanged" : ""}>
+                {unchanged ? "유지" : "위험 사유"}
+              </small>
+              <p>{unchanged ? "원문이 그대로 유지됩니다. 별도 위험 표현은 식별되지 않았습니다." : change.reason}</p>
             </div>
             <span className="arrow-cell">→</span>
             <div>
-              <mark className="add-mark">{change.replacement}</mark>
-              <small>개선 포인트</small>
-              <p>오인 가능성을 낮추고 필수 고지 맥락을 보강합니다.</p>
+              <mark className={`add-mark${unchangedClass}`}>{change.replacement}</mark>
+              <small className={unchanged ? "is-unchanged" : ""}>
+                {unchanged ? "변경 없음" : "개선 포인트"}
+              </small>
+              <p>{unchanged ? "수정안에서도 동일한 표현이 사용됩니다." : "오인 가능성을 낮추고 필수 고지 맥락을 보강합니다."}</p>
             </div>
           </article>
-        )) : (
+          );
+        }) : (
           <article className="rewrite-row">
             <strong>1</strong>
             <div>
