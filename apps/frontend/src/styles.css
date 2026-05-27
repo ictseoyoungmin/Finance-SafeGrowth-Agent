@@ -656,26 +656,12 @@ textarea {
   margin-left: 0;
 }
 
-.textarea-wrap {
-  position: relative;
-  min-width: 0;
-}
-
-.textarea-wrap textarea {
-  padding-bottom: 36px;
-}
-
-.character-count--inside {
-  position: absolute;
-  /* Sit safely inside the textarea's padding box (textarea has padding: 14px 16px
-     and a resize handle in the bottom-right). The chip is offset slightly more
-     than the textarea padding so its rounded edge never crosses the border. */
-  bottom: 18px;
-  right: 22px;
+/* Character counter sits in its own row directly under the textarea.
+   This guarantees its right edge aligns with the textarea border via the
+   parent grid column, with no sub-pixel offset or resize-handle overlap. */
+.character-count--row {
+  justify-self: end;
   margin-left: 0;
-  pointer-events: none;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
 }
 
 .approval-actions {
