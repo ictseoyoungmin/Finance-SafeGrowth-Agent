@@ -83,6 +83,20 @@ export interface RewriteAttempt {
   detail?: string | null;
 }
 
+export interface ResidualSpan {
+  span_text: string;
+  risk_category: string;
+  severity: string;
+}
+
+export interface RevisionValidation {
+  risk_level: string;
+  residual_high: number;
+  residual_medium: number;
+  residual_low: number;
+  residual_spans: ResidualSpan[];
+}
+
 export interface RewriteResponse {
   content_id: string;
   revised_text_conservative: string;
@@ -91,6 +105,8 @@ export interface RewriteResponse {
   source?: "gemini" | "llm" | "fallback";
   model_version?: string | null;
   attempts?: RewriteAttempt[];
+  validation_conservative?: RevisionValidation | null;
+  validation_marketing?: RevisionValidation | null;
 }
 
 export type ApprovalDecision = "APPROVED" | "CONDITIONALLY_APPROVED" | "REJECTED" | "REVISION_REQUESTED";

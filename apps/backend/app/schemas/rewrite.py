@@ -21,6 +21,20 @@ class RewriteAttempt(BaseModel):
     detail: str | None = None
 
 
+class ResidualSpan(BaseModel):
+    span_text: str
+    risk_category: str
+    severity: str
+
+
+class RevisionValidation(BaseModel):
+    risk_level: str  # LOW | MEDIUM | HIGH
+    residual_high: int = 0
+    residual_medium: int = 0
+    residual_low: int = 0
+    residual_spans: list[ResidualSpan] = Field(default_factory=list)
+
+
 class RewriteResponse(BaseModel):
     content_id: str
     revised_text_conservative: str
@@ -29,3 +43,5 @@ class RewriteResponse(BaseModel):
     source: Literal["llm", "gemini", "fallback"] = "fallback"
     model_version: str | None = None
     attempts: list[RewriteAttempt] = Field(default_factory=list)
+    validation_conservative: RevisionValidation | None = None
+    validation_marketing: RevisionValidation | None = None

@@ -193,3 +193,69 @@ def test_rewrite_sanitizes_blank_llm_change_originals() -> None:
     assert response.source == "llm"
     assert response.changes[0].original
     assert response.changes[0].original == "연 8% 수익"
+
+
+def _build_service(llm: ScriptedJsonLlmProvider) -> RewriteService:
+    return RewriteService(
+        llm_provider=llm,  # type: ignore[arg-type]
+        content_repository=FakeContentRepository(),  # type: ignore[arg-type]
+        risk_results_repository=FakeRiskResultsRepository(),  # type: ignore[arg-type]
+        regulation_docs_repository=FakeRegulationDocsRepository(),  # type: ignore[arg-type]
+    )
+
+
+# --- self-validation -----------------------------------------------------------
+
+
+def test_self_validation_clean_revision_reports_low_risk() -> None:
+    service = _build_service(
+        ScriptedJsonLlmProvider(
+            {
+                "revised_text_conservative": (
+                    "본 상품은 시장 상황에 따라 수익 또는 손실이 발생할 수 있으며, "
+                    "가입 전 상품설명서와 유의사항을 확인하시기 바랍니다."
+                ),
+                "revised_text_marketing": (
+                    "시장 상황에 따라 수익은 변동될 수 있으며, 원금 손실 가능성이 있습니다. "
+                    "가입 전 상품설명서와 유의사항을 확인해 주세요."
+                ),
+                "changes": [],
+            }
+        )
+    )
+
+    response = service.rewrite(RewriteRequest(content_id="content-1", mode="marketing_balanced"))
+
+    assert response.validation_conservative is not None
+    assert response.validation_conservative.risk_level == "LOW"
+    assert response.validation_conservative.residual_high == 0
+    assert response.validation_marketing is not None
+    assert response.validation_marketing.risk_level == "LOW"
+
+
+def test_self_validation_detects_residual_high_in_revision() -> None:
+    # marketing revision intentionally keeps a high-risk phrase
+    service = _build_service(
+        ScriptedJsonLlmProvider(
+            {
+                "revised_text_conservative": (
+                    "수익은 시장 상황에 따라 변동될 수 있으며, 가입 전 상품설명서를 확인해 주세요."
+                ),
+                "revised_text_marketing": (
+                    "누구나 가입 가능한 정기예금, 지금 신청하세요!"
+                ),
+                "changes": [],
+            }
+        )
+    )
+
+    response = service.rewrite(RewriteRequest(content_id="content-1", mode="marketing_balanced"))
+
+    assert response.validation_marketing is not None
+    assert response.validation_marketing.risk_level == "HIGH"
+    assert response.validation_marketing.residual_high >= 1
+    # span_text 가 실제 위험 표현인지
+    high_categories = {
+        s.risk_category for s in response.validation_marketing.residual_spans if s.severity == "HIGH"
+    }
+    assert "과장 표현" in high_categories

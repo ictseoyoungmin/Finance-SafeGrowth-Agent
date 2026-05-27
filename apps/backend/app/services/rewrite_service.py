@@ -7,7 +7,20 @@ from app.integrations.llm import LlmAttempt, LlmProvider, get_llm_provider
 from app.repositories.contents_repo import ContentRepository, get_content_repository
 from app.repositories.regulation_docs_repo import RegulationDocsRepository, get_regulation_docs_repository
 from app.repositories.risk_results_repo import RiskResultsRepository, get_risk_results_repository
-from app.schemas.rewrite import RewriteAttempt, RewriteChange, RewriteRequest, RewriteResponse
+from app.rules.disclosure import apply_to_spans as apply_disclosure_post_processing
+from app.rules.rule_engine import RuleEngine
+from app.schemas.compliance import RiskLevel
+from app.schemas.rewrite import (
+    ResidualSpan,
+    RevisionValidation,
+    RewriteAttempt,
+    RewriteChange,
+    RewriteRequest,
+    RewriteResponse,
+)
+
+
+_SEVERITY_ORDER = {RiskLevel.LOW: 1, RiskLevel.MEDIUM: 2, RiskLevel.HIGH: 3}
 
 
 def _llm_attempts_to_schema(attempts: list[LlmAttempt]) -> list[RewriteAttempt]:
@@ -54,11 +67,13 @@ class RewriteService:
         content_repository: ContentRepository,
         risk_results_repository: RiskResultsRepository,
         regulation_docs_repository: RegulationDocsRepository,
+        rule_engine: RuleEngine | None = None,
     ) -> None:
         self._llm = llm_provider
         self._content_repository = content_repository
         self._risk_results_repository = risk_results_repository
         self._regulation_docs_repository = regulation_docs_repository
+        self._rule_engine = rule_engine or RuleEngine()
 
     def rewrite(self, request: RewriteRequest) -> RewriteResponse:
         context = self._resolve_context(request.content_id)
@@ -67,17 +82,59 @@ class RewriteService:
         if result and result.payload:
             parsed = self._parse_response(request.content_id, result.payload, context)
             if parsed:
-                return parsed.model_copy(
+                response = parsed.model_copy(
                     update={
                         "model_version": result.model_version,
                         "attempts": _llm_attempts_to_schema(result.attempts),
                     }
                 )
+                return self._attach_validation(response)
 
-        return self._build_fallback_response(
+        response = self._build_fallback_response(
             request.content_id,
             context,
             attempts=_llm_attempts_to_schema(result.attempts) if result else [],
+        )
+        return self._attach_validation(response)
+
+    def _attach_validation(self, response: RewriteResponse) -> RewriteResponse:
+        return response.model_copy(
+            update={
+                "validation_conservative": self._validate_revision(response.revised_text_conservative),
+                "validation_marketing": self._validate_revision(response.revised_text_marketing),
+            }
+        )
+
+    def _validate_revision(self, text: str) -> RevisionValidation:
+        if not text or not text.strip():
+            return RevisionValidation(risk_level=RiskLevel.LOW.value)
+
+        raw_spans = self._rule_engine.scan(text)
+        processed = apply_disclosure_post_processing(text, raw_spans)
+
+        counts = {RiskLevel.HIGH: 0, RiskLevel.MEDIUM: 0, RiskLevel.LOW: 0}
+        residual: list[ResidualSpan] = []
+        for span in processed:
+            counts[span.severity] = counts.get(span.severity, 0) + 1
+            residual.append(
+                ResidualSpan(
+                    span_text=span.span_text,
+                    risk_category=span.risk_category,
+                    severity=span.severity.value,
+                )
+            )
+
+        if processed:
+            risk_level = max(processed, key=lambda s: _SEVERITY_ORDER[s.severity]).severity
+        else:
+            risk_level = RiskLevel.LOW
+
+        return RevisionValidation(
+            risk_level=risk_level.value,
+            residual_high=counts[RiskLevel.HIGH],
+            residual_medium=counts[RiskLevel.MEDIUM],
+            residual_low=counts[RiskLevel.LOW],
+            residual_spans=residual,
         )
 
     def prompt_hash(self, request: RewriteRequest) -> str:

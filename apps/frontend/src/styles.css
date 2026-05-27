@@ -1403,6 +1403,71 @@ dd {
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
+.revision-validations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 0;
+}
+
+.revision-validation {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.revision-validation strong {
+  font-size: 0.84rem;
+  color: #0f172a;
+}
+
+.revision-validation small {
+  font-size: 0.74rem;
+  color: #475569;
+}
+
+.revision-validation em {
+  font-style: normal;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.revision-validation.is-low {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+.revision-validation.is-low strong {
+  color: #166534;
+}
+
+.revision-validation.is-medium {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+.revision-validation.is-medium strong {
+  color: #b45309;
+}
+
+.revision-validation.is-high {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+.revision-validation.is-high strong {
+  color: #b91c1c;
+}
+.revision-validation.is-high em {
+  color: #b91c1c;
+}
+
+@media (max-width: 720px) {
+  .revision-validations {
+    grid-template-columns: 1fr;
+  }
+}
+
 .rewrite-table {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) 60px minmax(0, 1fr);

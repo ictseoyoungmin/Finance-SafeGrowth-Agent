@@ -2,7 +2,12 @@ import { useMemo } from "react";
 
 import { HelpHint } from "../../../components/HelpHint";
 import type { ComplianceWorkflow } from "../store";
-import type { FlaggedSpan, RewriteAttempt, RiskLevel } from "../types";
+import type {
+  FlaggedSpan,
+  RevisionValidation,
+  RewriteAttempt,
+  RiskLevel,
+} from "../types";
 
 interface StepProps {
   workflow: ComplianceWorkflow;
@@ -28,6 +33,25 @@ function summarizeAttempts(attempts: RewriteAttempt[]): string {
       return `${index + 1}/${attempts.length} ${attempt.model} · ${label}`;
     })
     .join("  →  ");
+}
+
+function renderValidationChip(label: string, v?: RevisionValidation | null) {
+  if (!v) return null;
+  const level = v.risk_level;
+  const tone =
+    level === "HIGH" ? "is-high" : level === "MEDIUM" ? "is-medium" : "is-low";
+  const counts = `HIGH ${v.residual_high} · MEDIUM ${v.residual_medium} · LOW ${v.residual_low}`;
+  return (
+    <div className={`revision-validation ${tone}`}>
+      <strong>
+        {label} · 잔존 위험 {level}
+      </strong>
+      <small>{counts}</small>
+      {v.residual_high > 0 ? (
+        <em>※ HIGH 잔존 — 추가 검토 권장</em>
+      ) : null}
+    </div>
+  );
 }
 
 function lookupSeverity(
@@ -153,6 +177,13 @@ export function RewriteStep({ workflow }: StepProps) {
           </article>
         )}
       </div>
+
+      {(rewrite.validation_conservative || rewrite.validation_marketing) ? (
+        <div className="revision-validations">
+          {renderValidationChip("보수적 수정안", rewrite.validation_conservative)}
+          {renderValidationChip("마케팅 유지 수정안", rewrite.validation_marketing)}
+        </div>
+      ) : null}
 
       <div className="revision-actions">
         <button

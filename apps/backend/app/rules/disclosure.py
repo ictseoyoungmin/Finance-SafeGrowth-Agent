@@ -6,7 +6,7 @@ runs once, after both rule and LLM spans have been merged.
 
 import re
 
-from app.schemas.compliance import RiskLevel
+from app.schemas.compliance import FlaggedSpan, RiskLevel
 
 
 # Disclosure phrases that, when found near a risk span, indicate the author
@@ -82,3 +82,40 @@ def has_disclosure_nearby(
         if any(keyword in chunk for keyword in DISCLOSURE_KEYWORDS):
             return True
     return False
+
+
+def apply_to_spans(text: str, spans: list[FlaggedSpan]) -> list[FlaggedSpan]:
+    """Drop disclaimer-only spans and downgrade those near a disclosure.
+
+    Shared by `AnalyzeService` (rule + LLM merge) and `RewriteService`
+    (self-validation of generated revisions) so the policy stays in one place.
+    """
+    if not spans:
+        return spans
+
+    sentences = sentence_spans(text)
+    cleaned: list[FlaggedSpan] = []
+    for span in spans:
+        if is_disclosure_span(span.span_text):
+            continue
+
+        idx = sentence_index(sentences, span.start)
+        if idx is None or not has_disclosure_nearby(text, sentences, idx, window=1):
+            cleaned.append(span)
+            continue
+
+        downgraded = DOWNGRADE.get(span.severity, span.severity)
+        if downgraded == span.severity:
+            cleaned.append(span)
+            continue
+
+        cleaned.append(
+            span.model_copy(
+                update={
+                    "severity": downgraded,
+                    "reason": f"{span.reason} {DOWNGRADE_REASON_SUFFIX}",
+                    "confidence": max(0.0, span.confidence - 0.05),
+                }
+            )
+        )
+    return cleaned
