@@ -196,12 +196,52 @@ def test_rewrite_sanitizes_blank_llm_change_originals() -> None:
 
 
 def _build_service(llm: ScriptedJsonLlmProvider) -> RewriteService:
+    from app.services._response_cache import ResponseCache
+    from app.schemas.rewrite import RewriteResponse
+
     return RewriteService(
         llm_provider=llm,  # type: ignore[arg-type]
         content_repository=FakeContentRepository(),  # type: ignore[arg-type]
         risk_results_repository=FakeRiskResultsRepository(),  # type: ignore[arg-type]
         regulation_docs_repository=FakeRegulationDocsRepository(),  # type: ignore[arg-type]
+        cache=ResponseCache[RewriteResponse](),  # 매 테스트 격리
     )
+
+
+def test_rewrite_cache_skips_second_llm_call() -> None:
+    llm = ScriptedJsonLlmProvider(
+        {
+            "revised_text_conservative": "보수안",
+            "revised_text_marketing": "마케팅안",
+            "changes": [],
+        }
+    )
+    service = _build_service(llm)
+    req = RewriteRequest(content_id="content-1", mode="marketing_balanced")
+
+    a = service.rewrite(req)
+    b = service.rewrite(req)
+
+    assert a == b
+    # ScriptedJsonLlmProvider.prompts 누적: 캐시 hit 이면 두 번째 호출에서 prompt 추가 안 됨
+    assert len(llm.prompts) == 1
+
+
+def test_rewrite_force_refresh_bypasses_cache() -> None:
+    llm = ScriptedJsonLlmProvider(
+        {
+            "revised_text_conservative": "보수안",
+            "revised_text_marketing": "마케팅안",
+            "changes": [],
+        }
+    )
+    service = _build_service(llm)
+    req = RewriteRequest(content_id="content-1", mode="marketing_balanced")
+
+    service.rewrite(req)
+    service.rewrite(req, force_refresh=True)
+
+    assert len(llm.prompts) == 2
 
 
 # --- self-validation -----------------------------------------------------------

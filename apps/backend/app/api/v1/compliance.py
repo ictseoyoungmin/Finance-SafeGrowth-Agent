@@ -38,9 +38,10 @@ router = APIRouter(tags=["compliance"])
 @router.post("/analyze", response_model=AnalyzeResponse)
 def analyze_compliance_content(
     request: AnalyzeRequest,
+    refresh: bool = Query(False, description="Bypass cached analyze response."),
     service: AnalyzeService = Depends(get_analyze_service),
 ) -> AnalyzeResponse:
-    return service.analyze(request)
+    return service.analyze(request, force_refresh=refresh)
 
 
 @router.post("/evidence", response_model=EvidenceResponse)
@@ -54,9 +55,10 @@ def retrieve_compliance_evidence(
 @router.post("/rewrite", response_model=RewriteResponse)
 def rewrite_compliance_content(
     request: RewriteRequest,
+    refresh: bool = Query(False, description="Bypass cached rewrite response."),
     service: RewriteService = Depends(get_rewrite_service),
 ) -> RewriteResponse:
-    return service.rewrite(request)
+    return service.rewrite(request, force_refresh=refresh)
 
 
 @router.post("/approve", response_model=ApprovalResponse)

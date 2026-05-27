@@ -1,3 +1,4 @@
+import hashlib
 import json
 from typing import Any
 
@@ -10,7 +11,16 @@ from app.repositories.risk_results_repo import (
 from app.rules.disclosure import apply_to_spans as apply_disclosure_post_processing
 from app.rules.rule_engine import RuleEngine
 from app.schemas.compliance import AnalyzeRequest, AnalyzeResponse, FlaggedSpan, RiskLevel
+from app.services._response_cache import ResponseCache
 from app.services.audit_service import AuditService, get_audit_service
+
+
+_ANALYZE_CACHE: ResponseCache[AnalyzeResponse] = ResponseCache()
+
+
+def _analyze_cache_key(request: AnalyzeRequest) -> str:
+    payload = request.model_dump_json()
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 SEVERITY_ORDER = {
@@ -28,14 +38,22 @@ class AnalyzeService:
         content_repository: ContentRepository,
         risk_results_repository: RiskResultsRepository,
         audit_service: AuditService,
+        cache: ResponseCache[AnalyzeResponse] | None = None,
     ) -> None:
         self._rule_engine = rule_engine
         self._llm = llm_provider
         self._content_repository = content_repository
         self._risk_results_repository = risk_results_repository
         self._audit_service = audit_service
+        self._cache = cache if cache is not None else _ANALYZE_CACHE
 
-    def analyze(self, request: AnalyzeRequest) -> AnalyzeResponse:
+    def analyze(self, request: AnalyzeRequest, *, force_refresh: bool = False) -> AnalyzeResponse:
+        cache_key = _analyze_cache_key(request)
+        if not force_refresh:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+
         content_id = self._content_repository.save_original(request)
         flagged_spans = self._merge_spans(
             request.original_text,
@@ -58,13 +76,15 @@ class AnalyzeService:
         )
         self._audit_service.record_analysis(content_id)
 
-        return AnalyzeResponse(
+        response = AnalyzeResponse(
             content_id=content_id,
             risk_level=risk_level,
             flagged_spans=flagged_spans,
             risk_categories=risk_categories,
             reviewer_notes=reviewer_notes,
         )
+        self._cache.set(cache_key, response)
+        return response
 
     def _llm_spans(self, request: AnalyzeRequest) -> list[FlaggedSpan]:
         prompt = json.dumps(

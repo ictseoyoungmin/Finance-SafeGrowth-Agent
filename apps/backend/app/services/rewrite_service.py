@@ -18,9 +18,12 @@ from app.schemas.rewrite import (
     RewriteRequest,
     RewriteResponse,
 )
+from app.services._response_cache import ResponseCache
 
 
 _SEVERITY_ORDER = {RiskLevel.LOW: 1, RiskLevel.MEDIUM: 2, RiskLevel.HIGH: 3}
+
+_REWRITE_CACHE: ResponseCache[RewriteResponse] = ResponseCache()
 
 
 def _llm_attempts_to_schema(attempts: list[LlmAttempt]) -> list[RewriteAttempt]:
@@ -68,16 +71,23 @@ class RewriteService:
         risk_results_repository: RiskResultsRepository,
         regulation_docs_repository: RegulationDocsRepository,
         rule_engine: RuleEngine | None = None,
+        cache: ResponseCache[RewriteResponse] | None = None,
     ) -> None:
         self._llm = llm_provider
         self._content_repository = content_repository
         self._risk_results_repository = risk_results_repository
         self._regulation_docs_repository = regulation_docs_repository
         self._rule_engine = rule_engine or RuleEngine()
+        self._cache = cache if cache is not None else _REWRITE_CACHE
 
-    def rewrite(self, request: RewriteRequest) -> RewriteResponse:
+    def rewrite(self, request: RewriteRequest, *, force_refresh: bool = False) -> RewriteResponse:
         context = self._resolve_context(request.content_id)
         prompt = self._build_prompt(request, context)
+        cache_key = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+        if not force_refresh:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
         result = self._llm.generate_json(prompt)
         if result and result.payload:
             parsed = self._parse_response(request.content_id, result.payload, context)
@@ -88,14 +98,18 @@ class RewriteService:
                         "attempts": _llm_attempts_to_schema(result.attempts),
                     }
                 )
-                return self._attach_validation(response)
+                validated = self._attach_validation(response)
+                self._cache.set(cache_key, validated)
+                return validated
 
         response = self._build_fallback_response(
             request.content_id,
             context,
             attempts=_llm_attempts_to_schema(result.attempts) if result else [],
         )
-        return self._attach_validation(response)
+        validated = self._attach_validation(response)
+        self._cache.set(cache_key, validated)
+        return validated
 
     def _attach_validation(self, response: RewriteResponse) -> RewriteResponse:
         return response.model_copy(

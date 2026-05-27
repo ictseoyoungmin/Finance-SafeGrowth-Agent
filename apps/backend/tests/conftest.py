@@ -21,3 +21,15 @@ for proxy_key in (
     "https_proxy",
 ):
     os.environ.pop(proxy_key, None)
+
+
+import pytest  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _clear_response_caches() -> None:
+    """Module-level response caches leak across tests; reset before each."""
+    from app.services import analyze_service, rewrite_service
+
+    analyze_service._ANALYZE_CACHE.clear()
+    rewrite_service._REWRITE_CACHE.clear()
