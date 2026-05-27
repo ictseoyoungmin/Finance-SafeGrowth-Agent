@@ -76,3 +76,9 @@ npm run build
 - `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` are backend-only.
 - Set `LLM_PROVIDER=openai_compatible` with `OPENAI_BASE_URL=http://host.docker.internal:18080/v1` when the backend container should use the shared local LLM server.
 - Rule-based compliance detection must work without Gemini or Supabase.
+
+## Determinism
+
+For stable analyze/rewrite responses set `LLM_TEMPERATURE=0.0` (or `0.1`) on the backend.
+Identical inputs are also served from an in-memory cache (TTL 15min). Bypass with `?refresh=1`.
+See `docs/deployment/README.md` for the full env-var list.
