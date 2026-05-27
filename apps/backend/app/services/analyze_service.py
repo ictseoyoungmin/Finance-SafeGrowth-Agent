@@ -7,6 +7,14 @@ from app.repositories.risk_results_repo import (
     RiskResultsRepository,
     get_risk_results_repository,
 )
+from app.rules.disclosure import (
+    DOWNGRADE,
+    DOWNGRADE_REASON_SUFFIX,
+    has_disclosure_nearby,
+    is_disclosure_span,
+    sentence_index,
+    sentence_spans,
+)
 from app.rules.rule_engine import RuleEngine
 from app.schemas.compliance import AnalyzeRequest, AnalyzeResponse, FlaggedSpan, RiskLevel
 from app.services.audit_service import AuditService, get_audit_service
@@ -43,6 +51,7 @@ class AnalyzeService:
                 *self._llm_spans(request),
             ],
         )
+        flagged_spans = self._post_process_disclosures(request.original_text, flagged_spans)
         risk_level = self._risk_level(flagged_spans)
         risk_categories = self._risk_categories(flagged_spans)
         reviewer_notes = self._reviewer_notes(request, flagged_spans)
@@ -184,6 +193,47 @@ class AnalyzeService:
             return RiskLevel.LOW
 
         return max(flagged_spans, key=lambda hit: SEVERITY_ORDER[hit.severity]).severity
+
+    def _post_process_disclosures(
+        self,
+        text: str,
+        spans: list[FlaggedSpan],
+    ) -> list[FlaggedSpan]:
+        """Strip disclaimer-only spans and downgrade those near a disclosure."""
+        if not spans:
+            return spans
+
+        sentences = sentence_spans(text)
+        cleaned: list[FlaggedSpan] = []
+        for span in spans:
+            # (B) drop spans whose own text is essentially a disclaimer
+            if is_disclosure_span(span.span_text):
+                continue
+
+            # (A)+(C) downgrade if disclosure exists in same / adjacent sentence
+            idx = sentence_index(sentences, span.start)
+            if idx is None:
+                cleaned.append(span)
+                continue
+            if not has_disclosure_nearby(text, sentences, idx, window=1):
+                cleaned.append(span)
+                continue
+
+            downgraded = DOWNGRADE.get(span.severity, span.severity)
+            if downgraded == span.severity:
+                cleaned.append(span)
+                continue
+
+            cleaned.append(
+                span.model_copy(
+                    update={
+                        "severity": downgraded,
+                        "reason": f"{span.reason} {DOWNGRADE_REASON_SUFFIX}",
+                        "confidence": max(0.0, span.confidence - 0.05),
+                    }
+                )
+            )
+        return cleaned
 
     def _risk_categories(self, flagged_spans: list[FlaggedSpan]) -> list[str]:
         categories: list[str] = []
