@@ -85,3 +85,40 @@ def test_security_pattern() -> None:
 def test_word_바라dsi_no_longer_false_positive() -> None:
     # "반드시 확인" 같은 disclaimer 톤에서 더 이상 잡히지 않아야 함.
     assert "과장 표현" not in _categories("가입 전 상품설명서를 반드시 확인하시기 바랍니다.")
+
+
+# --- H1: negative (false-positive 방지) ---------------------------------------
+
+
+def test_negative_고금리_정보성_문구() -> None:
+    # 광고 맥락(상품/특판/혜택 등)이 없는 정보성 "고금리 시대" 는 매칭되지 않아야 함.
+    assert "금리 기간 미명시" not in _categories("고금리 시대의 재테크 전략을 알아봅니다.")
+
+
+def test_positive_고금리_광고_문구() -> None:
+    assert "금리 기간 미명시" in _categories("고금리 특판 적금 출시!")
+
+
+def test_negative_최고경영자_합성어() -> None:
+    assert "과장 표현" not in _categories("최고경영자(CEO)가 신상품을 발표했습니다.")
+
+
+def test_positive_최고_광고_문구() -> None:
+    assert "과장 표현" in _categories("최고의 혜택을 누리세요")
+
+
+def test_negative_오늘만큼은_부사어() -> None:
+    assert "한정 마케팅" not in _categories("오늘만큼은 신중히 검토하세요.")
+
+
+def test_positive_오늘만_한정() -> None:
+    assert "한정 마케팅" in _categories("오늘만 진행되는 특별 이벤트")
+
+
+def test_negative_100퍼센트_무관_문맥() -> None:
+    # "100% 충전" 처럼 보장/성공/수익/확실 이 아닌 경우 비매칭.
+    assert "보증/장담 표현" not in _categories("100% 충전이 완료되었습니다.")
+
+
+def test_negative_단3일_한정단어_없음() -> None:
+    assert "한정 마케팅" not in _categories("단 3일 늦게 신청했습니다.")

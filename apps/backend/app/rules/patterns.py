@@ -11,8 +11,9 @@ from app.schemas.compliance import RiskLevel
 
 PATTERN_DEFINITIONS: list[tuple[str, str, RiskLevel, str, float]] = [
     # === 과장 표현 ===
+    # "최고경영(자)", "최고치", "최고위원" 등 합성어는 제외 (negative lookahead).
     (
-        r"누구나|무조건|업계\s*1\s*위|업계\s*최고|최고의?",
+        r"누구나|무조건|업계\s*1\s*위|업계\s*최고|최고의?(?!경영|치|위원|령)",
         "과장 표현",
         RiskLevel.HIGH,
         "보편적 수혜 또는 조건 없는 혜택으로 오인될 수 있습니다.",
@@ -58,8 +59,9 @@ PATTERN_DEFINITIONS: list[tuple[str, str, RiskLevel, str, float]] = [
     ),
 
     # === 한정 마케팅 (신규) ===
+    # "오늘만큼은" 같은 부사어는 제외 (negative lookahead).
     (
-        r"오늘만|마감\s*임박|선착순|단\s*\d+\s*(?:일|시간|분)\s*한정|마지막\s*기회|이번\s*기회를\s*놓치지\s*마",
+        r"오늘만(?!큼)|마감\s*임박|선착순|단\s*\d+\s*(?:일|시간|분)\s*한정|마지막\s*기회|이번\s*기회를\s*놓치지\s*마",
         "한정 마케팅",
         RiskLevel.MEDIUM,
         "충동 가입을 유도하는 시간 한정 표현은 사전 점검이 필요합니다.",
@@ -103,8 +105,9 @@ PATTERN_DEFINITIONS: list[tuple[str, str, RiskLevel, str, float]] = [
     ),
 
     # === 금리 기간 미명시 (신규) ===
+    # 광고 맥락 (상품/특판/혜택/적금/예금/가입/이벤트) 에 한정 → "고금리 시대" 같은 정보성 표현 제외.
     (
-        r"고금리(?!\s*\d)|초저금리(?!\s*\d)|최고\s*금리(?!\s*\d)",
+        r"(?:고금리|초저금리|최고\s*금리)\s*(?:상품|특판|혜택|적금|예금|가입|이벤트|로\s*굴리)",
         "금리 기간 미명시",
         RiskLevel.LOW,
         "금리 표현은 적용 기간/조건을 함께 명시해야 합니다.",
