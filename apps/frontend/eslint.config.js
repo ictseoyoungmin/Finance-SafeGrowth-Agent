@@ -32,4 +32,11 @@ export default [
       ],
     },
   },
+  {
+    // Config & test files run in Node, so expose Node globals (process, etc.).
+    files: ["*.config.{ts,js}", "**/*.config.{ts,js}", "tests/**/*.{ts,tsx}"],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
 ];
