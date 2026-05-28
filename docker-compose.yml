@@ -20,3 +20,53 @@ services:
       - ./apps/frontend:/app
     profiles:
       - full
+
+  # --- e2e profile: isolated network, separate ports from the 'full' stack ---
+  backend-e2e:
+    build:
+      context: ./apps/backend
+    environment:
+      APP_ENV: test
+      CORS_ORIGINS: "http://frontend-e2e:5199,http://localhost:5199,http://127.0.0.1:5199"
+    expose:
+      - "8000"
+    profiles:
+      - e2e
+
+  frontend-e2e:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5199 --strictPort"
+    environment:
+      VITE_API_BASE_URL: http://backend-e2e:8000
+    expose:
+      - "5199"
+    volumes:
+      - ./apps/frontend:/app
+      - frontend_e2e_node_modules:/app/node_modules
+    depends_on:
+      - backend-e2e
+    profiles:
+      - e2e
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.60.0-noble
+    working_dir: /app
+    environment:
+      PLAYWRIGHT_BASE_URL: http://frontend-e2e:5199
+    command: >
+      sh -c "npm ci &&
+             echo 'waiting for frontend-e2e...' &&
+             until wget -q -O /dev/null http://frontend-e2e:5199; do sleep 2; done &&
+             npx playwright test"
+    volumes:
+      - ./apps/frontend:/app
+      - playwright_node_modules:/app/node_modules
+    depends_on:
+      - frontend-e2e
+    profiles:
+      - e2e
+
+volumes:
+  frontend_e2e_node_modules:
+  playwright_node_modules:

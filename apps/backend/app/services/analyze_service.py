@@ -74,7 +74,7 @@ class AnalyzeService:
             risk_categories=risk_categories,
             reviewer_notes=reviewer_notes,
         )
-        self._audit_service.record_analysis(content_id)
+        self._audit_service.record_analysis(content_id, rule_categories=risk_categories)
 
         response = AnalyzeResponse(
             content_id=content_id,

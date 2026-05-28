@@ -21,8 +21,9 @@ class AuditLogsRepository:
         doc_version: str,
         prompt_hash: str | None,
         created_at: datetime,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
-        payload = {
+        payload: dict[str, Any] = {
             "content_id": content_id,
             "action": action,
             "model_version": model_version,
@@ -30,6 +31,11 @@ class AuditLogsRepository:
             "prompt_hash": prompt_hash,
             "created_at": created_at.isoformat(),
         }
+        if metadata:
+            # Supabase: requires a jsonb `metadata` column (see migration
+            # 0002_audit_metadata.sql). If absent, insert fails and we fall
+            # back to memory below — no data loss in demo mode.
+            payload["metadata"] = metadata
 
         if self._supabase_client.is_configured:
             try:

@@ -46,8 +46,9 @@ class FakeRiskResultsRepository:
 
 
 class FakeAuditService:
-    def record_analysis(self, content_id: str) -> None:
+    def record_analysis(self, content_id: str, rule_categories: list[str] | None = None) -> None:
         self.content_id = content_id
+        self.rule_categories = rule_categories or []
 
 
 def test_analyze_merges_llm_detected_spans_with_rule_spans() -> None:
