@@ -30,3 +30,5 @@ apps/frontend/dist/
 .DS_Store
 .vscode/
 memory/
+
+docs/submit/
