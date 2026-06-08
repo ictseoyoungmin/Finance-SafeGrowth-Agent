@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     openai_base_url: str = "http://127.0.0.1:18080/v1"
     openai_api_key: str | None = "local-not-required"
     openai_model: str = "gemma-4-local"
-    llm_timeout_seconds: int = 600
+    # Single HTTP timeout for every Gemini call. 60s keeps wizard-flow
+    # requests (analyze / rewrite) responsive while still covering occasional
+    # slow ingest prompts. Override via env for one-off long-running ingests.
+    llm_timeout_seconds: int = 60
     llm_thinking_enabled: bool = False
     llm_max_tokens: int = 1024
     llm_temperature: float = 0.2

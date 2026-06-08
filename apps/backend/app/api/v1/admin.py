@@ -42,6 +42,9 @@ def list_regulation_versions(
     return repository.list_by_source(source_id)
 
 
+MAX_REGULATION_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB
+
+
 @router.post("/regulations/ingest", response_model=IngestResult)
 async def ingest_regulation(
     source_id: str = Form(...),
@@ -51,7 +54,14 @@ async def ingest_regulation(
     _: None = Depends(require_admin_token),
     service: RegulationIngestionService = Depends(get_regulation_ingestion_service),
 ) -> IngestResult:
-    raw_bytes = await file.read()
+    # Read one byte past the cap so we can detect oversize files without
+    # loading the entire payload into memory.
+    raw_bytes = await file.read(MAX_REGULATION_UPLOAD_BYTES + 1)
+    if len(raw_bytes) > MAX_REGULATION_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"file too large (max {MAX_REGULATION_UPLOAD_BYTES // (1024 * 1024)}MB)",
+        )
     if not raw_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
     try:

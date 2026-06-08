@@ -246,7 +246,7 @@ class GeminiClient:
         )
 
         try:
-            with urllib.request.urlopen(request, timeout=15) as response:
+            with urllib.request.urlopen(request, timeout=settings.llm_timeout_seconds) as response:
                 return json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as http_err:
             raise _classify_http_error(http_err) from http_err

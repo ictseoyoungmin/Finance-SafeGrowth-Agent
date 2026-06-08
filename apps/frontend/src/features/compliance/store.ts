@@ -39,6 +39,13 @@ const INITIAL_STATE: ComplianceState = {
 
 const STORAGE_KEY = "compliance.workflow.v1";
 
+// Demo fallbacks (canned responses when the backend errors) hide real failures
+// from production users. Allow them only in dev or when explicitly opted in
+// via VITE_ENABLE_DEMO_FALLBACK=true (set this for competition demo deploys).
+const ENABLE_DEMO_FALLBACK =
+  import.meta.env.MODE !== "production" ||
+  import.meta.env.VITE_ENABLE_DEMO_FALLBACK === "true";
+
 function loadPersisted(): ComplianceState | null {
   if (typeof window === "undefined") return null;
   try {
@@ -125,6 +132,15 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
         actionMessage: undefined,
       }));
     } catch {
+      if (!ENABLE_DEMO_FALLBACK) {
+        setState((current) => ({
+          ...current,
+          isLoading: false,
+          errorMessage: "백엔드 응답이 없어 분석을 진행할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+          actionMessage: undefined,
+        }));
+        return;
+      }
       const analyze = fallbackAnalyze(state.input);
       setState((current) => ({
         ...current,
@@ -139,7 +155,17 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
   };
 
   const loadEvidence = async () => {
-    const analyze = state.analyze ?? fallbackAnalyze(state.input);
+    const analyze =
+      state.analyze ?? (ENABLE_DEMO_FALLBACK ? fallbackAnalyze(state.input) : null);
+    if (!analyze) {
+      setState((current) => ({
+        ...current,
+        isLoading: false,
+        errorMessage: "분석 결과가 없어 근거 단계로 진행할 수 없습니다.",
+        actionMessage: undefined,
+      }));
+      return;
+    }
     setState((current) => ({
       ...current,
       isLoading: true,
@@ -163,6 +189,15 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
         actionMessage: undefined,
       }));
     } catch {
+      if (!ENABLE_DEMO_FALLBACK) {
+        setState((current) => ({
+          ...current,
+          isLoading: false,
+          errorMessage: "근거 API 응답이 없어 근거를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
+          actionMessage: undefined,
+        }));
+        return;
+      }
       setState((current) => ({
         ...current,
         step: "evidence",
@@ -198,6 +233,15 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
           : "Gemini 검수 수정안을 불러왔습니다.",
       }));
     } catch {
+      if (!ENABLE_DEMO_FALLBACK) {
+        setState((current) => ({
+          ...current,
+          isLoading: false,
+          errorMessage: "수정안 API 응답이 없어 수정안을 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
+          actionMessage: undefined,
+        }));
+        return;
+      }
       setState((current) => ({
         ...current,
         step: "rewrite",
