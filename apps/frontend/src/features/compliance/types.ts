@@ -33,6 +33,8 @@ export interface EvidenceRequest {
   content_id: string;
   risk_categories: string[];
   product_type: string;
+  original_text?: string;
+  flagged_spans?: string[];
 }
 
 export interface EvidenceItem {

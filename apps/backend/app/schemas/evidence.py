@@ -5,6 +5,12 @@ class EvidenceRequest(BaseModel):
     content_id: str = Field(..., min_length=1)
     risk_categories: list[str] = Field(default_factory=list)
     product_type: str = Field(..., min_length=1)
+    # Optional context used to build a richer vector-search query. When the
+    # caller supplies the original copy or the spans flagged by analyze(),
+    # the retriever can route through vector_search() instead of falling
+    # back to plain category lookup.
+    original_text: str | None = None
+    flagged_spans: list[str] = Field(default_factory=list)
 
 
 class EvidenceItem(BaseModel):

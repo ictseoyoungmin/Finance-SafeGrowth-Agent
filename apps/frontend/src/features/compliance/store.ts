@@ -152,6 +152,8 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
         content_id: analyze.content_id,
         risk_categories: analyze.risk_categories,
         product_type: state.input.product_type,
+        original_text: state.input.original_text,
+        flagged_spans: analyze.flagged_spans.map((span) => span.span_text),
       });
       setState((current) => ({
         ...current,

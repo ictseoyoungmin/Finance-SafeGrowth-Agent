@@ -59,8 +59,69 @@ export function ReportPackagePanel({ report, helperText }: ReportPackagePanelPro
         <p className="report-package__final-text">{finalText}</p>
       </div>
 
+      <ReportChangesSection changes={report.changes} />
+      <ReportEvidenceSection evidence={report.evidence} />
+
       {helperText ? <p className="report-package__hint">{helperText}</p> : null}
     </section>
+  );
+}
+
+function ReportChangesSection({ changes }: { changes: ReportResponse["changes"] }) {
+  if (!changes || changes.length === 0) return null;
+  return (
+    <div className="report-package__section">
+      <p className="report-package__section-label">수정 전후 ({changes.length}건)</p>
+      <ul className="report-package__changes">
+        {changes.map((change, index) => {
+          const original = String(change.original ?? "");
+          const replacement = String(change.replacement ?? "");
+          const reason = change.reason ? String(change.reason) : "";
+          const category = change.risk_category ? String(change.risk_category) : "";
+          return (
+            <li key={`${original}-${index}`} className="report-package__change">
+              <div className="report-package__change-row">
+                <span className="report-package__change-orig">{original}</span>
+                <span aria-hidden="true">→</span>
+                <span className="report-package__change-new">{replacement}</span>
+              </div>
+              {(category || reason) && (
+                <p className="report-package__change-meta">
+                  {category && <span>{category}</span>}
+                  {category && reason && <span aria-hidden="true"> · </span>}
+                  {reason && <span>{reason}</span>}
+                </p>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function ReportEvidenceSection({ evidence }: { evidence: ReportResponse["evidence"] }) {
+  if (!evidence || evidence.length === 0) return null;
+  return (
+    <div className="report-package__section">
+      <p className="report-package__section-label">관련 근거 ({evidence.length}건)</p>
+      <ul className="report-package__evidence">
+        {evidence.map((item, index) => {
+          const title = String(item.title ?? "근거 문서");
+          const version = item.version ? String(item.version) : "";
+          const snippet = item.snippet ? String(item.snippet) : "";
+          return (
+            <li key={`${title}-${index}`} className="report-package__evidence-item">
+              <div className="report-package__evidence-head">
+                <span className="report-package__evidence-title">{title}</span>
+                {version && <span className="report-package__evidence-version">{version}</span>}
+              </div>
+              {snippet && <p className="report-package__evidence-snippet">{snippet}</p>}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
