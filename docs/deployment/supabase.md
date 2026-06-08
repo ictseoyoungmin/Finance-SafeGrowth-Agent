@@ -104,3 +104,19 @@ The RPC requires a real embedding for production vector search. The MVP backend 
 ## Seed Caveat
 
 The seed regulation documents are PoC sample guidance for demo validation only. They are not legal advice and should be replaced with reviewed internal policy content before production use.
+
+## Delete Policy (R-C-2)
+
+`DELETE /v1/compliance/contents/{id}` and the bulk `DELETE /v1/compliance/contents`
+only remove the parent row from `contents`. The schema defines:
+
+| child table | on delete |
+| --- | --- |
+| `risk_results` | **CASCADE** — automatically removed |
+| `approval_logs` | **SET NULL** — row preserved with `content_id = NULL` |
+| `audit_logs` | **SET NULL** — row preserved with `content_id = NULL` |
+
+The approval / audit trail therefore survives content deletion by design, so
+the backend does not issue bulk deletes against those tables. In fallback
+in-memory mode, only the `risk_results` cache is pruned along with the
+content; approval / audit fallback maps are kept for parity with Supabase.

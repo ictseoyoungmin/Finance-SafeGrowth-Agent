@@ -86,12 +86,12 @@ class AuditLogsRepository:
         FALLBACK_AUDIT_LOGS.pop(content_id, None)
 
     def delete_all(self) -> None:
-        if self._supabase_client.is_configured:
-            for content_id in list(FALLBACK_AUDIT_LOGS.keys()):
-                try:
-                    self._supabase_client.delete("audit_logs", {"content_id": content_id})
-                except Exception:
-                    logger.exception("Supabase audit_logs bulk delete partial failure.")
+        """Fallback-memory cleanup only — Supabase rows are preserved.
+
+        ``audit_logs.content_id`` uses ON DELETE SET NULL, so the audit trail
+        survives content removal. We intentionally do not bulk-delete Supabase
+        rows from this helper.
+        """
         FALLBACK_AUDIT_LOGS.clear()
 
     def _save_fallback(self, content_id: str, payload: dict[str, Any]) -> None:

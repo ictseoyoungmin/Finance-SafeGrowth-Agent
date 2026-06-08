@@ -63,12 +63,13 @@ class RiskResultsRepository:
         FALLBACK_RISK_RESULTS.pop(content_id, None)
 
     def delete_all(self) -> None:
-        if self._supabase_client.is_configured:
-            for content_id in list(FALLBACK_RISK_RESULTS.keys()) or []:
-                try:
-                    self._supabase_client.delete("risk_results", {"content_id": content_id})
-                except Exception:
-                    logger.exception("Supabase risk_results bulk delete partial failure.")
+        """Fallback-memory cleanup only.
+
+        On Supabase, risk_results rows are removed automatically via
+        ``contents.id`` ON DELETE CASCADE — bulk-deleting through this client
+        without knowing the content_ids would only re-iterate the fallback
+        keys (which are empty in Supabase mode anyway). Trust the FK.
+        """
         FALLBACK_RISK_RESULTS.clear()
 
     def _save_fallback(self, content_id: str, payload: dict[str, Any]) -> None:

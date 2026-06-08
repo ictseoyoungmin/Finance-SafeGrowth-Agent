@@ -1,9 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from app.repositories.approval_logs_repo import (
-    ApprovalLogsRepository,
-    get_approval_logs_repository,
-)
 from app.repositories.audit_logs_repo import (
     AuditLogsRepository,
     get_audit_logs_repository,
@@ -110,13 +106,13 @@ def delete_content(
     content_id: str,
     contents: ContentRepository = Depends(get_content_repository),
     risks: RiskResultsRepository = Depends(get_risk_results_repository),
-    approvals: ApprovalLogsRepository = Depends(get_approval_logs_repository),
-    audits: AuditLogsRepository = Depends(get_audit_logs_repository),
 ) -> Response:
+    # Supabase: deleting the content cascades into risk_results (FK ON DELETE
+    # CASCADE). approval_logs / audit_logs intentionally retain the audit trail
+    # with content_id set to NULL, so they are *not* touched here.
+    # Fallback memory has no FK — prune the risk_results dict explicitly.
     existed = contents.delete(content_id)
     risks.delete_by_content_id(content_id)
-    approvals.delete_by_content_id(content_id)
-    audits.delete_by_content_id(content_id)
     if not existed:
         raise HTTPException(status_code=404, detail="content not found")
     return Response(status_code=204)
@@ -126,13 +122,12 @@ def delete_content(
 def delete_all_contents(
     contents: ContentRepository = Depends(get_content_repository),
     risks: RiskResultsRepository = Depends(get_risk_results_repository),
-    approvals: ApprovalLogsRepository = Depends(get_approval_logs_repository),
-    audits: AuditLogsRepository = Depends(get_audit_logs_repository),
 ) -> Response:
+    # Same policy as the single-content delete: contents bulk delete cascades
+    # into risk_results on Supabase; approval_logs / audit_logs are preserved.
+    # The risks.delete_all() call is for fallback-memory parity.
     contents.delete_all()
     risks.delete_all()
-    approvals.delete_all()
-    audits.delete_all()
     return Response(status_code=204)
 
 

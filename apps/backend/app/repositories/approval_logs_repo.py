@@ -64,12 +64,12 @@ class ApprovalLogsRepository:
         FALLBACK_APPROVAL_LOGS.pop(content_id, None)
 
     def delete_all(self) -> None:
-        if self._supabase_client.is_configured:
-            for content_id in list(FALLBACK_APPROVAL_LOGS.keys()):
-                try:
-                    self._supabase_client.delete("approval_logs", {"content_id": content_id})
-                except Exception:
-                    logger.exception("Supabase approval_logs bulk delete partial failure.")
+        """Fallback-memory cleanup only — Supabase rows are preserved.
+
+        ``approval_logs.content_id`` uses ON DELETE SET NULL, so the audit
+        trail survives even when its parent content is removed. We intentionally
+        do not bulk-delete Supabase rows from this helper.
+        """
         FALLBACK_APPROVAL_LOGS.clear()
 
     def _save_fallback(self, payload: dict[str, Any]) -> str:
