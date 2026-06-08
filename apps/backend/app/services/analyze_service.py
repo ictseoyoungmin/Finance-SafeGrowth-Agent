@@ -15,7 +15,10 @@ from app.services._response_cache import ResponseCache
 from app.services.audit_service import AuditService, get_audit_service
 
 
-_ANALYZE_CACHE: ResponseCache[AnalyzeResponse] = ResponseCache()
+# Cached value is the *risk body* (spans/level/categories/notes) — NOT the full
+# AnalyzeResponse. Each request must mint a new content_id and persist its own
+# audit row, so caching the whole response would conflate distinct submissions.
+_ANALYZE_CACHE: ResponseCache[dict[str, Any]] = ResponseCache()
 
 
 def _analyze_cache_key(request: AnalyzeRequest) -> str:
@@ -38,7 +41,7 @@ class AnalyzeService:
         content_repository: ContentRepository,
         risk_results_repository: RiskResultsRepository,
         audit_service: AuditService,
-        cache: ResponseCache[AnalyzeResponse] | None = None,
+        cache: ResponseCache[dict[str, Any]] | None = None,
     ) -> None:
         self._rule_engine = rule_engine
         self._llm = llm_provider
@@ -48,43 +51,45 @@ class AnalyzeService:
         self._cache = cache if cache is not None else _ANALYZE_CACHE
 
     def analyze(self, request: AnalyzeRequest, *, force_refresh: bool = False) -> AnalyzeResponse:
-        cache_key = _analyze_cache_key(request)
-        if not force_refresh:
-            cached = self._cache.get(cache_key)
-            if cached is not None:
-                return cached
-
+        # Always mint a new content_id and persist its own audit row so that
+        # successive submissions of the same input remain independently
+        # auditable. The cache only memoises the *risk analysis body*.
         content_id = self._content_repository.save_original(request)
-        flagged_spans = self._merge_spans(
-            request.original_text,
-            [
-                *self._rule_engine.scan(request.original_text),
-                *self._llm_spans(request),
-            ],
-        )
-        flagged_spans = self._post_process_disclosures(request.original_text, flagged_spans)
-        risk_level = self._risk_level(flagged_spans)
-        risk_categories = self._risk_categories(flagged_spans)
-        reviewer_notes = self._reviewer_notes(request, flagged_spans)
+        cache_key = _analyze_cache_key(request)
+
+        risk_body: dict[str, Any] | None = None
+        if not force_refresh:
+            risk_body = self._cache.get(cache_key)
+
+        if risk_body is None:
+            flagged_spans = self._merge_spans(
+                request.original_text,
+                [
+                    *self._rule_engine.scan(request.original_text),
+                    *self._llm_spans(request),
+                ],
+            )
+            flagged_spans = self._post_process_disclosures(request.original_text, flagged_spans)
+            risk_body = {
+                "flagged_spans": flagged_spans,
+                "risk_level": self._risk_level(flagged_spans),
+                "risk_categories": self._risk_categories(flagged_spans),
+                "reviewer_notes": self._reviewer_notes(request, flagged_spans),
+            }
+            self._cache.set(cache_key, risk_body)
 
         self._risk_results_repository.save_analysis(
             content_id=content_id,
-            risk_level=risk_level,
-            flagged_spans=flagged_spans,
-            risk_categories=risk_categories,
-            reviewer_notes=reviewer_notes,
+            risk_level=risk_body["risk_level"],
+            flagged_spans=risk_body["flagged_spans"],
+            risk_categories=risk_body["risk_categories"],
+            reviewer_notes=risk_body["reviewer_notes"],
         )
-        self._audit_service.record_analysis(content_id, rule_categories=risk_categories)
+        self._audit_service.record_analysis(
+            content_id, rule_categories=risk_body["risk_categories"]
+        )
 
-        response = AnalyzeResponse(
-            content_id=content_id,
-            risk_level=risk_level,
-            flagged_spans=flagged_spans,
-            risk_categories=risk_categories,
-            reviewer_notes=reviewer_notes,
-        )
-        self._cache.set(cache_key, response)
-        return response
+        return AnalyzeResponse(content_id=content_id, **risk_body)
 
     def _llm_spans(self, request: AnalyzeRequest) -> list[FlaggedSpan]:
         prompt = json.dumps(

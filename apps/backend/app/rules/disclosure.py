@@ -33,6 +33,26 @@ DOWNGRADE: dict[RiskLevel, RiskLevel] = {
     RiskLevel.LOW: RiskLevel.LOW,
 }
 
+# Negation tokens that, alongside a disclosure keyword, indicate the phrase is
+# actually a *risk claim* ("…가능성 없음", "…걱정 없이") rather than a disclaimer.
+NEGATION_NEAR_DISCLOSURE: tuple[str, ...] = (
+    "없음",
+    "없이",
+    "없습니다",
+    "없어요",
+    "없다",
+    "전혀 없",
+    "걱정 없",
+    "무관",
+)
+
+
+def _has_genuine_disclosure(text: str) -> bool:
+    """True iff text contains a disclaimer phrase that is NOT negated nearby."""
+    if any(neg in text for neg in NEGATION_NEAR_DISCLOSURE):
+        return False
+    return any(keyword in text for keyword in DISCLOSURE_KEYWORDS)
+
 DOWNGRADE_REASON_SUFFIX = "(인접 고지 문구로 위험도가 한 단계 완화됨)"
 
 # 숫자 사이의 마침표(예: "5.0")는 문장 경계로 인식하지 않는다.
@@ -61,8 +81,12 @@ def sentence_index(spans: list[tuple[int, int]], position: int) -> int | None:
 
 
 def is_disclosure_span(span_text: str) -> bool:
-    """True if the span's own text is essentially a disclaimer phrase."""
-    return any(keyword in span_text for keyword in DISCLOSURE_KEYWORDS)
+    """True if the span's own text is essentially a disclaimer phrase.
+
+    Skips negated forms ("원금 손실 가능성 없음") so genuine risk claims that
+    happen to mention a disclosure keyword are NOT stripped.
+    """
+    return _has_genuine_disclosure(span_text)
 
 
 def has_disclosure_nearby(
@@ -78,8 +102,7 @@ def has_disclosure_nearby(
     lo = max(0, index - window)
     hi = min(len(spans), index + window + 1)
     for start, end in spans[lo:hi]:
-        chunk = text[start:end]
-        if any(keyword in chunk for keyword in DISCLOSURE_KEYWORDS):
+        if _has_genuine_disclosure(text[start:end]):
             return True
     return False
 
