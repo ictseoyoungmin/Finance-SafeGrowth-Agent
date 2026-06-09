@@ -14,6 +14,7 @@ import {
 } from "./api";
 import { approvalDecisionLabel } from "./approvalDecisionLabels";
 import type { AnalyzeRequest, ApprovalDecision, ComplianceState, WorkflowStep } from "./types";
+import { useAuth } from "../auth/AuthContext";
 
 export interface ComplianceWorkflow {
   state: ComplianceState;
@@ -101,6 +102,8 @@ function pendingActionForDecision(decision: ApprovalDecision): ComplianceState["
 export function useComplianceWorkflow(): ComplianceWorkflow {
   const [state, setState] = useState<ComplianceState>(() => loadPersisted() ?? INITIAL_STATE);
   const apiBaseUrl = useMemo(() => getApiBaseUrl(), []);
+  const { profile } = useAuth();
+  const reviewerName = profile?.display_name ?? "Compliance Reviewer";
 
   useEffect(() => {
     persist(state);
@@ -270,7 +273,7 @@ export function useComplianceWorkflow(): ComplianceWorkflow {
     try {
       const approval = await approveContent({
         content_id: contentId,
-        reviewer: "김준법 수석",
+        reviewer: reviewerName,
         decision,
         comment: decision === "CONDITIONALLY_APPROVED" ? "Demo approval" : undefined,
         selected_revision: selectedRevisionText ?? state.input.original_text,

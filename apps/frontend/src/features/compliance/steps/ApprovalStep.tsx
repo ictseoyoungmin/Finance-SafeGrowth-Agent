@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { useAuth } from "../../auth/AuthContext";
 import { ApprovalStamp } from "../components/ApprovalStamp";
 import { ReportPackagePanel } from "../components/ReportPackagePanel";
 import { approvalDecisionLabel } from "../approvalDecisionLabels";
@@ -11,6 +12,10 @@ interface StepProps {
 
 export function ApprovalStep({ workflow }: StepProps) {
   const { state, goTo, loadReport, reset, submitApproval } = workflow;
+  const { profile } = useAuth();
+  const reviewerName = profile?.display_name ?? "Compliance Reviewer";
+  const reviewerTitle = profile?.title ?? "Compliance Manager";
+  const avatarInitial = reviewerName[0] ?? "C";
   const decisionBannerRef = useRef<HTMLElement>(null);
   const analyze = state.analyze;
   const rewrite = state.rewrite;
@@ -43,9 +48,9 @@ export function ApprovalStep({ workflow }: StepProps) {
           <p>준법감시팀의 심의 결과와 최종 문안을 확인하고 승인 절차를 진행해주세요.</p>
         </div>
         <div className="reviewer-card">
-          <span className="avatar">A</span>
-          <strong>김준법 수석</strong>
-          <small>Compliance Manager</small>
+          <span className="avatar">{avatarInitial}</span>
+          <strong>{reviewerName}</strong>
+          <small>{reviewerTitle}</small>
         </div>
         <ApprovalStamp decision={state.approval?.decision} />
       </section>
@@ -64,7 +69,7 @@ export function ApprovalStep({ workflow }: StepProps) {
           </h2>
           <p>
             {isApprovalSaved
-              ? `방금 김준법 수석 이름으로 ${decisionLabel} 결과가 저장되었습니다.`
+              ? `방금 ${reviewerName} 이름으로 ${decisionLabel} 결과가 저장되었습니다.`
               : state.actionMessage ?? "아래 주요 수정 사항을 반영하여 최종 승인하시기를 권고드립니다."}
           </p>
         </div>

@@ -1,5 +1,6 @@
 import { useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 
+import { useAuth } from "../../features/auth/AuthContext";
 import type { WorkflowStep } from "../../features/compliance/types";
 import {
   ApproveIcon,
@@ -49,8 +50,10 @@ export function AppShell({
   availableSteps,
 }: AppShellProps) {
   const [guideOpen, setGuideOpen] = useState(false);
+  const { profile, logout } = useAuth();
   const currentTitle =
     title ?? STEPS.find((step) => step.id === currentStep)?.title ?? "콘텐츠 입력";
+  const avatarInitial = profile?.display_name?.[0] ?? "A";
 
   return (
     <div className="app-frame">
@@ -143,12 +146,20 @@ export function AppShell({
           </div>
           <div className="status-stack">
             <NotificationsBell />
-            <span className="avatar">A</span>
+            <span className="avatar">{avatarInitial}</span>
             <span className="admin-block">
-              <strong>관리자</strong>
-              <small>준법감시팀</small>
+              <strong>{profile?.display_name ?? "익명 검토자"}</strong>
+              <small>{profile?.title ?? ""}{profile?.team ? ` · ${profile.team}` : ""}</small>
             </span>
             {usedFallback && <span className="fallback-badge">Fallback</span>}
+            <button
+              type="button"
+              className="logout-button"
+              onClick={() => void logout()}
+              title="로그아웃"
+            >
+              로그아웃
+            </button>
           </div>
           <div
             className={`global-progress ${isLoading ? "is-active" : ""}`}

@@ -1,6 +1,7 @@
 import { useEffect, useState, type MouseEvent } from "react";
 
 import { ArrowLeftIcon } from "../../components/icons";
+import { useAuth } from "../auth/AuthContext";
 import { ReportPackagePanel } from "./components/ReportPackagePanel";
 import {
   deleteAllContents,
@@ -22,6 +23,8 @@ type LoadState =
   | { status: "error"; message: string };
 
 export function HistoryPage() {
+  const { profile } = useAuth();
+  const canDelete = profile?.role === "admin";
   const [state, setState] = useState<LoadState>({ status: "idle" });
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [report, setReport] = useState<ReportResponse | undefined>();
@@ -131,7 +134,7 @@ export function HistoryPage() {
           <h2>검토 이력</h2>
           <p>최근에 저장된 검토 건을 선택해 리포트 패키지를 다시 확인할 수 있습니다.</p>
         </div>
-        {state.status === "ready" && state.items.length > 0 ? (
+        {canDelete && state.status === "ready" && state.items.length > 0 ? (
           <button
             type="button"
             className="danger-button"
@@ -190,17 +193,19 @@ export function HistoryPage() {
                   </p>
                   <p className="history-item__preview">{item.original_text_preview}</p>
                 </button>
-                <button
-                  type="button"
-                  className="history-item__delete"
-                  onClick={(event) => handleDeleteOne(item.id, event)}
-                  disabled={deleting === item.id}
-                  aria-busy={deleting === item.id}
-                  aria-label="이 검토 건 삭제"
-                  title="이 검토 건 삭제"
-                >
-                  ✕
-                </button>
+                {canDelete ? (
+                  <button
+                    type="button"
+                    className="history-item__delete"
+                    onClick={(event) => handleDeleteOne(item.id, event)}
+                    disabled={deleting === item.id}
+                    aria-busy={deleting === item.id}
+                    aria-label="이 검토 건 삭제"
+                    title="이 검토 건 삭제"
+                  >
+                    ✕
+                  </button>
+                ) : null}
                 {isActive ? (
                   <div className="history-item__report">
                     {reportLoading ? (

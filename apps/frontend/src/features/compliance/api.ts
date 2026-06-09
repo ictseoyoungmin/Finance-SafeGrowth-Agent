@@ -26,8 +26,21 @@ export const DEFAULT_INPUT: AnalyzeRequest = {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
+// Module-level auth slot. The AuthProvider keeps this in sync so every
+// existing API call automatically gains the Authorization header without
+// touching individual call sites.
+let _authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  _authToken = token;
+}
+
 export function getApiBaseUrl() {
   return API_BASE_URL;
+}
+
+function authHeaders(): Record<string, string> {
+  return _authToken ? { Authorization: `Bearer ${_authToken}` } : {};
 }
 
 export async function analyzeContent(request: AnalyzeRequest): Promise<AnalyzeResponse> {
@@ -63,7 +76,7 @@ export async function fetchRegulationVersion(versionId: string): Promise<Regulat
 export async function deleteContent(contentId: string): Promise<void> {
   const response = await fetch(
     `${API_BASE_URL}/v1/compliance/contents/${encodeURIComponent(contentId)}`,
-    { method: "DELETE" },
+    { method: "DELETE", headers: authHeaders() },
   );
   if (!response.ok && response.status !== 204) {
     throw new Error(`API request failed: ${response.status}`);
@@ -71,7 +84,10 @@ export async function deleteContent(contentId: string): Promise<void> {
 }
 
 export async function deleteAllContents(): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/v1/compliance/contents`, { method: "DELETE" });
+  const response = await fetch(`${API_BASE_URL}/v1/compliance/contents`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
   if (!response.ok && response.status !== 204) {
     throw new Error(`API request failed: ${response.status}`);
   }
@@ -91,7 +107,7 @@ export async function fetchRecentAuditEvents(limit = 10): Promise<{ entries: Rec
 async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
   });
 
@@ -110,7 +126,7 @@ export class ApiNotAvailableError extends Error {
 }
 
 async function getJson<TResponse>(path: string): Promise<TResponse> {
-  const response = await fetch(`${API_BASE_URL}${path}`);
+  const response = await fetch(`${API_BASE_URL}${path}`, { headers: authHeaders() });
 
   if (response.status === 404) {
     throw new ApiNotAvailableError(`해당 엔드포인트가 백엔드에 없습니다 (404): ${path}`);

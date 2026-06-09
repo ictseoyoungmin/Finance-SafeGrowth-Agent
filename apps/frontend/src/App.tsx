@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import { AppShell } from "./components/layout/AppShell";
 import { AgentRunPage } from "./features/agent/AgentRunPage";
+import { useAuth } from "./features/auth/AuthContext";
+import { LoginPage } from "./features/auth/LoginPage";
 import { ComplianceTraceRail } from "./features/compliance/components/ComplianceTraceRail";
 import { HistoryPage } from "./features/compliance/HistoryPage";
 import { useComplianceWorkflow } from "./features/compliance/store";
@@ -13,7 +15,15 @@ import { RewriteStep } from "./features/compliance/steps/RewriteStep";
 import type { WorkflowStep } from "./features/compliance/types";
 
 export function App() {
+  const auth = useAuth();
   const route = useHashRoute();
+
+  if (auth.status === "loading") {
+    return <div className="login-frame" aria-busy>세션 확인 중...</div>;
+  }
+  if (auth.status === "unauthenticated") {
+    return <LoginPage />;
+  }
 
   if (route === "/agent") {
     return (
