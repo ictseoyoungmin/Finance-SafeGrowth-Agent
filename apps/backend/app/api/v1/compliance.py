@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
+from app.core.auth import require_admin_role
 from app.repositories.audit_logs_repo import (
     AuditLogsRepository,
     get_audit_logs_repository,
@@ -106,6 +107,7 @@ def delete_content(
     content_id: str,
     contents: ContentRepository = Depends(get_content_repository),
     risks: RiskResultsRepository = Depends(get_risk_results_repository),
+    _: object = Depends(require_admin_role),
 ) -> Response:
     # Supabase: deleting the content cascades into risk_results (FK ON DELETE
     # CASCADE). approval_logs / audit_logs intentionally retain the audit trail
@@ -122,6 +124,7 @@ def delete_content(
 def delete_all_contents(
     contents: ContentRepository = Depends(get_content_repository),
     risks: RiskResultsRepository = Depends(get_risk_results_repository),
+    _: object = Depends(require_admin_role),
 ) -> Response:
     # Same policy as the single-content delete: contents bulk delete cascades
     # into risk_results on Supabase; approval_logs / audit_logs are preserved.

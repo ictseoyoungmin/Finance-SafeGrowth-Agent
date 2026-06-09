@@ -41,13 +41,21 @@ class ContentRepository:
         return FALLBACK_CONTENTS.get(content_id)
 
     def delete(self, content_id: str) -> bool:
+        supabase_deleted = 0
         if self._supabase_client.is_configured:
             try:
-                self._supabase_client.delete("contents", {"id": content_id})
+                # SupabaseClient.delete returns the number of removed rows.
+                supabase_deleted = self._supabase_client.delete(
+                    "contents", {"id": content_id}
+                )
             except Exception:
                 logger.exception("Supabase contents delete failed; falling back to memory store.")
 
-        return FALLBACK_CONTENTS.pop(content_id, None) is not None
+        # OR the two paths so a Supabase-mode deletion doesn't read as
+        # not-found just because the row was never in the local fallback dict
+        # (which was the case for every prod content_id).
+        fallback_deleted = FALLBACK_CONTENTS.pop(content_id, None) is not None
+        return supabase_deleted > 0 or fallback_deleted
 
     def delete_all(self) -> int:
         if self._supabase_client.is_configured:

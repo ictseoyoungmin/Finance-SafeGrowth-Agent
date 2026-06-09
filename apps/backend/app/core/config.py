@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     agent_max_iterations: int = 8
     agent_deadline_seconds: int = 60
     admin_api_token: str | None = None
+    # Auth (R-E-1). Tester credentials are public demo defaults; admin password
+    # MUST be supplied via env in any deploy where DELETE access matters.
+    tester_password: str = "tester"
+    admin_password: str | None = None
+    admin_id: str = "admin"
+    tester_id: str = "tester"
+    auth_token_ttl_seconds: int = 8 * 60 * 60
 
     model_config = SettingsConfigDict(
         env_file=".env",
